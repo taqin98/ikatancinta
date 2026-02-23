@@ -30,6 +30,15 @@ Proyek ini adalah frontend single-page application (SPA) untuk:
 
 ## Fitur Utama
 - Landing page marketing (`Hero`, `Features`, `Pricing`, `FAQ`, testimonial).
+- Highlight fitur di section `Features`:
+  - Desain Kekinian
+  - Buku Tamu (QR Card)
+  - Love Stories
+  - Live Streaming
+  - Bagikan Dengan Nama Tamu
+  - Native Share
+  - Multi Bahasa (Indonesia/Inggris)
+  - Custom Time Zone
 - Galeri tema dengan filter kategori.
 - Detail tema dan daftar contoh undangan per tema.
 - Preview undangan:

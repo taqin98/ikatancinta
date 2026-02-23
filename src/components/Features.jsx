@@ -224,7 +224,7 @@ export default function Features() {
           <div className="md:col-span-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
             <div className="rounded-[2rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 sm:p-6 flex flex-col justify-between group hover:shadow-lg transition-shadow min-h-[180px] relative overflow-hidden">
               <div className="absolute inset-0">
-                <svg viewBox="0 0 360 220" className="w-full h-full opacity-55 dark:opacity-35">
+                <svg viewBox="0 0 360 220" className="w-full h-full opacity-80 dark:opacity-35">
                   <rect width="360" height="220" fill="#d5d8d4" />
                   <path d="M0 35H220C240 35 255 50 255 70V78H0Z" fill="#9ad77b" />
                   <path d="M180 148H360V220H146C155 188 165 168 180 148Z" fill="#9ad77b" />
@@ -262,30 +262,20 @@ export default function Features() {
             </div>
 
             <div className="rounded-[2rem] bg-primary-soft/80 dark:bg-slate-800 dark:border-slate-700 p-5 sm:p-6 flex flex-col gap-4 group hover:shadow-lg transition-shadow min-h-[210px] relative overflow-hidden">
-              <div className="absolute inset-0">
-                <svg viewBox="0 0 360 220" className="w-full h-full opacity-55 dark:opacity-35">
-                  <rect width="560" height="420" fill="#fce7f1" />
-                  <path d="M0 28H160L128 82H0Z" fill="#f8d3e6" />
-                  <path d="M226 0H360V76H198Z" fill="#f7d7dc" />
-                  <path d="M160 220H360V150L250 132Z" fill="#f6dee2" />
-
-                  <rect x="36" y="46" width="108" height="74" rx="10" fill="#ffffff" stroke="#e8b7cf" strokeWidth="3" />
-                  <path d="M36 58L90 92L144 58" fill="none" stroke="#ee2b8c" strokeWidth="4" strokeLinecap="round" />
-                  <rect x="210" y="58" width="120" height="82" rx="12" fill="#fff7fa" stroke="#e7bfd1" strokeWidth="3" />
-                  <path d="M210 70L270 108L330 70" fill="none" stroke="#dcb8bc" strokeWidth="4" strokeLinecap="round" />
-
-
-                  <path d="M44 170h110" stroke="#e8b7cf" strokeWidth="4" strokeLinecap="round" />
-                  <path d="M44 184h86" stroke="#e8b7cf" strokeWidth="4" strokeLinecap="round" />
-                  <path d="M44 198h62" stroke="#e8b7cf" strokeWidth="4" strokeLinecap="round" />
-                </svg>
+              <div className="absolute inset-0 opacity-80 dark:opacity-35">
+                <img
+                    src="/illustrations/gift-card-bg-03.svg"
+                    alt=""
+                    aria-hidden="true"
+                    className="w-full h-full object-cover"
+                  />
               </div>
-              <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/75 to-white/45 dark:from-slate-800/95 dark:via-slate-800/70 dark:to-slate-800/40"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/45 to-white/45 dark:from-slate-800/95 dark:via-slate-800/70 dark:to-slate-800/40"></div>
 
-              <div className="relative z-10 flex justify-between items-start">
-                <div className="bg-white/90 w-10 h-10 rounded-xl flex items-center justify-center text-primary shadow-sm">
+              <div className="relative z-10 flex justify-end items-start">
+                {/* <div className="bg-white/90 w-10 h-10 rounded-xl flex items-center justify-center text-primary shadow-sm">
                   <span className="material-symbols-outlined">card_giftcard</span>
-                </div>
+                </div> */}
                 <span className="material-symbols-outlined text-primary/40 group-hover:text-primary transition-colors">
                   arrow_outward
                 </span>
@@ -320,6 +310,67 @@ export default function Features() {
                 </div>
               </div>
               <div className="absolute right-0 bottom-0 w-32 h-32 bg-primary/20 rounded-full blur-2xl transform translate-x-10 translate-y-10"></div>
+            </div>
+          </div>
+
+          <div className="md:col-span-3 w-full">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">palette</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Desain Kekinian</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Template modern dan elegan.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">edit_note</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Buku Tamu</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Buat daftar tamu dengan sistem QR Card</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">favorite</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Love Stories</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Ceritakan perjalanan cintamu dengan leluasa.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">live_tv</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Live Streaming</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Acara bisa ditonton dari mana saja.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">person_add</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Bagikan Dengan Nama Tamu</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Bisa juga membuat share dengan nama Teman/Saudara/Keluarga agar lebih ekslusif.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">ios_share</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Native Share</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Bagikan instan via fitur perangkat.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">translate</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Multi Bahasa</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Pilih undangan kamu menggunakan bahasa indonesia/inggris.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Custom Time Zone</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Waktu acara sesuai zona tamu.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
