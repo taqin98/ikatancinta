@@ -297,6 +297,7 @@ https://<username>.github.io/<nama-repo>/
 - Jika pakai custom domain, sesuaikan `BASE_PATH=/` dan tambahkan file `public/CNAME` bila diperlukan.
 - Jika routing SPA menghasilkan 404 ketika refresh, gunakan fallback `404.html` (salin dari `index.html`) atau ubah strategi routing agar kompatibel dengan static hosting.
 
+
 ## Troubleshooting
 `npm run dev` gagal jalan:
 - Pastikan dependency sudah terpasang (`npm install`).
