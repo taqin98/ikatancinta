@@ -33,9 +33,16 @@ export default function ThemeDetailPage() {
     );
   }
 
+  const getPreviewPathByPackageTier = (packageTier) => {
+    if (packageTier === "BASIC") return "/preview-undangan-basic";
+    if (packageTier === "PREMIUM") return "/preview-undangan-premium";
+    if (packageTier === "EKSLUSIF") return "/preview-undangan-eksklusif";
+    return "/preview-undangan";
+  };
+
   const invitationsUsingPreset = invitationsByTheme[theme.slug] || [];
   const previewBackground = theme.thumbnail || theme.image;
-  const previewHref = `${theme.packageTier === "BASIC" ? "/preview-undangan-basic" : "/preview-undangan"}?preset_id=${theme.presetId}`;
+  const previewHref = `${getPreviewPathByPackageTier(theme.packageTier)}?preset_id=${theme.presetId}`;
 
   return (
     <>

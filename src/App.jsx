@@ -10,6 +10,8 @@ import Navbar from "./components/Navbar";
 import OrderConfirmationPage from "./components/OrderConfirmationPage";
 import Pricing from "./components/Pricing";
 import { BasicThemePreviewPage } from "./templates/basic";
+import { PremiumThemePreviewPage } from "./templates/premium";
+import { ExclusiveThemePreviewPage } from "./templates/exclusive";
 import InvitationPreviewPage from "./components/InvitationPreviewPage";
 import ThemeDetailPage from "./components/ThemeDetailPage";
 import ThemeGalleryPage from "./components/ThemeGalleryPage";
@@ -102,6 +104,14 @@ function App() {
 
   if (pathname === "/preview-undangan-basic") {
     return <BasicThemePreviewPage />;
+  }
+
+  if (pathname === "/preview-undangan-premium") {
+    return <PremiumThemePreviewPage />;
+  }
+
+  if (pathname === "/preview-undangan-eksklusif" || pathname === "/preview-undangan-exclusive") {
+    return <ExclusiveThemePreviewPage />;
   }
 
   if (pathname.startsWith("/tema/")) {

@@ -28,8 +28,14 @@ export default function ThemeGalleryPage() {
   const handleLoadMore = () => {
     setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, filteredThemes.length));
   };
-  const getPreviewHref = (theme) =>
-    `${theme.packageTier === "BASIC" ? "/preview-undangan-basic" : "/preview-undangan"}?preset_id=${theme.presetId}`;
+  const getPreviewPathByPackageTier = (packageTier) => {
+    if (packageTier === "BASIC") return "/preview-undangan-basic";
+    if (packageTier === "PREMIUM") return "/preview-undangan-premium";
+    if (packageTier === "EKSLUSIF") return "/preview-undangan-eksklusif";
+    return "/preview-undangan";
+  };
+
+  const getPreviewHref = (theme) => `${getPreviewPathByPackageTier(theme.packageTier)}?preset_id=${theme.presetId}`;
 
   return (
     <>
