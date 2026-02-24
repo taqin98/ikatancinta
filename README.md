@@ -296,7 +296,7 @@ https://<username>.github.io/<nama-repo>/
 - Jika halaman blank / asset 404, cek `BASE_PATH` harus sama dengan nama repo.
 - Jika pakai custom domain, sesuaikan `BASE_PATH=/` dan tambahkan file `public/CNAME` bila diperlukan.
 - Jika routing SPA menghasilkan 404 ketika refresh, gunakan fallback `404.html` (salin dari `index.html`) atau ubah strategi routing agar kompatibel dengan static hosting.
-- Jika workflow gagal di step `actions/deploy-pages` dengan error `HttpError: Not Found`, hampir selalu GitHub Pages belum diaktifkan atau source belum diset ke **GitHub Actions** di **Settings → Pages**.
+
 
 ## Troubleshooting
 `npm run dev` gagal jalan:
