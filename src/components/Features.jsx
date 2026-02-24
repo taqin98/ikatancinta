@@ -371,6 +371,20 @@ export default function Features() {
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">Waktu acara sesuai zona tamu.</p>
                 </div>
               </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">chat</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Quotes</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Pilih quote atau ayat dengan leluasa.</p>
+                </div>
+              </div>
+              <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
+                <span className="material-symbols-outlined text-primary text-[20px]">calendar_clock</span>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Jadwal Unlimited</p>
+                  <p className="text-[11px] text-gray-500 dark:text-gray-400">Tambahkan banyak sesi acara sesuai kebutuhan.</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
