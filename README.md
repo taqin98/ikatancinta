@@ -257,36 +257,32 @@ npm run preview
 
 ## Deploy ke GitHub Pages (React + Vite)
 
-Cara termudah di repo ini adalah memakai GitHub Actions (file workflow sudah disiapkan di `.github/workflows/deploy-gh-pages.yml`).
+Saat ini repo ini **tidak** memakai workflow deploy otomatis GitHub Actions.
 
-### 1) Aktifkan GitHub Pages
-1. Buka **Settings → Pages** di repository GitHub.
-2. Pada **Build and deployment**, pilih **Source: GitHub Actions**.
-
-### 2) Pastikan branch default adalah `main`
-Workflow deploy dipicu saat ada push ke branch `main` (atau bisa manual lewat `workflow_dispatch`).
-
-### 3) Build path untuk subfolder GitHub Pages
-Karena URL GitHub Pages project biasanya berbentuk `https://<username>.github.io/<repo>/`, konfigurasi Vite memakai `BASE_PATH`:
-
-- di local/dev: default `/`
-- di GitHub Actions: otomatis di-set ke `/<nama-repo>/`
-
-Contoh build lokal yang menyerupai GitHub Pages:
+### 1) Build untuk path GitHub Pages
+Karena URL GitHub Pages project biasanya berbentuk `https://<username>.github.io/<repo>/`, jalankan build dengan `BASE_PATH` sesuai nama repo:
 
 ```bash
 BASE_PATH=/ikatancinta/ npm run build
 ```
 
-### 4) Push perubahan ke `main`
-Setelah push, workflow akan:
-1. install dependency (`npm ci`)
-2. build aplikasi (`npm run build`)
-3. upload `dist`
-4. deploy ke GitHub Pages
+Output build akan ada di folder `dist/`.
 
-### 5) Akses URL aplikasi
-Setelah job selesai, URL akan tersedia di tab **Actions** dan **Settings → Pages**, biasanya:
+### 2) Publish `dist/` ke branch `gh-pages`
+Contoh paling sederhana (pakai package `gh-pages`):
+
+```bash
+npm install -D gh-pages
+npx gh-pages -d dist
+```
+
+### 3) Aktifkan GitHub Pages dari branch
+1. Buka **Settings → Pages** di repository GitHub.
+2. Pada **Build and deployment**, pilih **Source: Deploy from a branch**.
+3. Pilih branch `gh-pages` dan folder `/(root)`.
+
+### 4) Akses URL aplikasi
+URL biasanya:
 
 ```text
 https://<username>.github.io/<nama-repo>/

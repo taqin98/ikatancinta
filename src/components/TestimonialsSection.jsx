@@ -3,13 +3,13 @@ const testimonials = [
     name: "Nadia & Arif",
     city: "Bandung",
     rating: "5.0",
-    text: "Undangannya cantik banget, proses edit cepat, dan tamu langsung paham info acara. RSVP real-time sangat membantu.",
+    text: "Undangannya cantik banget, proses edit cepat, dan tamu langsung paham info acara. Fitur RSVP-nya simpel dan membantu.",
   },
   {
     name: "Rina & Fajar",
     city: "Yogyakarta",
     rating: "4.9",
-    text: "Tema modernnya elegan. Kami pakai fitur kirim WhatsApp otomatis dan hemat banyak waktu.",
+    text: "Tema modernnya elegan. Kami pakai fitur kirim link WhatsApp dan hemat banyak waktu.",
   },
   {
     name: "Dewi & Bagus",
@@ -27,7 +27,7 @@ const testimonials = [
     name: "Aisyah & Yusuf",
     city: "Makassar",
     rating: "5.0",
-    text: "Kami pilih tema islami dan hasilnya sesuai ekspektasi. Rekap tamu sangat memudahkan koordinasi.",
+    text: "Kami pilih tema islami dan hasilnya sesuai ekspektasi. Proses konfirmasi tamu jadi lebih rapi.",
   },
   {
     name: "Putri & Rizky",

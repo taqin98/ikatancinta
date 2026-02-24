@@ -295,17 +295,17 @@ export default function Features() {
                   <span className="material-symbols-outlined text-primary">
                     check_circle
                   </span>
-                  RSVP Real-time
+                  RSVP Biasa
                 </h4>
                 <p className="text-sm text-slate-300 max-w-sm">
-                  Konfirmasi kehadiran otomatis masuk ke WhatsApp &amp; Dashboard.
+                  Tamu dapat mengisi konfirmasi kehadiran langsung dari undangan.
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="px-2.5 py-1 rounded-full bg-white/10 text-[11px] font-semibold">
                     Tamu Hadir
                   </span>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-200 text-[11px] font-semibold">
-                    Sinkron Otomatis
+                    Konfirmasi Standar
                   </span>
                 </div>
               </div>
