@@ -254,6 +254,50 @@ Preview lokal hasil build:
 npm run preview
 ```
 
+
+## Deploy ke GitHub Pages (React + Vite)
+
+Cara termudah di repo ini adalah memakai GitHub Actions (file workflow sudah disiapkan di `.github/workflows/deploy-gh-pages.yml`).
+
+### 1) Aktifkan GitHub Pages
+1. Buka **Settings → Pages** di repository GitHub.
+2. Pada **Build and deployment**, pilih **Source: GitHub Actions**.
+
+### 2) Pastikan branch default adalah `main`
+Workflow deploy dipicu saat ada push ke branch `main` (atau bisa manual lewat `workflow_dispatch`).
+
+### 3) Build path untuk subfolder GitHub Pages
+Karena URL GitHub Pages project biasanya berbentuk `https://<username>.github.io/<repo>/`, konfigurasi Vite memakai `BASE_PATH`:
+
+- di local/dev: default `/`
+- di GitHub Actions: otomatis di-set ke `/<nama-repo>/`
+
+Contoh build lokal yang menyerupai GitHub Pages:
+
+```bash
+BASE_PATH=/ikatancinta/ npm run build
+```
+
+### 4) Push perubahan ke `main`
+Setelah push, workflow akan:
+1. install dependency (`npm ci`)
+2. build aplikasi (`npm run build`)
+3. upload `dist`
+4. deploy ke GitHub Pages
+
+### 5) Akses URL aplikasi
+Setelah job selesai, URL akan tersedia di tab **Actions** dan **Settings → Pages**, biasanya:
+
+```text
+https://<username>.github.io/<nama-repo>/
+```
+
+### Troubleshooting cepat
+- Jika halaman blank / asset 404, cek `BASE_PATH` harus sama dengan nama repo.
+- Jika pakai custom domain, sesuaikan `BASE_PATH=/` dan tambahkan file `public/CNAME` bila diperlukan.
+- Jika routing SPA menghasilkan 404 ketika refresh, gunakan fallback `404.html` (salin dari `index.html`) atau ubah strategi routing agar kompatibel dengan static hosting.
+- Jika workflow gagal di step `actions/deploy-pages` dengan error `HttpError: Not Found`, hampir selalu GitHub Pages belum diaktifkan atau source belum diset ke **GitHub Actions** di **Settings → Pages**.
+
 ## Troubleshooting
 `npm run dev` gagal jalan:
 - Pastikan dependency sudah terpasang (`npm install`).
