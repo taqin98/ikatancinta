@@ -14,12 +14,16 @@ function withLeadingSlash(value) {
   return value.startsWith("/") ? value : `/${value}`;
 }
 
+function collapseRepeatedSlashes(value) {
+  return value.replace(/\/{2,}/g, "/");
+}
+
 function stripTrailingSlash(value) {
   return value.replace(/\/+$/, "") || "/";
 }
 
 function stripBasePath(pathname) {
-  const clean = stripTrailingSlash(pathname);
+  const clean = stripTrailingSlash(collapseRepeatedSlashes(pathname));
   if (!normalizedBasePath) return clean;
   if (clean === normalizedBasePath) return "/";
   if (clean.startsWith(`${normalizedBasePath}/`)) {
@@ -36,10 +40,11 @@ export function toAppPath(href) {
   const url = new URL(target, window.location.origin);
   if (url.origin !== window.location.origin) return target;
 
-  let path = withLeadingSlash(url.pathname || "/");
+  let path = collapseRepeatedSlashes(withLeadingSlash(url.pathname || "/"));
   if (normalizedBasePath && path !== normalizedBasePath && !path.startsWith(`${normalizedBasePath}/`)) {
     path = path === "/" ? normalizedBasePath : `${normalizedBasePath}${path}`;
   }
+  path = collapseRepeatedSlashes(path);
 
   return `${path}${url.search}${url.hash}`;
 }
