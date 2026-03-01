@@ -1,5 +1,59 @@
 export const themes = [
   {
+    slug: "light-blue-floral",
+    presetId: "lbf-basic-001",
+    name: "Light Blue Floral",
+    category: "Floral",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Elegan pastel biru muda dengan sentuhan ornamen floral ringan.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail:
+      "https://images.unsplash.com/photo-1519741347686-c1e0aadf4611?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=600&q=80",
+    overlayClass: "bg-blue-900/20",
+    cardClass: "bg-blue-50/50 hover:bg-blue-50",
+    templateRoute: "/undangan/light-blue-floral",
+  },
+  {
+    slug: "rose-gold-minimalist",
+    presetId: "rgm-basic-001",
+    name: "Rose Gold Minimalist",
+    category: "Minimalist",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Elegan dan bersih dengan sentuhan Rose Gold hangat dan tipografi serif anggun.",
+    title: "Wedding Invitation",
+    couple: "Habib & Adiba",
+    thumbnail:
+      "https://images.unsplash.com/photo-1543168256-418811576931?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1519741347686-c1e0aadf4611?auto=format&fit=crop&w=600&q=80",
+    overlayClass: "bg-rose-900/10",
+    cardClass: "bg-rose-50/50 hover:bg-rose-50",
+    templateRoute: "/undangan/rose-gold-minimalist",
+  },
+  {
+    slug: "beige-natural",
+    presetId: "bgn-basic-001",
+    name: "Beige Natural",
+    category: "Natural",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Nuansa krem natural dengan floral beige dan tipografi klasik hangat.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail:
+      "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80",
+    image:
+      "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80",
+    overlayClass: "bg-amber-900/10",
+    cardClass: "bg-amber-50/60 hover:bg-amber-50",
+    templateRoute: "/undangan/beige-natural",
+  },
+  {
     slug: "sage-romance",
     presetId: "6970876768272a8c0e70176b",
     name: "Sage Romance",

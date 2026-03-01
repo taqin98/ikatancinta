@@ -28,14 +28,12 @@ export default function ThemeGalleryPage() {
   const handleLoadMore = () => {
     setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, filteredThemes.length));
   };
-  const getPreviewPathByPackageTier = (packageTier) => {
-    if (packageTier === "BASIC") return "/preview-undangan-basic";
-    if (packageTier === "PREMIUM") return "/preview-undangan-premium";
-    if (packageTier === "EKSLUSIF") return "/preview-undangan-eksklusif";
-    return "/preview-undangan";
+  const getPreviewHref = (theme) => {
+    if (theme.templateRoute) return theme.templateRoute;
+    if (theme.packageTier === "PREMIUM") return `/preview-undangan-premium?preset_id=${theme.presetId}`;
+    if (theme.packageTier === "EKSLUSIF") return `/preview-undangan-eksklusif?preset_id=${theme.presetId}`;
+    return null; // No preview available for this theme yet
   };
-
-  const getPreviewHref = (theme) => `${getPreviewPathByPackageTier(theme.packageTier)}?preset_id=${theme.presetId}`;
 
   return (
     <>
@@ -61,11 +59,10 @@ export default function ThemeGalleryPage() {
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
-                  className={`whitespace-nowrap px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold active:scale-95 transition-all ${
-                    activeCategory === category
-                      ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20"
-                      : "bg-white hover:bg-slate-50 text-slate-600 border border-slate-200"
-                  }`}
+                  className={`whitespace-nowrap px-4 sm:px-6 py-2 sm:py-2.5 rounded-full text-xs sm:text-sm font-bold active:scale-95 transition-all ${activeCategory === category
+                    ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20"
+                    : "bg-white hover:bg-slate-50 text-slate-600 border border-slate-200"
+                    }`}
                 >
                   {category}
                 </button>
@@ -126,21 +123,28 @@ export default function ThemeGalleryPage() {
                       <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-1">
                         {theme.name}
                       </h3>
-                      <div className="grid grid-cols-2 gap-2 sm:gap-3 mt-4">
-                        <button
-                          onClick={() => openInNewTab(getPreviewHref(theme))}
-                          className="w-full py-2.5 rounded-xl border border-slate-300 text-slate-600 text-xs sm:text-sm font-bold hover:border-slate-800 hover:text-slate-900 transition-colors flex items-center justify-center gap-1"
-                        >
-                          <span className="material-symbols-outlined text-sm">visibility</span>
-                          Preview
-                        </button>
-                        <button
-                          onClick={() => navigateTo(`/buat-undangan?theme=${theme.slug}&preset_id=${theme.presetId}`)}
-                          className="w-full py-2.5 rounded-xl bg-primary hover:bg-pink-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
-                        >
-                          Pakai Desain Ini
-                        </button>
-                      </div>
+                      {(() => {
+                        const previewHref = getPreviewHref(theme);
+                        return (
+                          <div className={`grid gap-2 sm:gap-3 mt-4 ${previewHref ? "grid-cols-2" : "grid-cols-1"}`}>
+                            {previewHref && (
+                              <button
+                                onClick={() => openInNewTab(previewHref)}
+                                className="w-full py-2.5 rounded-xl border border-slate-300 text-slate-600 text-xs sm:text-sm font-bold hover:border-slate-800 hover:text-slate-900 transition-colors flex items-center justify-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-sm">visibility</span>
+                                Preview
+                              </button>
+                            )}
+                            <button
+                              onClick={() => navigateTo(`/buat-undangan?theme=${theme.slug}&preset_id=${theme.presetId}`)}
+                              className="w-full py-2.5 rounded-xl bg-primary hover:bg-pink-600 text-white text-xs sm:text-sm font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
+                            >
+                              Pakai Desain Ini
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

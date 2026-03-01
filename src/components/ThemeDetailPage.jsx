@@ -34,15 +34,20 @@ export default function ThemeDetailPage() {
   }
 
   const getPreviewPathByPackageTier = (packageTier) => {
-    if (packageTier === "BASIC") return "/preview-undangan-basic";
     if (packageTier === "PREMIUM") return "/preview-undangan-premium";
     if (packageTier === "EKSLUSIF") return "/preview-undangan-eksklusif";
-    return "/preview-undangan";
+    return null;
   };
 
   const invitationsUsingPreset = invitationsByTheme[theme.slug] || [];
   const previewBackground = theme.thumbnail || theme.image;
-  const previewHref = `${getPreviewPathByPackageTier(theme.packageTier)}?preset_id=${theme.presetId}`;
+  // templateRoute is required for new templates; fall back to tier-based path for legacy PREMIUM/EKSLUSIF
+  const legacyPath = getPreviewPathByPackageTier(theme.packageTier);
+  const previewHref = theme.templateRoute
+    ? theme.templateRoute
+    : legacyPath
+      ? `${legacyPath}?preset_id=${theme.presetId}`
+      : null;
 
   return (
     <>
@@ -68,16 +73,18 @@ export default function ThemeDetailPage() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3">
-                  <button
-                    onClick={(event) => {
-                      event.preventDefault();
-                      openInNewTab(previewHref);
-                    }}
-                    className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl border border-slate-300 text-slate-700 text-sm sm:text-base font-bold hover:border-slate-900 hover:text-slate-900 transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-base">visibility</span>
-                    Preview
-                  </button>
+                  {previewHref && (
+                    <button
+                      onClick={(event) => {
+                        event.preventDefault();
+                        openInNewTab(previewHref);
+                      }}
+                      className="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 rounded-xl border border-slate-300 text-slate-700 text-sm sm:text-base font-bold hover:border-slate-900 hover:text-slate-900 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-base">visibility</span>
+                      Preview
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => navigateTo(`/buat-undangan?theme=${theme.slug}&preset_id=${theme.presetId}`)}

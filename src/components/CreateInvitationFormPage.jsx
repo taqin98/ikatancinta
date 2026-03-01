@@ -3,6 +3,8 @@ import { navigateTo } from "../utils/navigation";
 import { getThemeByPresetId, getThemeBySlug, themes } from "../data/themes";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { submitOrder } from "../services/orderApi";
+import { saveInvitationDraft, mapFormToInvitationSchema } from "../services/invitationDataBridge";
+import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
 const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "" };
@@ -29,11 +31,10 @@ function StepItem({ index, label, currentStep }) {
   return (
     <div className="flex flex-col items-center gap-1.5 z-10 relative min-w-0">
       <div
-        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold border-2 transition-all ${
-          isActive || isDone
-            ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
-            : "bg-white border-slate-200 dark:border-slate-600 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
-        }`}
+        className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold border-2 transition-all ${isActive || isDone
+          ? "bg-primary text-white border-primary shadow-lg shadow-primary/30"
+          : "bg-white border-slate-200 dark:border-slate-600 dark:bg-slate-800 text-slate-400 dark:text-slate-500"
+          }`}
       >
         {isDone ? <span className="material-symbols-outlined text-[15px]">check</span> : index}
       </div>
@@ -197,11 +198,10 @@ function StepOneMempelai({
                     setIsThemePickerOpen(false);
                     setThemeQuery("");
                   }}
-                  className={`text-left rounded-xl border p-2 transition-colors ${
-                    selectedTheme?.slug === theme.slug
-                      ? "border-primary bg-white shadow-sm ring-2 ring-primary/30"
-                      : "border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800 hover:border-primary/60"
-                  }`}
+                  className={`text-left rounded-xl border p-2 transition-colors ${selectedTheme?.slug === theme.slug
+                    ? "border-primary bg-white shadow-sm ring-2 ring-primary/30"
+                    : "border-slate-200 dark:border-slate-600 bg-white/80 dark:bg-slate-800 hover:border-primary/60"
+                    }`}
                 >
                   <div className="relative w-full aspect-[4/6] rounded-lg overflow-hidden bg-slate-200 mb-2">
                     <img src={theme.thumbnail || theme.image} alt={`Thumbnail ${theme.name}`} className="w-full h-full object-cover" />
@@ -625,11 +625,10 @@ function StepThreeFoto({
               <div className="flex gap-4">
                 <div className="flex-shrink-0 mt-1 z-10">
                   <div
-                    className={`w-8 h-8 rounded-full bg-surface-light dark:bg-surface-dark border-2 flex items-center justify-center shadow-sm ${
-                      index === 0
-                        ? "border-primary text-primary"
-                        : "border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
-                    }`}
+                    className={`w-8 h-8 rounded-full bg-surface-light dark:bg-surface-dark border-2 flex items-center justify-center shadow-sm ${index === 0
+                      ? "border-primary text-primary"
+                      : "border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
+                      }`}
                   >
                     <span className="material-symbols-outlined text-sm">{index === 0 ? "favorite" : "handshake"}</span>
                   </div>
@@ -891,6 +890,7 @@ export default function CreateInvitationFormPage() {
   const [formAlert, setFormAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitFailed, setHasSubmitFailed] = useState(false);
+  const [confirmDialog, setConfirmDialog] = useState(null); // { message, onConfirm }
   const coverInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const contentRef = useRef(null);
@@ -1020,8 +1020,16 @@ export default function CreateInvitationFormPage() {
   };
 
   const confirmExitIfDirty = () => {
-    if (!isFormDirty || isSubmitting) return true;
-    return window.confirm("Data form belum disubmit. Yakin ingin keluar dari halaman buat undangan?");
+    if (!isFormDirty || isSubmitting) return Promise.resolve(true);
+    return new Promise((resolve) => {
+      setConfirmDialog({
+        message: "Data form belum disubmit. Yakin ingin keluar dari halaman buat undangan?",
+        onConfirm: (confirmed) => {
+          setConfirmDialog(null);
+          resolve(confirmed);
+        },
+      });
+    });
   };
 
   const tips = useMemo(() => {
@@ -1155,8 +1163,7 @@ export default function CreateInvitationFormPage() {
   const handleBack = () => {
     if (isSubmitting) return;
     if (currentStep === 1) {
-      if (!confirmExitIfDirty()) return;
-      navigateTo("/");
+      confirmExitIfDirty().then((ok) => { if (ok) navigateTo("/"); });
       return;
     }
     setCurrentStep((prev) => prev - 1);
@@ -1168,6 +1175,27 @@ export default function CreateInvitationFormPage() {
       showAlert("success", "Nomor pembayaran berhasil disalin.");
     } catch {
       showAlert("error", "Gagal menyalin. Silakan salin manual.");
+    }
+  };
+
+  const handlePreviewUndangan = () => {
+    const route = selectedTheme?.templateRoute;
+    if (!route) {
+      showAlert("info", "Tema ini belum memiliki preview langsung. Hubungi admin untuk demo.");
+      return;
+    }
+    try {
+      const defaultSchema = getDefaultSchemaBySlug(selectedTheme?.slug);
+      const schemaData = mapFormToInvitationSchema({
+        groom, bride, akad, resepsi, isReceptionEnabled,
+        coverImage, galleryImages, stories,
+        defaultSchema,
+      });
+      saveInvitationDraft(schemaData);
+      window.open(`${route}?preview=1`, "_blank", "noopener");
+    } catch (err) {
+      console.error("handlePreviewUndangan failed", err);
+      showAlert("error", "Gagal memuat preview. Coba lagi.");
     }
   };
 
@@ -1287,14 +1315,14 @@ export default function CreateInvitationFormPage() {
         stories,
         music: musicMode === "list"
           ? {
-              mode: "list",
-              trackId: selectedMusicTrack.id,
-              trackLabel: selectedMusicTrack.label,
-            }
+            mode: "list",
+            trackId: selectedMusicTrack.id,
+            trackLabel: selectedMusicTrack.label,
+          }
           : {
-              mode: "upload",
-              file: uploadedMusicFile,
-            },
+            mode: "upload",
+            file: uploadedMusicFile,
+          },
         selectedTheme: {
           name: selectedTheme?.name || "",
           slug: selectedTheme?.slug || "",
@@ -1359,13 +1387,12 @@ export default function CreateInvitationFormPage() {
           <section ref={contentRef} className="flex-1 overflow-y-auto px-4 sm:px-5 pb-24 pt-6">
             {formAlert && (
               <div
-                className={`mb-4 rounded-xl border px-4 py-3 flex items-start justify-between gap-3 ${
-                  formAlert.type === "success"
-                    ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-                    : formAlert.type === "info"
+                className={`mb-4 rounded-xl border px-4 py-3 flex items-start justify-between gap-3 ${formAlert.type === "success"
+                  ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+                  : formAlert.type === "info"
                     ? "bg-sky-50 border-sky-200 text-sky-800"
                     : "bg-rose-50 border-rose-200 text-rose-800"
-                }`}
+                  }`}
                 role="alert"
               >
                 <div className="flex items-start gap-2">
@@ -1396,8 +1423,7 @@ export default function CreateInvitationFormPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (!confirmExitIfDirty()) return;
-                    navigateTo("/tema");
+                    confirmExitIfDirty().then((ok) => { if (ok) navigateTo("/tema"); });
                   }}
                   className="text-xs font-bold px-3 py-2 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 hover:border-primary hover:text-primary transition-colors"
                 >
@@ -1479,6 +1505,17 @@ export default function CreateInvitationFormPage() {
           </section>
 
           <footer className="sticky bottom-0 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur border-t border-slate-100 dark:border-slate-800 p-4 pb-5 sm:pb-6 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            {/* Preview undangan: visible on Step 3 & 4 when theme has a template route */}
+            {(currentStep === 3 || currentStep === 4) && selectedTheme?.templateRoute && (
+              <button
+                type="button"
+                onClick={handlePreviewUndangan}
+                className="w-full mb-3 flex items-center justify-center gap-2 rounded-full border border-primary/40 text-primary font-semibold py-2.5 text-sm hover:bg-primary/5 transition-colors"
+              >
+                <span className="material-symbols-outlined text-base">preview</span>
+                Preview Undangan Langsung
+              </button>
+            )}
             <div className="flex gap-3 sm:gap-4">
               {currentStep > 1 && (
                 <button
@@ -1536,6 +1573,51 @@ export default function CreateInvitationFormPage() {
 
       <input ref={coverInputRef} type="file" accept="image/*" className="hidden" onChange={handleUploadCover} />
       <input ref={galleryInputRef} type="file" accept="image/*" className="hidden" multiple onChange={handleUploadGallery} />
+
+      {/* ── Confirmation Dialog (replaces window.confirm) ─────── */}
+      {confirmDialog && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+          onClick={() => confirmDialog.onConfirm(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-6"
+            style={{ animation: "dialogSlideUp 0.22s ease-out" }}
+          >
+            <div className="flex items-start gap-3 mb-5">
+              <span className="material-symbols-outlined text-amber-500 text-2xl mt-0.5">warning</span>
+              <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                {confirmDialog.message}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => confirmDialog.onConfirm(false)}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmDialog.onConfirm(true)}
+                className="flex-1 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-600 text-white text-sm font-bold transition-colors shadow-lg shadow-rose-500/25"
+              >
+                Ya, Keluar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes dialogSlideUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </main>
   );
 }
