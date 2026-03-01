@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { getThemeByPresetId } from "../data/themes";
+import { toAppPath } from "../utils/navigation";
 
 function getPresetIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -12,7 +13,9 @@ export default function InvitationPreviewPage() {
   const [isOpened, setIsOpened] = useState(false);
 
   const mapLink = "https://maps.app.goo.gl/5Qh9MvaS7wq4QnBCA";
-  const orderLink = theme ? `/buat-undangan?theme=${theme.slug}&preset_id=${theme.presetId}` : "/buat-undangan";
+  const orderLink = theme
+    ? toAppPath(`/buat-undangan?theme=${theme.slug}&preset_id=${theme.presetId}`)
+    : toAppPath("/buat-undangan");
 
   const [groomName, brideName] = useMemo(() => {
     const parts = (theme?.couple || "Rizky & Sarah")
@@ -41,7 +44,7 @@ export default function InvitationPreviewPage() {
           <h1 className="font-serif text-3xl font-bold mb-2">Preview tidak ditemukan</h1>
           <p className="text-sm text-[#8f7a57] mb-6">Preset tidak valid atau sudah tidak tersedia.</p>
           <a
-            href="/tema"
+            href={toAppPath("/tema")}
             className="inline-flex items-center justify-center gap-2 rounded-full bg-[#8e742f] text-white px-5 py-3 text-sm font-bold"
           >
             Kembali ke Galeri
@@ -55,7 +58,7 @@ export default function InvitationPreviewPage() {
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#f9f2e7_0%,#f3ebdf_45%,#f6f1e8_100%)] px-3 py-5 sm:px-5 sm:py-8">
       <div className="mx-auto w-full max-w-[430px]">
         <header className="mb-4 flex items-center justify-between rounded-2xl border border-[#e7dccd] bg-white/80 backdrop-blur px-3 py-2">
-          <a href="/tema" className="inline-flex items-center gap-1 text-xs font-bold text-[#7c6533]">
+          <a href={toAppPath("/tema")} className="inline-flex items-center gap-1 text-xs font-bold text-[#7c6533]">
             <span className="material-symbols-outlined text-sm">arrow_back</span>
             Kembali
           </a>

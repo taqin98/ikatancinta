@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { navigateTo } from "../utils/navigation";
+import { navigateTo, toAppPath } from "../utils/navigation";
 import { getThemeByPresetId, getThemeBySlug, themes } from "../data/themes";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { submitOrder } from "../services/orderApi";
 import { saveInvitationDraft, mapFormToInvitationSchema } from "../services/invitationDataBridge";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 
+const APP_BASE_URL = import.meta.env.BASE_URL || "/";
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
 const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "" };
 const INITIAL_BRIDE = { fullname: "", nickname: "", parents: "", instagram: "" };
@@ -20,8 +21,8 @@ const INITIAL_STORIES = [
   { id: 2, title: "Menjalin Asmara", description: "Setelah berteman lama, kami memutuskan melangkah lebih serius.", date: "2021" },
 ];
 const MUSIC_TRACKS = [
-  { id: "andmesh-cinta-luar-biasa", label: "Andmesh - Cinta Luar Biasa", previewUrl: "/audio/andmesh-cinta-luar-biasa.mp3" },
-  { id: "novo-amor-anchor", label: "Novo Amor - Anchor", previewUrl: "/audio/novo-amor.mp3" },
+  { id: "andmesh-cinta-luar-biasa", label: "Andmesh - Cinta Luar Biasa", previewUrl: `${APP_BASE_URL}audio/andmesh-cinta-luar-biasa.mp3` },
+  { id: "novo-amor-anchor", label: "Novo Amor - Anchor", previewUrl: `${APP_BASE_URL}audio/novo-amor.mp3` },
 ];
 
 function StepItem({ index, label, currentStep }) {
@@ -1192,7 +1193,7 @@ export default function CreateInvitationFormPage() {
         defaultSchema,
       });
       saveInvitationDraft(schemaData);
-      window.open(`${route}?preview=1`, "_blank", "noopener");
+      window.open(toAppPath(`${route}?preview=1`), "_blank", "noopener");
     } catch (err) {
       console.error("handlePreviewUndangan failed", err);
       showAlert("error", "Gagal memuat preview. Coba lagi.");

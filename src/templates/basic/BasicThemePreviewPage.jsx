@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { getThemeByPresetId } from "../../data/themes";
+import { toAppPath } from "../../utils/navigation";
 
 function getPresetIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -25,7 +26,7 @@ export default function BasicThemePreviewPage() {
           <h1 className="font-serif text-3xl font-bold text-[#6b6e2e] mb-2">Preview tidak ditemukan</h1>
           <p className="text-sm text-slate-600 mb-5">Preset tidak valid atau sudah tidak tersedia.</p>
           <a
-            href="/tema"
+            href={toAppPath("/tema")}
             className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-bold text-white bg-[#6b6e2e]"
           >
             Kembali ke Galeri

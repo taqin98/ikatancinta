@@ -1,4 +1,4 @@
-import { navigateTo } from "../utils/navigation";
+import { navigateTo, toAppPath } from "../utils/navigation";
 import { useState } from "react";
 
 export default function Navbar() {
@@ -18,7 +18,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20 gap-2">
           <a
-            href="/"
+            href={toAppPath("/")}
             onClick={(event) => handleInternalNav(event, "/")}
             className="flex-shrink-0 flex items-center gap-1.5 min-w-0"
           >
@@ -33,28 +33,28 @@ export default function Navbar() {
           <div className="hidden md:flex items-center gap-8">
             <a
               className="text-sm font-semibold hover:text-primary transition-colors"
-              href="/#fitur"
+              href={toAppPath("/#fitur")}
               onClick={(event) => handleInternalNav(event, "/#fitur")}
             >
               Fitur
             </a>
             <a
               className="text-sm font-semibold hover:text-primary transition-colors"
-              href="/tema"
+              href={toAppPath("/tema")}
               onClick={(event) => handleInternalNav(event, "/tema")}
             >
               Tema
             </a>
             <a
               className="text-sm font-semibold hover:text-primary transition-colors"
-              href="/#harga"
+              href={toAppPath("/#harga")}
               onClick={(event) => handleInternalNav(event, "/#harga")}
             >
               Harga
             </a>
             <a
               className="text-sm font-semibold hover:text-primary transition-colors"
-              href="/#testimoni"
+              href={toAppPath("/#testimoni")}
               onClick={(event) => handleInternalNav(event, "/#testimoni")}
             >
               Testimoni
@@ -96,28 +96,28 @@ export default function Navbar() {
             <div className="rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur border border-slate-100 dark:border-slate-700 p-3">
               <a
                 className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                href="/#fitur"
+                href={toAppPath("/#fitur")}
                 onClick={(event) => handleInternalNav(event, "/#fitur")}
               >
                 Fitur
               </a>
               <a
                 className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                href="/tema"
+                href={toAppPath("/tema")}
                 onClick={(event) => handleInternalNav(event, "/tema")}
               >
                 Tema
               </a>
               <a
                 className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                href="/#harga"
+                href={toAppPath("/#harga")}
                 onClick={(event) => handleInternalNav(event, "/#harga")}
               >
                 Harga
               </a>
               <a
                 className="block px-3 py-2 rounded-lg text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"
-                href="/#testimoni"
+                href={toAppPath("/#testimoni")}
                 onClick={(event) => handleInternalNav(event, "/#testimoni")}
               >
                 Testimoni

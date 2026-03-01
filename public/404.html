@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var loc = window.location;
+        var segments = loc.pathname.split("/").filter(Boolean);
+        var repo = segments.length > 0 ? segments[0] : "";
+        var base = repo ? "/" + repo : "";
+        var route = segments.slice(1).join("/");
+
+        var redirect = base + "/";
+        if (route) {
+          redirect += "?/" + route.replace(/&/g, "~and~");
+        }
+
+        if (loc.search && loc.search.length > 1) {
+          redirect += (route ? "&" : "?") + loc.search.slice(1).replace(/&/g, "~and~");
+        }
+
+        if (loc.hash) {
+          redirect += loc.hash;
+        }
+
+        loc.replace(redirect);
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>

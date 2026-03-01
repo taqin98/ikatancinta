@@ -1,3 +1,5 @@
+import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
+
 export const themes = [
   {
     slug: "light-blue-floral",
@@ -52,6 +54,22 @@ export const themes = [
     overlayClass: "bg-amber-900/10",
     cardClass: "bg-amber-50/60 hover:bg-amber-50",
     templateRoute: "/undangan/beige-natural",
+  },
+  {
+    slug: "blue-nature",
+    presetId: "bun-basic-001",
+    name: "Blue Nature",
+    category: "Natural",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Nuansa biru natural dengan sentuhan gold dan tekstur floral yang hangat.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: blueNatureThumbnail,
+    image: blueNatureThumbnail,
+    overlayClass: "bg-slate-900/20",
+    cardClass: "bg-slate-100/70 hover:bg-slate-100",
+    templateRoute: "/undangan/blue-nature",
   },
   {
     slug: "sage-romance",

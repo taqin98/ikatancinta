@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { getThemeByPresetId } from "../../data/themes";
+import { toAppPath } from "../../utils/navigation";
 
 function getPresetIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -35,7 +36,7 @@ export default function PremiumThemePreviewPage() {
         <div className="mx-auto max-w-md rounded-3xl border border-[#e7ddd1] bg-white p-7 text-center">
           <h1 className="font-serif text-3xl text-[#5f4c2e] font-bold mb-2">Preview tidak ditemukan</h1>
           <p className="text-sm text-[#8d7a5d] mb-5">Preset tidak valid atau sudah tidak tersedia.</p>
-          <a href="/tema" className="inline-flex rounded-full bg-[#7b6338] text-white px-5 py-2.5 text-sm font-bold">
+          <a href={toAppPath("/tema")} className="inline-flex rounded-full bg-[#7b6338] text-white px-5 py-2.5 text-sm font-bold">
             Kembali ke Galeri
           </a>
         </div>

@@ -1,4 +1,4 @@
-import { navigateTo } from "../utils/navigation";
+import { navigateTo, toAppPath } from "../utils/navigation";
 import { themes } from "../data/themes";
 
 export default function ThemeShowcase() {
@@ -56,7 +56,7 @@ export default function ThemeShowcase() {
 
         <div className="mt-10 text-center">
           <a
-            href="/tema"
+            href={toAppPath("/tema")}
             onClick={handleSeeMore}
             className="inline-flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-bold text-sm px-6 py-3 rounded-full hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
           >

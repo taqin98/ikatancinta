@@ -9,7 +9,7 @@ import Marquee from "./components/Marquee";
 import Navbar from "./components/Navbar";
 import OrderConfirmationPage from "./components/OrderConfirmationPage";
 import Pricing from "./components/Pricing";
-import { BeigeNaturalTemplate, LightBlueFloralTemplate, RoseGoldMinimalistTemplate } from "./templates/basic";
+import { BeigeNaturalTemplate, BlueNatureTemplate, LightBlueFloralTemplate, RoseGoldMinimalistTemplate } from "./templates/basic";
 import { PremiumThemePreviewPage } from "./templates/premium";
 import { ExclusiveThemePreviewPage } from "./templates/exclusive";
 import InvitationPreviewPage from "./components/InvitationPreviewPage";
@@ -113,6 +113,10 @@ function App() {
 
   if (pathname === "/undangan/beige-natural") {
     return <BeigeNaturalTemplate />;
+  }
+
+  if (pathname === "/undangan/blue-nature") {
+    return <BlueNatureTemplate />;
   }
 
   if (pathname === "/preview-undangan-premium") {

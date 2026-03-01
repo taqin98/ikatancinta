@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+const APP_BASE_URL = import.meta.env.BASE_URL || "/";
+
 const galleryImages = [
   "https://lh3.googleusercontent.com/aida-public/AB6AXuCq5o2G6c8U43H69KadZyZ3qDZfA_DbIMYqgrAOMjuJ31b75f0jLCnjgpapNc7YhJeIDoX-k9fQkjKTAKuhXVBI7Y0OpRnTwbvQ7DGjjOXouZFftquGyOPii1WxRpIpNhBCO72RiNUb0VGwgxWM0Ek7tqeDgSGn56I1K1LmKcPclP28cHMhU7hnwf17pzNk_ukLSh2f1lKS9omJc8_8RGfM83DTYerzk-zpMTi54F4fSUcJgEqrVmca9d_AMRULHi6MKBB6CGlz9U8I",
   "https://lh3.googleusercontent.com/aida-public/AB6AXuASbD0QZ2ogbKpWPyM1c6TDRemfrnh7bAQIy01S802LUJVhV_1uVFu7DIkGUBH8ugmeNoQhQ6xCgaeO-ZATPBqSsdfh6MOyR0bLIPSlcIVSgSuAdVlFHD-7LBND6kgxareEjZ7kQnuSfwOIw67IEY8FeKpMyS8g4_T_KtI6_QT96cesO9_IO7pSu6f7vSxTUhpC95todPoUN9qKaBDB7lYiC4EHTcaR8U_f5zAEsH5m7cFomLQ0YE56UbklF0mlx89pnBfMA5sqwAZC",
@@ -7,7 +9,7 @@ const galleryImages = [
 ];
 
 const albumArt = "https://i.scdn.co/image/ab67616d0000b273277620423172f5a151f452e3";
-const musicBackgroundVideo = "/videos/novo-amor-anchor.mp4";
+const musicBackgroundVideo = `${APP_BASE_URL}videos/novo-amor-anchor.mp4`;
 
 export default function Features() {
   const audioRef = useRef(null);
@@ -168,7 +170,7 @@ export default function Features() {
               </p>
               <div className="mt-auto bg-white dark:bg-slate-700 p-4 rounded-3xl shadow-lg">
                 <audio ref={audioRef} preload="metadata">
-                  <source src="/audio/andmesh-cinta-luar-biasa.mp3" type="audio/mpeg" />
+                  <source src={`${APP_BASE_URL}audio/andmesh-cinta-luar-biasa.mp3`} type="audio/mpeg" />
                 </audio>
                 <div className="flex items-center gap-3 mb-3">
                   <div
