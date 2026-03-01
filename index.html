@@ -23,7 +23,9 @@
           return segment.replace(/~and~/g, "&");
         })
         .join("?");
-      window.history.replaceState(null, "", location.pathname + decoded + location.hash);
+      const basePath = location.pathname.replace(/\/+$/, "");
+      const nextPath = `${basePath}${decoded.startsWith("/") ? decoded : `/${decoded}`}`.replace(/\/{2,}/g, "/");
+      window.history.replaceState(null, "", nextPath + location.hash);
     })(window.location);
   </script>
   <script type="module" src="/src/main.jsx"></script>
