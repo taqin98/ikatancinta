@@ -124,7 +124,12 @@ export default function BeigeNaturalTemplate() {
 
     useEffect(() => {
         if (!opened) return;
-        const ids = ["hero", "acara", "galeri", "lovestory", "rsvp"];
+        const ids = ["hero", "acara", "galeri", "lovestory"];
+        if (features?.rsvpEnabled) {
+            ids.push("rsvp");
+        } else if (features?.digitalEnvelopeEnabled) {
+            ids.push("gift");
+        }
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -142,7 +147,7 @@ export default function BeigeNaturalTemplate() {
         });
 
         return () => observer.disconnect();
-    }, [opened, features?.rsvpEnabled]);
+    }, [opened, features?.rsvpEnabled, features?.digitalEnvelopeEnabled]);
 
     if (loading || !data) {
         return (
@@ -520,7 +525,7 @@ export default function BeigeNaturalTemplate() {
                                     ? navItem("rsvp", "edit_note", "RSVP")
                                     : features.digitalEnvelopeEnabled
                                         ? navItem("gift", "redeem", "Gift")
-                                        : navItem("hero", "favorite", "Home")}
+                                        : null}
                             </div>
                         </nav>
 

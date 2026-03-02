@@ -120,6 +120,10 @@
   content: "\f51f";
 }
 
+.bn-fa-play-circle::before {
+  content: "\f144";
+}
+
 .bn-fa-pause-circle::before {
   content: "\f28b";
 }
@@ -402,7 +406,7 @@
 
 .bn-quote__initials {
   font-family: "edensor", serif;
-  font-size: 62px;
+  font-size: clamp(42px, 12vw, 62px);
 }
 
 .bn-quote__text {
@@ -457,7 +461,7 @@
 .bn-profile__name {
   margin-top: 8px;
   font-family: "analogue", serif;
-  font-size: 36px;
+  font-size: clamp(30px, 8.6vw, 36px);
   line-height: 1.05;
   color: var(--bn-primary);
 }
@@ -495,7 +499,7 @@
 
 .bn-countdown__title {
   font-family: "strawberrycupcakes", cursive;
-  font-size: 38px;
+  font-size: clamp(30px, 9vw, 38px);
   color: var(--bn-gold-dark);
 }
 
@@ -553,7 +557,7 @@
 }
 
 .bn-event-card__title {
-  font-size: 35px;
+  font-size: clamp(29px, 8.5vw, 35px);
 }
 
 .bn-event-card__date {
@@ -625,7 +629,7 @@
 }
 
 .bn-live__title {
-  font-size: 35px;
+  font-size: clamp(29px, 8.5vw, 35px);
 }
 
 .bn-live__text {
@@ -658,7 +662,7 @@
 
 .bn-gallery__title {
   text-align: center;
-  font-size: 35px;
+  font-size: clamp(29px, 8.5vw, 35px);
 }
 
 .bn-gallery__grid {
@@ -711,7 +715,7 @@
 .bn-love-hero__heading {
   font-family: "Cinzel", serif;
   text-transform: uppercase;
-  font-size: 36px;
+  font-size: clamp(30px, 9vw, 36px);
   color: var(--bn-gold);
   text-shadow: 2px 2px 1px #fff;
   letter-spacing: 0.04em;
@@ -720,7 +724,7 @@
 .bn-love-hero__sub {
   margin-top: -38px;
   font-family: "laluxesscript-regula", cursive;
-  font-size: 44px;
+  font-size: clamp(34px, 10vw, 44px);
   color: #1b1b1b;
 }
 
@@ -807,7 +811,7 @@
 }
 
 .bn-gift__title {
-  font-size: 33px;
+  font-size: clamp(28px, 8.2vw, 33px);
 }
 
 .bn-gift__desc {
@@ -941,7 +945,7 @@
 
 .bn-wishes__title {
   text-align: center;
-  font-size: 33px;
+  font-size: clamp(28px, 8.2vw, 33px);
 }
 
 .bn-wishes__desc {
@@ -1078,7 +1082,7 @@
   position: relative;
   z-index: 1;
   font-family: "laluxesscript-regula", cursive;
-  font-size: 40px;
+  font-size: clamp(32px, 9.5vw, 40px);
   color: #d8af6f;
 }
 
@@ -1114,7 +1118,7 @@
 .bn-closing__names {
   margin-top: 12px;
   font-family: "analogue", serif;
-  font-size: 35px;
+  font-size: clamp(30px, 8.8vw, 35px);
   color: var(--bn-primary-dark);
 }
 

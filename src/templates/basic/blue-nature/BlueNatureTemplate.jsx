@@ -225,7 +225,13 @@ export default function BlueNatureTemplate() {
 
     useEffect(() => {
         if (!opened) return;
-        const sectionIds = ["hero", "events", "gallery", "rsvp", "closing"];
+        const sectionIds = ["hero", "events", "gallery"];
+        if (features?.rsvpEnabled) {
+            sectionIds.push("rsvp");
+        } else if (features?.digitalEnvelopeEnabled) {
+            sectionIds.push("gift");
+        }
+        sectionIds.push("closing");
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
@@ -243,7 +249,7 @@ export default function BlueNatureTemplate() {
         });
 
         return () => observer.disconnect();
-    }, [opened]);
+    }, [opened, features?.rsvpEnabled, features?.digitalEnvelopeEnabled]);
 
     useEffect(() => {
         const handleVisibility = () => {
@@ -744,7 +750,11 @@ export default function BlueNatureTemplate() {
                                 ["hero", "home", "Home"],
                                 ["events", "event", "Acara"],
                                 ["gallery", "photo_library", "Galeri"],
-                                ["rsvp", "chat", "Wishes"],
+                                ...(features.rsvpEnabled
+                                    ? [["rsvp", "chat", "Wishes"]]
+                                    : features.digitalEnvelopeEnabled
+                                        ? [["gift", "redeem", "Gift"]]
+                                        : []),
                                 ["closing", "favorite", "Akhir"],
                             ].map(([id, icon, label]) => navItem(id, icon, label))}
                         </nav>
@@ -756,7 +766,7 @@ export default function BlueNatureTemplate() {
                                 onClick={toggleAudio}
                                 aria-label={audioPlaying ? "Pause musik" : "Play musik"}
                             >
-                                <i className={audioPlaying ? "bn-fas bn-fa-compact-disc" : "bn-fas bn-fa-pause-circle"} />
+                                <i className={audioPlaying ? "bn-fas bn-fa-compact-disc" : "bn-fas bn-fa-play-circle"} />
                             </button>
                             <audio ref={audioRef} loop preload="auto">
                                 <source src={BackgroundMusic} type="audio/mp3" />

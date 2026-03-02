@@ -128,6 +128,8 @@ export default function RoseGoldMinimalistTemplate() {
     const [copied, setCopied] = useState(null);
 
     const { guest, couple, event, copy, lovestory, gallery, features } = data || {};
+    const bankList = features?.digitalEnvelopeInfo?.bankList || [];
+    const showGiftNav = Boolean(!features?.rsvpEnabled && features?.digitalEnvelopeEnabled);
 
     useEffect(() => {
         AOS.init({ duration: tokens.aos.duration, offset: tokens.aos.offset, easing: tokens.aos.easing, once: tokens.aos.once });
@@ -135,14 +137,19 @@ export default function RoseGoldMinimalistTemplate() {
     useEffect(() => { if (opened) setTimeout(() => AOS.refresh(), 400); }, [opened]);
     useEffect(() => {
         if (!opened) return;
-        const ids = ["hero", "mempelai", "acara", "galeri", "lovestory", "rsvp"];
+        const ids = ["hero", "mempelai", "acara", "galeri", "lovestory"];
+        if (features?.rsvpEnabled) {
+            ids.push("rsvp");
+        } else if (showGiftNav) {
+            ids.push("gift");
+        }
         const observer = new IntersectionObserver(
             (entries) => entries.forEach((e) => { if (e.isIntersecting) setActiveNav(e.target.id.replace("section-", "")); }),
             { threshold: 0.3 }
         );
         ids.forEach((id) => { const el = document.getElementById(`section-${id}`); if (el) observer.observe(el); });
         return () => observer.disconnect();
-    }, [opened]);
+    }, [opened, features?.rsvpEnabled, showGiftNav]);
 
     if (loading || !data) {
         return (
@@ -249,9 +256,6 @@ export default function RoseGoldMinimalistTemplate() {
     // ── MAIN CONTENT ─────────────────────────────────────────
     return (
         <div style={{ minHeight: "100dvh", background: tokens.colors.pageBg, fontFamily: tokens.fonts.sans }}>
-            <link rel="preconnect" href="https://fonts.googleapis.com" />
-            <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Lato:wght@300;400;700&family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" />
-
             <div className="relative mx-auto overflow-hidden" style={{ maxWidth: "430px", minHeight: "100dvh", background: tokens.colors.pageBg, boxShadow: "0 0 60px rgba(92,61,46,0.1)" }}>
 
                 {/* SECTION 1 — HERO */}
@@ -422,7 +426,7 @@ export default function RoseGoldMinimalistTemplate() {
 
                 {/* SECTION 7 — GIFT (if enabled) */}
                 {features.digitalEnvelopeEnabled && (
-                    <section style={secWhite}>
+                    <section id="section-gift" style={secWhite}>
                         <div data-aos="fade-up" style={{ textAlign: "center" }}>
                             <p style={{ fontFamily: tokens.fonts.script, fontSize: "1.6rem", color: tokens.colors.headingText, fontWeight: 400 }}>Amplop Digital</p>
                             <GeoDivider />
@@ -436,18 +440,33 @@ export default function RoseGoldMinimalistTemplate() {
                                 <div onClick={(e) => e.stopPropagation()} style={{ width: "100%", maxWidth: "430px", margin: "0 auto", background: "#FFF", borderRadius: "24px 24px 0 0", padding: "28px 24px 40px" }}>
                                     <div className="w-10 h-1 rounded-full bg-slate-200 mx-auto mb-6" />
                                     <p style={{ fontFamily: tokens.fonts.script, fontSize: "1.4rem", color: tokens.colors.headingText, textAlign: "center", marginBottom: "16px" }}>Rekening Gift</p>
-                                    {features.digitalEnvelopeInfo.bankList.map((bank, i) => (
-                                        <div key={i} style={{ background: tokens.colors.sectionAlt, borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
-                                            <p style={{ fontFamily: tokens.fonts.sans, fontSize: "0.7rem", color: tokens.colors.mutedText, marginBottom: "4px" }}>{bank.bank}</p>
-                                            <p style={{ fontFamily: tokens.fonts.sans, fontSize: "1rem", color: tokens.colors.headingText, fontWeight: 700, letterSpacing: "0.06em", marginBottom: "2px" }}>{bank.number}</p>
-                                            <p style={{ fontFamily: tokens.fonts.sans, fontSize: "0.8rem", color: tokens.colors.bodyText }}>{bank.name}</p>
-                                            <button onClick={() => { navigator.clipboard.writeText(bank.number); setCopied(i); setTimeout(() => setCopied(null), 2000); }}
-                                                style={{ marginTop: "8px", display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: tokens.fonts.sans, fontSize: "0.72rem", color: tokens.colors.accent, background: "transparent", border: `1px solid ${tokens.colors.cardBorder}`, borderRadius: "999px", padding: "4px 12px", cursor: "pointer" }}>
-                                                <span className="material-symbols-outlined text-xs">{copied === i ? "check" : "content_copy"}</span>
-                                                {copied === i ? "Disalin!" : "Salin"}
-                                            </button>
-                                        </div>
-                                    ))}
+                                    {bankList.map((bank, i) => {
+                                        const account = bank.account || bank.number || "";
+                                        return (
+                                            <div key={i} style={{ background: tokens.colors.sectionAlt, borderRadius: "12px", padding: "16px", marginBottom: "12px" }}>
+                                                <p style={{ fontFamily: tokens.fonts.sans, fontSize: "0.7rem", color: tokens.colors.mutedText, marginBottom: "4px" }}>{bank.bank}</p>
+                                                <p style={{ fontFamily: tokens.fonts.sans, fontSize: "1rem", color: tokens.colors.headingText, fontWeight: 700, letterSpacing: "0.06em", marginBottom: "2px" }}>{account || "-"}</p>
+                                                <p style={{ fontFamily: tokens.fonts.sans, fontSize: "0.8rem", color: tokens.colors.bodyText }}>{bank.name}</p>
+                                                <button
+                                                    onClick={async () => {
+                                                        if (!account) return;
+                                                        try {
+                                                            await navigator.clipboard.writeText(account);
+                                                            setCopied(i);
+                                                            setTimeout(() => setCopied(null), 2000);
+                                                        } catch {
+                                                            setCopied(null);
+                                                        }
+                                                    }}
+                                                    style={{ marginTop: "8px", display: "inline-flex", alignItems: "center", gap: "4px", fontFamily: tokens.fonts.sans, fontSize: "0.72rem", color: tokens.colors.accent, background: "transparent", border: `1px solid ${tokens.colors.cardBorder}`, borderRadius: "999px", padding: "4px 12px", cursor: account ? "pointer" : "not-allowed", opacity: account ? 1 : 0.5 }}
+                                                    disabled={!account}
+                                                >
+                                                    <span className="material-symbols-outlined text-xs">{copied === i ? "check" : "content_copy"}</span>
+                                                    {copied === i ? "Disalin!" : "Salin"}
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -499,7 +518,11 @@ export default function RoseGoldMinimalistTemplate() {
                         {navItem("acara", "calendar_month", "Acara")}
                         {navItem("galeri", "photo_library", "Galeri")}
                         {navItem("lovestory", "auto_stories", "Kisah")}
-                        {navItem("rsvp", "edit_note", "Ucapan")}
+                        {features.rsvpEnabled
+                            ? navItem("rsvp", "edit_note", "Ucapan")
+                            : showGiftNav
+                                ? navItem("gift", "redeem", "Gift")
+                                : null}
                     </div>
                 </nav>
             </div>

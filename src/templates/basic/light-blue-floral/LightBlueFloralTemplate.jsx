@@ -17,11 +17,6 @@ import LoveStoryItem from "./components/LoveStoryItem";
 import GiftEnvelope from "./components/GiftEnvelope";
 import LiveStreaming from "./components/LiveStreaming";
 
-import OrnamentTopLeft from "./assets/ornaments/OrnamentTopLeft";
-import OrnamentTopRight from "./assets/ornaments/OrnamentTopRight";
-import OrnamentBottomLeft from "./assets/ornaments/OrnamentBottomLeft";
-import OrnamentBottomRight from "./assets/ornaments/OrnamentBottomRight";
-
 // Real floral decoration assets
 const DEC = {
     topLeft: new URL("./assets/decorations/flower-top-left.webp", import.meta.url).href,
@@ -42,7 +37,6 @@ const DEC = {
 // Save The Date ICS download
 function downloadICS(data) {
     const { akad } = data.event;
-    const dtStart = akad.date.replace(/\D/g, "").slice(0, 8) + "T" + akad.time.replace(".", "").replace(/\s.*/, "").padEnd(6, "0");
     const icsContent = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -72,6 +66,8 @@ export default function LightBlueFloralTemplate() {
 
     // Destructure only once data is resolved
     const { guest, couple, event, copy, lovestory, gallery, features } = data || {};
+    const hasInfoSection = Boolean(features?.livestreamEnabled || features?.digitalEnvelopeEnabled);
+    const showInfoNav = Boolean(!features?.rsvpEnabled && hasInfoSection);
 
     // Init AOS
     useEffect(() => {
@@ -92,7 +88,12 @@ export default function LightBlueFloralTemplate() {
 
     // Active nav tracking
     useEffect(() => {
-        const sections = ["hero", "mempelai", "acara", "galeri", "lovestory", "rsvp"];
+        const sections = ["hero", "mempelai", "acara", "galeri", "lovestory"];
+        if (features?.rsvpEnabled) {
+            sections.push("rsvp");
+        } else if (showInfoNav) {
+            sections.push("info");
+        }
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((e) => {
@@ -106,7 +107,7 @@ export default function LightBlueFloralTemplate() {
             if (el) observer.observe(el);
         });
         return () => observer.disconnect();
-    }, [opened]);
+    }, [opened, features?.rsvpEnabled, showInfoNav]);
 
     const sectionBase = {
         width: "100%",
@@ -429,7 +430,7 @@ export default function LightBlueFloralTemplate() {
                                     style={{ fontFamily: tokens.fonts.serif, color: tokens.colors.cardBorder, lineHeight: 1 }}
                                     aria-hidden="true"
                                 >
-                                    "
+                                    &quot;
                                 </div>
                                 <p
                                     className="italic text-sm leading-relaxed mb-3 pt-4"
@@ -481,7 +482,7 @@ export default function LightBlueFloralTemplate() {
 
                         {/* SECTION 5 — LIVE STREAMING + AMPLOP DIGITAL */}
                         {(features.livestreamEnabled || features.digitalEnvelopeEnabled) && (
-                            <section style={sectionWhite}>
+                            <section id="section-info" style={sectionWhite}>
                                 <SectionTitle title="Info Tambahan" aos="fade-up" />
                                 <div className="flex flex-col gap-4">
                                     {features.livestreamEnabled && event.livestream && (
@@ -495,7 +496,7 @@ export default function LightBlueFloralTemplate() {
                                     )}
                                     {features.digitalEnvelopeEnabled && (
                                         <GiftEnvelope
-                                            bankList={features.digitalEnvelopeInfo.bankList}
+                                            bankList={features?.digitalEnvelopeInfo?.bankList || []}
                                             aos="fade-up"
                                         />
                                     )}
@@ -667,7 +668,11 @@ export default function LightBlueFloralTemplate() {
                                 {navItem("acara", "calendar_month", "Acara")}
                                 {navItem("galeri", "photo_library", "Galeri")}
                                 {navItem("lovestory", "auto_stories", "Kisah")}
-                                {navItem("rsvp", "edit_note", "Ucapan")}
+                                {features.rsvpEnabled
+                                    ? navItem("rsvp", "edit_note", "Ucapan")
+                                    : showInfoNav
+                                        ? navItem("info", "info", "Info")
+                                        : null}
                             </div>
                         </nav>
 
