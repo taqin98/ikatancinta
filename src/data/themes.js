@@ -1,4 +1,5 @@
 import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
+import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TEMA-05-2-6c5f3dc1.webp";
 
 export const themes = [
   {
@@ -70,6 +71,22 @@ export const themes = [
     overlayClass: "bg-slate-900/20",
     cardClass: "bg-slate-100/70 hover:bg-slate-100",
     templateRoute: "/undangan/blue-nature",
+  },
+  {
+    slug: "noir-floral",
+    presetId: "nrf-basic-001",
+    name: "Noir Floral",
+    category: "Floral",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Nuansa dark floral elegan dengan detail krem klasik dan tipografi romantis.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: noirFloralThumbnail,
+    image: noirFloralThumbnail,
+    overlayClass: "bg-zinc-900/30",
+    cardClass: "bg-zinc-100/70 hover:bg-zinc-100",
+    templateRoute: "/undangan/noir-floral",
   },
   {
     slug: "sage-romance",
