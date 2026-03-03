@@ -1,5 +1,6 @@
 import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
 import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TEMA-05-2-6c5f3dc1.webp";
+import timelessPromiseThumbnail from "../templates/basic/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
 
 export const themes = [
   {
@@ -87,6 +88,22 @@ export const themes = [
     overlayClass: "bg-zinc-900/30",
     cardClass: "bg-zinc-100/70 hover:bg-zinc-100",
     templateRoute: "/undangan/noir-floral",
+  },
+  {
+    slug: "timeless-promise",
+    presetId: "tlp-basic-001",
+    name: "Timeless Promise",
+    category: "Floral",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Template klasik hasil migrasi pixel-perfect dari source WordPress/Elementor.",
+    title: "The Wedding Of",
+    couple: "Adiba & Habib",
+    thumbnail: timelessPromiseThumbnail,
+    image: timelessPromiseThumbnail,
+    overlayClass: "bg-amber-900/20",
+    cardClass: "bg-amber-100/70 hover:bg-amber-100",
+    templateRoute: "/undangan/timeless-promise",
   },
   {
     slug: "sage-romance",

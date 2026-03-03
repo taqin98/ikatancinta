@@ -1,0 +1,92 @@
+{
+  "title": "Undangan Website Spesial 08",
+  "guest": {
+    "greetingLabel": "Kepada Bapak/Ibu/Saudara/i",
+    "name": "Nama Tamu"
+  },
+  "couple": {
+    "groom": {
+      "nameFull": "Habib Yulianto",
+      "nickName": "Habib",
+      "instagram": "wekita.id",
+      "parentInfo": "Putra Kedua Bapak M. Dawam & (Almh) Ibu Dewi Sudarwati"
+    },
+    "bride": {
+      "nameFull": "Adiba Putri Syakila",
+      "nickName": "Adiba",
+      "instagram": "wekita.id",
+      "parentInfo": "Putri Pertama Bapak Anas & Ibu Kholifah"
+    }
+  },
+  "event": {
+    "dateISO": "2025-03-30T10:00:00+07:00",
+    "akad": {
+      "date": "Minggu, 30 Maret 2025",
+      "time": "10.00 WIB",
+      "address": "Ds Pagu Kec. Wates Kab. Kediri",
+      "mapsUrl": "https://maps.google.com"
+    },
+    "resepsi": {
+      "date": "Minggu, 30 Maret 2025",
+      "time": "10.00 WIB",
+      "address": "Ds Pagu Kec. Wates Kab. Kediri",
+      "mapsUrl": "https://maps.google.com"
+    },
+    "livestream": {
+      "date": "Minggu, 30 Maret 2025",
+      "time": "10.00 WIB",
+      "platformLabel": "Instagram",
+      "url": "https://instagram.com"
+    }
+  },
+  "copy": {
+    "openingGreeting": "The Wedding Of",
+    "openingText": "Tanpa mengurangi rasa hormat. Kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami :",
+    "closingText": "Merupakan suatu kehormatan dan kebahagiaan bagi kami, apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya, kami mengucapkan terima kasih."
+  },
+  "gallery": [
+    "assets/image/ornament/2-FILEminimizer-1-1-1.jpg",
+    "assets/image/ornament/3-FILEminimizer-1-1-1.jpg",
+    "assets/image/ornament/4-FILEminimizer-1-1-1.jpg",
+    "assets/image/ornament/5-FILEminimizer-2-1.jpg",
+    "assets/image/ornament/ls-1-1.jpg",
+    "assets/image/ornament/6-FILEminimizer-1-1.jpg",
+    "assets/image/ornament/10-FILEminimizer-1-1.jpg",
+    "assets/image/ornament/9-FILEminimizer-1-1.jpg",
+    "assets/image/ornament/8-FILEminimizer-1-1.jpg"
+  ],
+  "gift": {
+    "bankList": [
+      {
+        "bank": "BCA",
+        "account": "1234 5678 90",
+        "name": "Habib"
+      },
+      {
+        "bank": "DANA",
+        "account": "1234 5678 90",
+        "name": "Habib"
+      }
+    ],
+    "shipping": {
+      "recipient": "Habib Yulianto",
+      "phone": "1234 5678 90",
+      "address": "Ds Pagu Kec.Wates Kab. Kediri"
+    }
+  },
+  "audio": {
+    "src": "assets/media/audio/Rossa-Ariel-Noah-Nada-Nada-Cinta-From-All-Access-To-Rossa-25-Shining-Years-1.40.mp3",
+    "autoplay": false,
+    "loop": true
+  },
+  "wishes": {
+    "initial": [
+      {
+        "author": "Tamu",
+        "comment": "Selamat menempuh hidup baru, semoga sakinah mawaddah warahmah.",
+        "attendance": "Hadir",
+        "createdAt": "Baru saja"
+      }
+    ]
+  }
+}

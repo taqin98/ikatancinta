@@ -15,6 +15,7 @@ import {
   LightBlueFloralTemplate,
   NoirFloralTemplate,
   RoseGoldMinimalistTemplate,
+  TimelessPromiseTemplate,
 } from "./templates/basic";
 import { PremiumThemePreviewPage } from "./templates/premium";
 import { ExclusiveThemePreviewPage } from "./templates/exclusive";
@@ -127,6 +128,10 @@ function App() {
 
   if (pathname === "/undangan/noir-floral") {
     return <NoirFloralTemplate />;
+  }
+
+  if (pathname === "/undangan/timeless-promise") {
+    return <TimelessPromiseTemplate />;
   }
 
   if (pathname === "/preview-undangan-premium") {

@@ -1,0 +1,454 @@
+				@font-face {
+					font-family: 'agencyfb-bold';
+					src: url('../fonts/custom/975AgencyFB-Bold.woff2') format('woff2'),
+						url('../fonts/custom/975AgencyFB-Bold.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.agencyfb-bold{font-family: 'agencyfb-bold' !important;}
+
+						@font-face {
+					font-family: 'akayakanadaka-regula';
+					src: url('../fonts/custom/8148AkayaKanadaka-Regula.woff2') format('woff2'),
+						url('../fonts/custom/8148AkayaKanadaka-Regula.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.akayakanadaka-regula{font-family: 'akayakanadaka-regula' !important;}
+
+						@font-face {
+					font-family: 'anydore';
+					src: url('../fonts/custom/5322anydore--2.woff2') format('woff2'),
+						url('../fonts/custom/5322anydore.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.anydore{font-family: 'anydore' !important;}
+
+						@font-face {
+					font-family: 'autumn';
+					src: url('../fonts/custom/7662autumn.woff2') format('woff2'),
+						url('../fonts/custom/7662autumn.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.autumn{font-family: 'autumn' !important;}
+
+						@font-face {
+					font-family: 'back-to-school';
+					src: url('../fonts/custom/2421Back-to-School.woff2') format('woff2'),
+						url('../fonts/custom/2421Back-to-School.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.back-to-school{font-family: 'back-to-school' !important;}
+
+						@font-face {
+					font-family: 'bebasneue-regular';
+					src: url('../fonts/custom/6575BebasNeue-Regular.woff2') format('woff2'),
+						url('../fonts/custom/6575BebasNeue-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.bebasneue-regular{font-family: 'bebasneue-regular' !important;}
+
+						@font-face {
+					font-family: 'belisha';
+					src: url('../fonts/custom/9769Belisha.woff2') format('woff2'),
+						url('../fonts/custom/9769Belisha.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.belisha{font-family: 'belisha' !important;}
+
+						@font-face {
+					font-family: 'bernardo';
+					src: url('../fonts/custom/2772Bernardo.woff2') format('woff2'),
+						url('../fonts/custom/2772Bernardo.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.bernardo{font-family: 'bernardo' !important;}
+
+						@font-face {
+					font-family: 'black-rotela';
+					src: url('../fonts/custom/446Black-Rotela.woff2') format('woff2'),
+						url('../fonts/custom/446Black-Rotela.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.black-rotela{font-family: 'black-rotela' !important;}
+
+						@font-face {
+					font-family: 'bodebeck';
+					src: url('../fonts/custom/2463bodebeck.woff2') format('woff2'),
+						url('../fonts/custom/2463bodebeck.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.bodebeck{font-family: 'bodebeck' !important;}
+
+						@font-face {
+					font-family: 'bohemian';
+					src: url('../fonts/custom/5411bohemian.woff2') format('woff2'),
+						url('../fonts/custom/5411bohemian.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.bohemian{font-family: 'bohemian' !important;}
+
+						@font-face {
+					font-family: 'calvino';
+					src: url('../fonts/custom/8844Calvino.woff2') format('woff2'),
+						url('../fonts/custom/8844Calvino.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.calvino{font-family: 'calvino' !important;}
+
+						@font-face {
+					font-family: 'carolyna-pro-black';
+					src: url('../fonts/custom/3184Carolyna-Pro-Black.woff2') format('woff2'),
+						url('../fonts/custom/3184Carolyna-Pro-Black.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.carolyna-pro-black{font-family: 'carolyna-pro-black' !important;}
+
+						@font-face {
+					font-family: 'chilanka-regular';
+					src: url('../fonts/custom/6211Chilanka-Regular.woff2') format('woff2'),
+						url('../fonts/custom/6211Chilanka-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.chilanka-regular{font-family: 'chilanka-regular' !important;}
+
+						@font-face {
+					font-family: 'coffee-extra';
+					src: url('../fonts/custom/7236Coffee-Extra.woff2') format('woff2'),
+						url('../fonts/custom/7236Coffee-Extra.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.coffee-extra{font-family: 'coffee-extra' !important;}
+
+						@font-face {
+					font-family: 'coffe-for-breakfast';
+					src: url('../fonts/custom/4119Coffe-for-breakfast.woff2') format('woff2'),
+						url('../fonts/custom/4119Coffe-for-breakfast.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.coffe-for-breakfast{font-family: 'coffe-for-breakfast' !important;}
+
+						@font-face {
+					font-family: 'cream-cake';
+					src: url('../fonts/custom/402Cream-Cake.woff2') format('woff2'),
+						url('../fonts/custom/402Cream-Cake.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.cream-cake{font-family: 'cream-cake' !important;}
+
+						@font-face {
+					font-family: 'dearsarah';
+					src: url('../fonts/custom/705DearSarah.woff2') format('woff2'),
+						url('../fonts/custom/705DearSarah.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.dearsarah{font-family: 'dearsarah' !important;}
+
+						@font-face {
+					font-family: 'dear-sarah';
+					src: url('../fonts/custom/888Dear-Sarah.woff2') format('woff2'),
+						url('../fonts/custom/888Dear-Sarah.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.dear-sarah{font-family: 'dear-sarah' !important;}
+
+						@font-face {
+					font-family: 'deliusswashcaps-regu';
+					src: url('../fonts/custom/4889DeliusSwashCaps-Regu.woff2') format('woff2'),
+						url('../fonts/custom/4889DeliusSwashCaps-Regu.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.deliusswashcaps-regu{font-family: 'deliusswashcaps-regu' !important;}
+
+						@font-face {
+					font-family: 'freestyle';
+					src: url('../fonts/custom/8969freestyle.woff2') format('woff2'),
+						url('../fonts/custom/8969freestyle.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.freestyle{font-family: 'freestyle' !important;}
+
+						@font-face {
+					font-family: 'grithani';
+					src: url('../fonts/custom/3580grithani.woff2') format('woff2'),
+						url('../fonts/custom/3580grithani.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.grithani{font-family: 'grithani' !important;}
+
+						@font-face {
+					font-family: 'hashiba';
+					src: url('../fonts/custom/4304Hashiba.woff2') format('woff2'),
+						url('../fonts/custom/4304Hashiba.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.hashiba{font-family: 'hashiba' !important;}
+
+						@font-face {
+					font-family: 'hennypenny-regular';
+					src: url('../fonts/custom/7829HennyPenny-Regular.woff2') format('woff2'),
+						url('../fonts/custom/7829HennyPenny-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.hennypenny-regular{font-family: 'hennypenny-regular' !important;}
+
+						@font-face {
+					font-family: 'high_spirited';
+					src: url('../fonts/custom/5905high_spirited.woff2') format('woff2'),
+						url('../fonts/custom/5905high_spirited.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.high_spirited{font-family: 'high_spirited' !important;}
+
+						@font-face {
+					font-family: 'italiana-regular';
+					src: url('../fonts/custom/4615Italiana-Regular.woff2') format('woff2'),
+						url('../fonts/custom/4615Italiana-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.italiana-regular{font-family: 'italiana-regular' !important;}
+
+						@font-face {
+					font-family: 'italianno';
+					src: url('../fonts/custom/6865Italianno.woff2') format('woff2'),
+						url('../fonts/custom/6865Italianno.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.italianno{font-family: 'italianno' !important;}
+
+						@font-face {
+					font-family: 'mainstay';
+					src: url('../fonts/custom/4315Mainstay.woff2') format('woff2'),
+						url('../fonts/custom/4315Mainstay.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.mainstay{font-family: 'mainstay' !important;}
+
+						@font-face {
+					font-family: 'matrix';
+					src: url('../fonts/custom/9247matrix.woff2') format('woff2'),
+						url('../fonts/custom/9247matrix.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.matrix{font-family: 'matrix' !important;}
+
+						@font-face {
+					font-family: 'mishka';
+					src: url('../fonts/custom/6098Mishka.woff2') format('woff2'),
+						url('../fonts/custom/6098Mishka.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.mishka{font-family: 'mishka' !important;}
+
+						@font-face {
+					font-family: 'monoline';
+					src: url('../fonts/custom/4254monoline.woff2') format('woff2'),
+						url('../fonts/custom/4254monoline.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.monoline{font-family: 'monoline' !important;}
+
+						@font-face {
+					font-family: 'monotype-corsiva';
+					src: url('../fonts/custom/9009Monotype-Corsiva.woff2') format('woff2'),
+						url('../fonts/custom/9009Monotype-Corsiva.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.monotype-corsiva{font-family: 'monotype-corsiva' !important;}
+
+						@font-face {
+					font-family: 'muthiara';
+					src: url('../fonts/custom/5804Muthiara.woff2') format('woff2'),
+						url('../fonts/custom/5804Muthiara.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.muthiara{font-family: 'muthiara' !important;}
+
+						@font-face {
+					font-family: 'mutiara';
+					src: url('../fonts/custom/5786mutiara.woff2') format('woff2'),
+						url('../fonts/custom/5786mutiara.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.mutiara{font-family: 'mutiara' !important;}
+
+						@font-face {
+					font-family: 'mvboli';
+					src: url('../fonts/custom/3589mvboli.woff2') format('woff2'),
+						url('../fonts/custom/3589mvboli.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.mvboli{font-family: 'mvboli' !important;}
+
+						@font-face {
+					font-family: 'photograph';
+					src: url('../fonts/custom/9069photograph--2.woff2') format('woff2'),
+						url('../fonts/custom/9069photograph.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.photograph{font-family: 'photograph' !important;}
+
+						@font-face {
+					font-family: 'pinyonscript-regular';
+					src: url('../fonts/custom/2286PinyonScript-Regular.woff2') format('woff2'),
+						url('../fonts/custom/2286PinyonScript-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.pinyonscript-regular{font-family: 'pinyonscript-regular' !important;}
+
+						@font-face {
+					font-family: 'playball';
+					src: url('../fonts/custom/7262playball.woff2') format('woff2'),
+						url('../fonts/custom/7262playball.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.playball{font-family: 'playball' !important;}
+
+						@font-face {
+					font-family: 'poorstory-regular';
+					src: url('../fonts/custom/6876PoorStory-Regular.woff2') format('woff2'),
+						url('../fonts/custom/6876PoorStory-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.poorstory-regular{font-family: 'poorstory-regular' !important;}
+
+						@font-face {
+					font-family: 'praise';
+					src: url('../fonts/custom/9670Praise.woff2') format('woff2'),
+						url('../fonts/custom/9670Praise.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.praise{font-family: 'praise' !important;}
+
+						@font-face {
+					font-family: 'rainbow-in-june';
+					src: url('../fonts/custom/3806Rainbow-in-June.woff2') format('woff2'),
+						url('../fonts/custom/3806Rainbow-in-June.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.rainbow-in-june{font-family: 'rainbow-in-june' !important;}
+
+						@font-face {
+					font-family: 'redrains-demo';
+					src: url('../fonts/custom/820redrains-demo.woff2') format('woff2'),
+						url('../fonts/custom/820redrains-demo.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.redrains-demo{font-family: 'redrains-demo' !important;}
+
+						@font-face {
+					font-family: 'revania';
+					src: url('../fonts/custom/995Revania.woff2') format('woff2'),
+						url('../fonts/custom/995Revania.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.revania{font-family: 'revania' !important;}
+
+						@font-face {
+					font-family: 'rumraisin-regular';
+					src: url('../fonts/custom/5887RumRaisin-Regular.woff2') format('woff2'),
+						url('../fonts/custom/5887RumRaisin-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.rumraisin-regular{font-family: 'rumraisin-regular' !important;}
+
+						@font-face {
+					font-family: 'skranji-regular';
+					src: url('../fonts/custom/652Skranji-Regular.woff2') format('woff2'),
+						url('../fonts/custom/652Skranji-Regular.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.skranji-regular{font-family: 'skranji-regular' !important;}
+
+						@font-face {
+					font-family: 'spring-in-may';
+					src: url('../fonts/custom/3298Spring-in-may.woff2') format('woff2'),
+						url('../fonts/custom/3298Spring-in-may.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.spring-in-may{font-family: 'spring-in-may' !important;}
+
+						@font-face {
+					font-family: 'strawberrycupcakes';
+					src: url('../fonts/custom/7226StrawberryCupcakes.woff2') format('woff2'),
+						url('../fonts/custom/7226StrawberryCupcakes.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.strawberrycupcakes{font-family: 'strawberrycupcakes' !important;}
+
+						@font-face {
+					font-family: 'sweet-saturday';
+					src: url('../fonts/custom/9843Sweet-Saturday.woff2') format('woff2'),
+						url('../fonts/custom/9843Sweet-Saturday.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.sweet-saturday{font-family: 'sweet-saturday' !important;}
+
+						@font-face {
+					font-family: 'tangerine';
+					src: url('../fonts/custom/1755Tangerine.woff2') format('woff2'),
+						url('../fonts/custom/1755Tangerine.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.tangerine{font-family: 'tangerine' !important;}
+
+						@font-face {
+					font-family: 'the-californication';
+					src: url('../fonts/custom/4659The-Californication.woff2') format('woff2'),
+						url('../fonts/custom/4659The-Californication.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.the-californication{font-family: 'the-californication' !important;}
+
+						@font-face {
+					font-family: 'the-bernardo';
+					src: url('../fonts/custom/1751The-bernardo.woff2') format('woff2'),
+						url('/wp-content/

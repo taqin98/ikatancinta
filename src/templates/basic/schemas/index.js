@@ -2,6 +2,7 @@ import { defaultSchema as lightBlueFloralSchema } from "../light-blue-floral/sch
 import { defaultSchema as beigeNaturalSchema } from "../beige-natural/schema/invitationSchema";
 import { defaultSchema as blueNatureSchema } from "../blue-nature/schema/invitationSchema";
 import { defaultSchema as noirFloralSchema } from "../noir-floral/schema/invitationSchema";
+import { defaultSchema as timelessPromiseSchema } from "../timeless-promise/schema/invitationSchema";
 
 const schemaBySlug = {
     "light-blue-floral": lightBlueFloralSchema,
@@ -9,6 +10,7 @@ const schemaBySlug = {
     "beige-natural": beigeNaturalSchema,
     "blue-nature": blueNatureSchema,
     "noir-floral": noirFloralSchema,
+    "timeless-promise": timelessPromiseSchema,
 };
 
 export function getDefaultSchemaBySlug(slug) {

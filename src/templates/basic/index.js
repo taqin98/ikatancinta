@@ -3,3 +3,4 @@ export { default as RoseGoldMinimalistTemplate } from "./rose-gold-minimalist/Ro
 export { default as BeigeNaturalTemplate } from "./beige-natural/BeigeNaturalTemplate";
 export { default as BlueNatureTemplate } from "./blue-nature/BlueNatureTemplate";
 export { default as NoirFloralTemplate } from "./noir-floral/NoirFloralTemplate";
+export { default as TimelessPromiseTemplate } from "./timeless-promise/TimelessPromiseTemplate";
