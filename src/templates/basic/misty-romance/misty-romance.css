@@ -1,0 +1,164 @@
+.misty-romance-template {
+    width: 100%;
+    min-height: 100vh;
+    background: #ffffff;
+}
+
+.misty-romance-root {
+    width: 100%;
+    margin: 0 auto;
+    max-width: var(--mr-max-width, 500px);
+    font-family: var(--mr-font-body, "Times New Roman", serif);
+}
+
+.misty-romance-root .aw {
+    display: none;
+}
+
+.misty-romance-root .btnVisibleAfterLoad {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.misty-romance-root .motion-text {
+    opacity: 0;
+    transform: scale(1) translateY(0);
+    transition: opacity 3s ease, transform 3s ease, rotate 3s ease;
+}
+
+.misty-romance-root .motion-text.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.misty-romance-root .acara img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+    object-position: top center;
+    image-rendering: high-quality;
+    transform: scale(1);
+}
+
+.misty-romance-root .profil img {
+    width: 180px;
+    height: 270px;
+    object-fit: cover;
+    object-position: top center;
+    image-rendering: high-quality;
+    transform: scale(1);
+}
+
+.misty-romance-root .acara2 img {
+    width: 220px;
+    height: 320px;
+    object-fit: cover;
+    object-position: top center;
+    image-rendering: high-quality;
+    transform: scale(1);
+}
+
+.misty-romance-root .roll img {
+    width: 250px;
+    height: 250px;
+    object-fit: cover;
+    object-position: top center;
+    image-rendering: high-quality;
+    transform: scale(1);
+}
+
+.misty-romance-root #mute-sound .elementor-icon {
+    animation: mr-rotating 12s linear infinite;
+}
+
+@keyframes mr-rotating {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.misty-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    background: rgba(0, 0, 0, 0.88);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    overflow: hidden;
+}
+
+.misty-lightbox img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    transition: transform 220ms ease;
+    cursor: zoom-in;
+}
+
+.misty-lightbox img.is-zoomed {
+    transform: scale(1.8);
+    cursor: zoom-out;
+}
+
+.misty-lightbox__toolbar {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 2;
+}
+
+.misty-lightbox__counter {
+    color: #fff;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 999px;
+    padding: 8px 12px;
+}
+
+.misty-lightbox__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.misty-lightbox__icon,
+.misty-lightbox__nav {
+    position: absolute;
+    border: 0;
+    cursor: pointer;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.45);
+    padding: 10px 12px;
+    border-radius: 999px;
+    font-size: 18px;
+    line-height: 1;
+}
+
+.misty-lightbox__icon {
+    position: static;
+    min-width: 38px;
+    min-height: 38px;
+}
+
+.misty-lightbox__nav--prev {
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.misty-lightbox__nav--next {
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+}

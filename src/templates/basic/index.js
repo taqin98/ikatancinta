@@ -4,3 +4,4 @@ export { default as BeigeNaturalTemplate } from "./beige-natural/BeigeNaturalTem
 export { default as BlueNatureTemplate } from "./blue-nature/BlueNatureTemplate";
 export { default as NoirFloralTemplate } from "./noir-floral/NoirFloralTemplate";
 export { default as TimelessPromiseTemplate } from "./timeless-promise/TimelessPromiseTemplate";
+export { default as MistyRomanceTemplate } from "./misty-romance/MistyRomanceTemplate";

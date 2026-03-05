@@ -1,6 +1,7 @@
 import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
 import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TEMA-05-2-6c5f3dc1.webp";
 import timelessPromiseThumbnail from "../templates/basic/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
+import mistyRomanceThumbnail from "../templates/basic/misty-romance/assets/images/cover/cover-main.webp";
 
 export const themes = [
   {
@@ -104,6 +105,22 @@ export const themes = [
     overlayClass: "bg-amber-900/20",
     cardClass: "bg-amber-100/70 hover:bg-amber-100",
     templateRoute: "/undangan/timeless-promise",
+  },
+  {
+    slug: "misty-romance",
+    presetId: "mtr-basic-001",
+    name: "Misty Romance",
+    category: "Floral",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Template romantis dengan ambience misty, lottie burung, dan layout Elementor pixel-perfect.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: mistyRomanceThumbnail,
+    image: mistyRomanceThumbnail,
+    overlayClass: "bg-zinc-900/20",
+    cardClass: "bg-zinc-100/70 hover:bg-zinc-100",
+    templateRoute: "/undangan/misty-romance",
   },
   {
     slug: "sage-romance",
