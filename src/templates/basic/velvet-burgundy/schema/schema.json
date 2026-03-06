@@ -1,0 +1,78 @@
+{
+  "groom": {
+    "nickName": "Habib",
+    "fullName": "Habib Yulianto",
+    "parentInfo": "Putra Kedua Dari : Bapak Putra dan Ibu Putri",
+    "instagram": "wekita.id"
+  },
+  "bride": {
+    "nickName": "Adiba",
+    "fullName": "Adiba Putri Syakila",
+    "parentInfo": "Putri Pertama Dari : Bapak Putra dan Ibu Putri",
+    "instagram": "wekita.id"
+  },
+  "event": {
+    "dateISO": "2027-03-30T09:00:00+07:00",
+    "akad": {
+      "date": "Minggu, 30 Maret 2027",
+      "time": "09:00 WIB",
+      "address": "Ds Pagu Kec. Wates Kab. Kediri",
+      "mapsUrl": "https://maps.app.goo.gl/D914WhqsNx1qxTRm6"
+    },
+    "resepsi": {
+      "date": "Minggu, 30 Maret 2027",
+      "time": "09:00 WIB",
+      "address": "Ds Pagu Kec. Wates Kab. Kediri",
+      "mapsUrl": "https://maps.app.goo.gl/D914WhqsNx1qxTRm6"
+    }
+  },
+  "gallery": [
+    "assets/images/local/wp-content__uploads__2024__09__sm-sm-1-5.jpg",
+    "assets/images/local/wp-content__uploads__2024__09__foto-1-1.jpg",
+    "assets/images/local/wp-content__uploads__2024__09__foto-1-2.jpg",
+    "assets/images/local/wp-content__uploads__2024__09__foto-1-6.jpg",
+    "assets/images/local/wp-content__uploads__2024__09__sm-1-5-1-e1725518237570.jpg"
+  ],
+  "streaming": {
+    "date": "Minggu, 30 Maret 2027",
+    "time": "09:00 WIB",
+    "url": "https://instagram.com",
+    "label": "Join Streaming"
+  },
+  "gifts": {
+    "bankAccounts": [
+      {
+        "bankName": "BCA",
+        "accountNumber": "1234 5678 90",
+        "accountHolder": "Habib",
+        "logo": "assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png",
+        "chip": "assets/images/local/wp-content__uploads__2024__09__chip-atm-1-2-4.png"
+      },
+      {
+        "bankName": "DANA",
+        "accountNumber": "1234 5678 90",
+        "accountHolder": "Habib",
+        "logo": "assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png"
+      }
+    ],
+    "shipping": {
+      "recipient": "Habib Yulianto",
+      "phone": "1234 5678 90",
+      "address": "Ds Pagu Kec.Wates Kab. Kediri"
+    }
+  },
+  "wishes": [
+    {
+      "author": "Rina",
+      "comment": "Selamat menempuh hidup baru, semoga bahagia selalu.",
+      "attendance": "Hadir",
+      "createdAt": "1 Mar 2026, 09:20"
+    },
+    {
+      "author": "Fajar",
+      "comment": "Turut berbahagia, semoga acara lancar sampai hari H.",
+      "attendance": "Tidak hadir",
+      "createdAt": "1 Mar 2026, 10:05"
+    }
+  ]
+}

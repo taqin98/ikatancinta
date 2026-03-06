@@ -1,0 +1,512 @@
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__modules__bdt-uikit.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__modules__ep-helper.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__exad-styles.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__addons__comment-kit2__css__cui_style.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__new-icon.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__themes__hello-elementor__assets__css__reset.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__themes__hello-elementor__assets__css__theme.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__themes__hello-elementor__assets__css__header-footer.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__frontend.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__css__post-5.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__eicons__css__elementor-icons.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__wdp.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__guest-book.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-spacer.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-heading.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__zoomIn.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__fadeInUp.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-divider.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__fadeIn.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-image.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-grow.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-social-icons.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__conditionals__apple-webkit.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__swiper__v8__css__swiper.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__conditionals__e-swiper.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor-pro__assets__css__widget-gallery.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__e-gallery__css__e-gallery.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor-pro__assets__css__conditionals__transitions.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-shrink.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor-pro__assets__css__modules__sticky.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-pulse-grow.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__css__post-5856.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__roboto.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__robotoslab.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__cormorant.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__poppins.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__portlligatsans.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__cinzel.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__nunito.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__jura.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__italiana.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__montserrat.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__fontawesome.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__solid.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__brands.min.css");
+@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__regular.min.css");
+
+@font-face {
+  font-family: "hatolie";
+  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__1670Hatolie.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "analogue";
+  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__4149Analogue.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "strawberrycupcakes";
+  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__9965StrawberryCupcakes.woff2") format("woff2");
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "photograph";
+  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__9069photograph.woff2") format("woff2");
+  font-display: swap;
+}
+
+.vb-template,
+.vb-template * {
+  box-sizing: border-box;
+}
+
+.vb-template {
+  position: relative;
+}
+
+.vb-template .vb-gallery-fallback {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  height: auto !important;
+  padding-bottom: 0 !important;
+}
+
+.vb-template .vb-gallery-fallback .e-gallery-item {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  height: 250px !important;
+}
+
+.vb-template .vb-gallery-fallback .e-gallery-image {
+  height: 100% !important;
+  padding-bottom: 0 !important;
+  background-position: center center;
+  background-size: cover;
+}
+
+@media (max-width: 767px) {
+  .vb-template .vb-gallery-fallback {
+    grid-template-columns: 1fr;
+  }
+}
+
+.vb-template .cui-wrapper {
+  font-size: 14px;
+}
+
+.vb-template .cui-post-author {
+  color: #fff !important;
+  background: #777 !important;
+}
+
+.vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form input[type="submit"],
+.vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form input[type="button"].cui-form-btn {
+  width: 100%;
+  font-size: 15px !important;
+  margin-left: 0;
+}
+
+.vb-template .cui-wrapper .cui-wrap-form .cui-container-form p.form-submit {
+  float: none;
+}
+
+.vb-template .cui-wrapper.cui-facebook .cui-wrap-form {
+  border-top: none;
+}
+
+.vb-template .cui_comment_count_card.cui_card-tidak_hadir {
+  background-color: #fdbcbc !important;
+  color: #ff0000 !important;
+  border: 0 !important;
+  border-radius: 8px;
+}
+
+.vb-template .cui_comment_count_card.cui_card-hadir {
+  background-color: #d9f9d3 !important;
+  color: #473025 !important;
+  border: 0 !important;
+  border-radius: 8px;
+}
+
+.vb-template .cui_comment_count_card.cui_card-masih_ragu {
+  background-color: #d5d5d5 !important;
+  color: #666565 !important;
+  border: 0 !important;
+  border-radius: 8px;
+}
+
+.vb-template .cui-wrapper.cui-facebook ul.cui-container-comments li.cui-item-comment {
+  border-bottom: 0 solid #fff;
+}
+
+.vb-template .cui-wrapper.cui-facebook ul.cui-container-comments {
+  border-top: 0 solid #fff;
+  display: block !important;
+}
+
+.vb-template .cui-wrapper ul.cui-container-comments li.cui-item-comment .cui-comment-avatar img {
+  max-width: 28px;
+  max-height: 28px;
+}
+
+.vb-template .cui-wrapper ul.cui-container-comments li.cui-item-comment .cui-comment-content {
+  margin-left: 38px;
+}
+
+.vb-template .cui-wrapper ul.cui-container-comments li.cui-item-comment ul .cui-comment-avatar img {
+  max-width: 24px;
+  max-height: 24px;
+}
+
+.vb-template .cui-wrapper ul.cui-container-comments li.cui-item-comment ul ul .cui-comment-avatar img {
+  max-width: 21px;
+  max-height: 21px;
+}
+
+.vb-template .cui-wrapper .cui-holder {
+  display: none !important;
+}
+
+.vb-template .cui-comment-content {
+  margin-left: 0 !important;
+}
+
+.vb-template .cui-comment-avatar {
+  display: none !important;
+}
+
+.cui-comment-text img {
+  max-width: 100% !important;
+}
+
+img.wp-smiley,
+img.emoji {
+  display: inline !important;
+  border: none !important;
+  box-shadow: none !important;
+  height: 1em !important;
+  width: 1em !important;
+  margin: 0 0.07em !important;
+  vertical-align: -0.1em !important;
+  background: none !important;
+  padding: 0 !important;
+}
+
+#mute-sound .elementor-icon {
+  animation: rotating 12s linear infinite;
+}
+
+@keyframes rotating {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+body {
+  overflow-x: hidden !important;
+}
+
+.elementor-button-wrapper {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.elementor-widget-weddingpress-copy-text {
+  margin: 10px 0 0 0 !important;
+}
+
+.acara img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: top center;
+  image-rendering: high-quality;
+  transform: scale(1);
+}
+
+.profil img {
+  width: 180px;
+  height: 270px;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.acara2 img {
+  width: 220px;
+  height: 320px;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.roll img {
+  width: 250px;
+  height: 250px;
+  object-fit: cover;
+  object-position: top center;
+}
+
+.particles-js-canvas-el {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  z-index: 0;
+  top: 0;
+}
+
+.ef {
+  position: relative;
+  transform: translateY(6rem) scale(0.93);
+  opacity: 0;
+  transition: 2.5s all ease;
+}
+
+.ef.active {
+  transform: translateY(0) scale(1);
+  opacity: 1;
+}
+
+.reveal,
+.revealin,
+.revealkanan,
+.revealkiri,
+.revealatas,
+.revealr {
+  position: relative;
+  opacity: 0;
+  transition: 2s all ease;
+}
+
+.reveal {
+  transform: translateY(6rem) scale(0.93);
+}
+
+.reveal.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.revealin {
+  transform: translateY(0rem) scale(0);
+}
+
+.revealin.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.revealkanan {
+  transform: translate(6rem) scale(0.93);
+}
+
+.revealkanan.active {
+  transform: translate(0);
+  opacity: 1;
+}
+
+.revealkiri {
+  transform: translate(-6rem) scale(0.93);
+}
+
+.revealkiri.active {
+  transform: translate(0);
+  opacity: 1;
+}
+
+.revealatas {
+  transform: translateY(-6rem) scale(0.93);
+}
+
+.revealatas.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.revealr {
+  transform: rotateY(180deg);
+}
+
+.revealr.active {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.motion-text {
+  opacity: 0;
+  transform: scale(1) translateY(0);
+  transition: opacity 3s ease, transform 3s ease, rotate 3s ease;
+}
+
+.motion-text.fade-up {
+  transform: translateY(20px);
+}
+
+.motion-text.fade-up.active,
+.motion-text.fade-down.active,
+.motion-text.zoom-in.active,
+.motion-text.slide-left.active,
+.motion-text.slide-right.active,
+.motion-text.spin.active,
+.motion-text.rotate-x.active,
+.motion-text.rotate-y.active,
+.motion-text.scale-down.active {
+  opacity: 1;
+}
+
+.motion-text.fade-down {
+  transform: translateY(-20px);
+}
+
+.motion-text.zoom-in {
+  transform: scale(0.5);
+}
+
+.motion-text.slide-left {
+  transform: translateX(30px);
+}
+
+.motion-text.slide-right {
+  transform: translateX(-30px);
+}
+
+.motion-text.spin {
+  transform: rotate(0deg);
+}
+
+.motion-text.spin.active {
+  transform: rotate(360deg);
+}
+
+.motion-text.rotate-x {
+  transform: rotateX(90deg);
+}
+
+.motion-text.rotate-y {
+  transform: rotateY(90deg);
+}
+
+.motion-text.scale-down {
+  transform: scale(1.5);
+}
+
+#sec {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 999;
+}
+
+#open {
+  cursor: pointer;
+}
+
+#amplop {
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 1000ms ease, opacity 1000ms ease;
+}
+
+#amplop.vb-open {
+  display: block;
+  max-height: 1600px;
+  opacity: 1;
+}
+
+.vb-wishes-shell .cui-wrap-comments {
+  display: block;
+}
+
+.vb-wishes-item {
+  border-bottom: 1px solid rgba(135, 65, 76, 0.18);
+  padding: 12px 0;
+}
+
+.vb-wishes-item:last-child {
+  border-bottom: 0;
+}
+
+.vb-wishes-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  color: #6d6d6d;
+}
+
+.vb-wishes-attend {
+  font-weight: 600;
+  color: #87414c;
+}
+
+.vb-template .elementor-element.elementor-element-636ea9bd {
+  position: fixed !important;
+  right: 14px;
+  bottom: 120px;
+  width: auto !important;
+  margin: 0 !important;
+  z-index: 1201;
+}
+
+.vb-template .elementor-element.elementor-element-46795b49 {
+  position: fixed !important;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  width: min(70%, 360px) !important;
+  max-width: calc(100vw - 24px);
+  margin: 0 !important;
+  z-index: 1200;
+}
+
+.vb-template:not(.vb-opened) .elementor-element.elementor-element-636ea9bd,
+.vb-template:not(.vb-opened) .elementor-element.elementor-element-46795b49 {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .vb-template .elementor-element.elementor-element-636ea9bd {
+    bottom: 130px;
+  }
+
+  .vb-template .elementor-element.elementor-element-46795b49 {
+    width: min(60%, 430px) !important;
+  }
+}
+
+.vb-lock-scroll {
+  position: fixed !important;
+  height: calc(var(--vh, 1vh) * 100);
+  left: 0;
+  right: 0;
+  overflow-y: scroll;
+}

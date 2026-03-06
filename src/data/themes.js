@@ -2,6 +2,7 @@ import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og
 import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TEMA-05-2-6c5f3dc1.webp";
 import timelessPromiseThumbnail from "../templates/basic/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
 import mistyRomanceThumbnail from "../templates/basic/misty-romance/assets/images/cover/cover-main.webp";
+import velvetBurgundyThumbnail from "../templates/basic/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
 
 export const themes = [
   {
@@ -121,6 +122,22 @@ export const themes = [
     overlayClass: "bg-zinc-900/20",
     cardClass: "bg-zinc-100/70 hover:bg-zinc-100",
     templateRoute: "/undangan/misty-romance",
+  },
+  {
+    slug: "velvet-burgundy",
+    presetId: "vlb-basic-001",
+    name: "Velvet Burgundy",
+    category: "Classic",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Migrasi pixel-perfect dari template WordPress/Elementor dengan nuansa burgundy elegan.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: velvetBurgundyThumbnail,
+    image: velvetBurgundyThumbnail,
+    overlayClass: "bg-rose-900/20",
+    cardClass: "bg-rose-100/70 hover:bg-rose-100",
+    templateRoute: "/undangan/velvet-burgundy",
   },
   {
     slug: "sage-romance",

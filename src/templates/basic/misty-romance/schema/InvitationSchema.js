@@ -28,13 +28,13 @@ export const defaultSchema = {
             date: "Minggu, 29 Desember 2024",
             time: "09.00 WIB",
             address: "Ds Pagu Kec. Wates Kab. Kediri, Jawa Timur",
-            mapsUrl: "https://maps.app.goo.gl/CXAqvaRwEKMXV2LM9",
+            mapsUrl: "https://maps.app.goo.gl/wNyFkeGRv7bmDs8t8?g_st=ic",
         },
         resepsi: {
             date: "Minggu, 29 Desember 2024",
             time: "12.00 WIB - Selesai",
             address: "Ds Pagu Kec. Wates Kab. Kediri, Jawa Timur",
-            mapsUrl: "https://maps.app.goo.gl/CXAqvaRwEKMXV2LM9",
+            mapsUrl: "https://maps.app.goo.gl/wNyFkeGRv7bmDs8t8?g_st=ic",
         },
         livestream: {
             date: "Minggu, 29 Desember 2024",

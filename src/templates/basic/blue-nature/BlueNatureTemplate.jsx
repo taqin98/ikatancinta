@@ -741,7 +741,7 @@ export default function BlueNatureTemplate() {
                             <p className="bn-footer__credit">
                                 Made with
                                 <img src={HeartEmoji} alt="heart" />
-                                by Rumah Undangan
+                                by Ikatancinta.in
                             </p>
                         </footer>
 
