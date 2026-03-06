@@ -1,0 +1,145 @@
+{
+  "guest": {
+    "name": "Nama Tamu"
+  },
+  "groom": {
+    "nickName": "Habib",
+    "fullName": "Habib Yulianto",
+    "parentInfo": "Putri Pertama dari Bapak Andri Setiawan & Ibu Eva Naryanti",
+    "instagram": "https://www.instagram.com/",
+    "image": "assets/media/uploads/2025/11/PRIA-e1689575693830-1.jpg"
+  },
+  "bride": {
+    "nickName": "Adiba",
+    "fullName": "Adiba Putri Syakila",
+    "parentInfo": "Putri Pertama dari Bapak Andri Setiawan & Ibu Eva Naryanti",
+    "instagram": "https://www.instagram.com/",
+    "image": "assets/media/uploads/2025/11/WANITA-e1689575718872-1.jpg"
+  },
+  "event": {
+    "dateISO": "2025-12-28T10:00:00+07:00",
+    "displayDate": "28. 12. 2025",
+    "mapUrl": "https://www.google.com/maps",
+    "heroImage": "assets/media/uploads/2025/11/44-5-e1689578884725-1.jpg",
+    "frameImage": "assets/media/uploads/2025/11/ART-WHITE-05-FRAME02-1.png",
+    "dividerImage": "assets/media/uploads/2025/11/DW-ED-1.png",
+    "akad": {
+      "title": "Akad Nikah",
+      "date": "Minggu, 28 Desember 2025",
+      "time": "Pukul 07.00 WIB s/d Selesai",
+      "addressName": "Kediaman Mempelai Wanita",
+      "address": "Ds Pagu, Wates, Kediri, Jawa Timur",
+      "mapsUrl": "https://www.google.com/maps"
+    },
+    "resepsi": {
+      "title": "Resepsi",
+      "date": "Minggu, 30 Desember 2025",
+      "time": "Pukul 10.00 WIB s/d Selesai",
+      "addressName": "Kediaman Mempelai Wanita",
+      "address": "Ds Pagu, Wates, Kediri, Jawa Timur",
+      "mapsUrl": "https://www.google.com/maps"
+    }
+  },
+  "gallery": [
+    "assets/media/uploads/2025/11/44-1-1.jpg",
+    "assets/media/uploads/2025/11/44-2-2.jpg"
+  ],
+  "streaming": {
+    "title": "Live Streaming",
+    "text": "Kami mengundang Bapak/Ibu/Saudara/i untuk menyaksikan pernikahan kami secara virtual yang disiarkan langsung melalui media sosial di bawah ini.",
+    "date": "Minggu, 30 Desember 2025",
+    "time": "Pukul 10.00 WIB s/d Selesai",
+    "url": "https://www.instagram.com/",
+    "label": "Klik di sini"
+  },
+  "gifts": {
+    "bankAccounts": [
+      {
+        "bankName": "BCA",
+        "accountNumber": "1234 5678 90",
+        "accountHolder": "Habib",
+        "logo": "assets/media/uploads/2025/11/BCA_logo_Bank_Central_Asia-1-3-5-scaled.png",
+        "chip": "assets/media/uploads/2025/11/chip-atm-1-2-4.png"
+      },
+      {
+        "bankName": "DANA",
+        "accountNumber": "1234 5678 90",
+        "accountHolder": "Habib",
+        "logo": "assets/media/uploads/2025/11/1200px-Logo_dana_blue.svg-1-1-1.png"
+      }
+    ],
+    "shipping": {
+      "recipient": "Habib Yulianto",
+      "phone": "1234 5678 90",
+      "address": "Ds Pagu Kec.Wates Kab. Kediri"
+    }
+  },
+  "wishes": [
+    {
+      "author": "Ayu",
+      "comment": "Selamat menempuh hidup baru. Samawa selalu ya.",
+      "attendance": "Hadir",
+      "createdAt": "Baru saja"
+    },
+    {
+      "author": "Rizky",
+      "comment": "Doa terbaik untuk kedua mempelai. Bahagia selalu.",
+      "attendance": "Hadir",
+      "createdAt": "2 menit lalu"
+    },
+    {
+      "author": "Nina",
+      "comment": "Masya Allah, semoga dilancarkan sampai hari H.",
+      "attendance": "Tidak Hadir",
+      "createdAt": "5 menit lalu"
+    },
+    {
+      "author": "Dimas",
+      "comment": "Semoga jadi keluarga yang sakinah, mawaddah, warahmah.",
+      "attendance": "Hadir",
+      "createdAt": "8 menit lalu"
+    },
+    {
+      "author": "Tamu Undangan",
+      "comment": "Turut berbahagia. Semoga selalu diberkahi.",
+      "attendance": "Tidak Hadir",
+      "createdAt": "12 menit lalu"
+    }
+  ],
+  "loveStory": [
+    {
+      "title": "Awal Bertemu",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+    },
+    {
+      "title": "Lamaran",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+    },
+    {
+      "title": "Pernikahan",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
+    }
+  ],
+  "copy": {
+    "openingGreeting": "The Wedding of",
+    "openingText": "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami :",
+    "quote": "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sungguh, pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir",
+    "quoteSource": "(Qs. Ar. Rum (30) : 21)",
+    "saveTheDateTitle": "Save The Date",
+    "saveTheDateText": "Dan kami bersyukur, dipertemukan Allah di waktu terbaik. Kini kami menanti hari istimewa kami.",
+    "galleryTitle": "Galeri Foto",
+    "giftTitle": "Wedding Gift",
+    "giftIntro": "Bagi Bapak/Ibu/Saudara/i yang ingin mengirimkan hadiah pernikahan dapat melalui virtual account atau e-wallet di bawah ini:",
+    "wishesTitle": "Ucapkan Sesuatu",
+    "wishesIntro": "Berikan ucapan harapan dan do’a kepada kedua mempelai",
+    "closingText": "Merupakan suatu kehormatan dan kebahagiaan bagi kami, apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya, kami mengucapkan terima kasih.",
+    "creditText": "Made with ❤ by Rumah Undangan"
+  },
+  "features": {
+    "digitalEnvelopeEnabled": true,
+    "rsvpEnabled": true,
+    "audioEnabled": true,
+    "lightboxEnabled": true,
+    "lottieEnabled": true
+  }
+}

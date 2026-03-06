@@ -19,7 +19,7 @@ import {
   MistyRomanceTemplate,
   VelvetBurgundyTemplate,
 } from "./templates/basic";
-import { PremiumThemePreviewPage } from "./templates/premium";
+import { BotanicalEleganceTemplate, PremiumThemePreviewPage } from "./templates/premium";
 import { ExclusiveThemePreviewPage } from "./templates/exclusive";
 import InvitationPreviewPage from "./components/InvitationPreviewPage";
 import ThemeDetailPage from "./components/ThemeDetailPage";
@@ -142,6 +142,10 @@ function App() {
 
   if (pathname === "/undangan/velvet-burgundy") {
     return <VelvetBurgundyTemplate />;
+  }
+
+  if (pathname === "/undangan/botanical-elegance") {
+    return <BotanicalEleganceTemplate />;
   }
 
   if (pathname === "/preview-undangan-premium") {

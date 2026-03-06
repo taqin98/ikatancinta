@@ -3,6 +3,7 @@ import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TE
 import timelessPromiseThumbnail from "../templates/basic/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
 import mistyRomanceThumbnail from "../templates/basic/misty-romance/assets/images/cover/cover-main.webp";
 import velvetBurgundyThumbnail from "../templates/basic/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
+import botanicalEleganceThumbnail from "../templates/premium/botanical-elegance/assets/media/uploads/2025/11/PREMIUM-01_SPESIAL-FOTO.jpg";
 
 export const themes = [
   {
@@ -138,6 +139,22 @@ export const themes = [
     overlayClass: "bg-rose-900/20",
     cardClass: "bg-rose-100/70 hover:bg-rose-100",
     templateRoute: "/undangan/velvet-burgundy",
+  },
+  {
+    slug: "botanical-elegance",
+    presetId: "bte-premium-001",
+    name: "Botanical Elegance",
+    category: "Classic",
+    packageTier: "PREMIUM",
+    price: "Rp 149.000",
+    description: "Migrasi pixel-perfect dari template premium WordPress/Elementor dengan detail botanical elegan.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: botanicalEleganceThumbnail,
+    image: botanicalEleganceThumbnail,
+    overlayClass: "bg-slate-900/20",
+    cardClass: "bg-slate-100/70 hover:bg-slate-100",
+    templateRoute: "/undangan/botanical-elegance",
   },
   {
     slug: "sage-romance",

@@ -1,0 +1,163 @@
+@import url("./assets/vendor/weddingpress/assets/css/modules/bdt-uikit.css");
+@import url("./assets/vendor/weddingpress/assets/css/modules/ep-helper.css");
+@import url("./assets/css/fonts/useanyfont.css");
+@import url("./assets/vendor/weddingpress/assets/css/exad-styles.min.css");
+@import url("./assets/vendor/weddingpress/addons/comment-kit2/css/cui_style.css");
+@import url("./assets/vendor/weddingpress/assets/css/new-icon.min.css");
+@import url("./assets/vendor/hello-elementor/assets/css/reset.css");
+@import url("./assets/vendor/hello-elementor/assets/css/theme.css");
+@import url("./assets/vendor/hello-elementor/assets/css/header-footer.css");
+@import url("./assets/vendor/elementor/assets/css/frontend.min.css");
+@import url("./assets/css/generated/elementor/post-5.css");
+@import url("./assets/vendor/elementor/assets/lib/eicons/css/elementor-icons.min.css");
+@import url("./assets/vendor/weddingpress/assets/css/wdp.css");
+@import url("./assets/vendor/weddingpress/assets/css/guest-book.css");
+@import url("./assets/vendor/elementor/assets/css/widget-heading.min.css");
+@import url("./assets/vendor/elementor/assets/css/widget-image.min.css");
+@import url("./assets/vendor/elementor-pro/assets/css/widget-lottie.min.css");
+@import url("./assets/vendor/elementor/assets/lib/animations/styles/fadeInDown.min.css");
+@import url("./assets/vendor/elementor/assets/lib/animations/styles/zoomIn.min.css");
+@import url("./assets/vendor/elementor/assets/lib/animations/styles/fadeInUp.min.css");
+@import url("./assets/vendor/elementor/assets/css/widget-spacer.min.css");
+@import url("./assets/vendor/elementor/assets/css/widget-social-icons.min.css");
+@import url("./assets/vendor/elementor/assets/css/conditionals/apple-webkit.min.css");
+@import url("./assets/vendor/elementor/assets/lib/swiper/v8/css/swiper.min.css");
+@import url("./assets/vendor/elementor/assets/css/conditionals/e-swiper.min.css");
+@import url("./assets/vendor/elementor-pro/assets/css/widget-gallery.min.css");
+@import url("./assets/vendor/elementor/assets/lib/e-gallery/css/e-gallery.min.css");
+@import url("./assets/vendor/elementor-pro/assets/css/conditionals/transitions.min.css");
+@import url("./assets/vendor/elementor/assets/lib/animations/styles/e-animation-shrink.min.css");
+@import url("./assets/vendor/elementor-pro/assets/css/modules/sticky.min.css");
+@import url("./assets/css/generated/elementor/post-13544.css");
+@import url("./assets/css/fonts/google/roboto.css");
+@import url("./assets/css/fonts/google/robotoslab.css");
+@import url("./assets/css/fonts/google/quicksand.css");
+@import url("./assets/css/fonts/google/cormorantgaramond.css");
+@import url("./assets/css/fonts/google/poppins.css");
+@import url("./assets/css/fonts/google/jura.css");
+@import url("./assets/css/fonts/google/montserrat.css");
+@import url("./assets/vendor/elementor/assets/lib/font-awesome/css/fontawesome.min.css");
+@import url("./assets/vendor/elementor/assets/lib/font-awesome/css/brands.min.css");
+@import url("./assets/vendor/elementor/assets/lib/font-awesome/css/solid.min.css");
+@import url("./assets/vendor/elementor/assets/lib/font-awesome/css/regular.min.css");
+@import url("./assets/vendor/aos/aos.css");
+
+.be-template,
+.be-template * {
+  box-sizing: border-box;
+}
+
+.emoji {
+    display: inline !important;
+    border: none !important;
+    box-shadow: none !important;
+    height: 1em !important;
+    width: 1em !important;
+    margin: 0 0.07em !important;
+    vertical-align: -0.1em !important;
+    background: none !important;
+    padding: 0 !important;
+}
+
+.be-template {
+  position: relative;
+  isolation: isolate;
+}
+
+body.be-lock-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: calc(var(--vh, 1vh) * 100);
+  overflow-y: scroll;
+}
+
+.be-template #amplop {
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 1000ms ease, opacity 1000ms ease;
+}
+
+.be-template #amplop.be-open {
+  display: block;
+}
+
+.be-template .be-gallery-fallback {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.be-template .be-gallery-fallback .e-gallery-item {
+  display: block !important;
+  width: 100% !important;
+}
+
+.be-template .be-gallery-fallback .e-gallery-image {
+  padding-bottom: 145% !important;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.be-template .cui-wrapper .cui-holder {
+  display: none !important;
+}
+
+.be-template .cui-comment-text img {
+  max-width: 100% !important;
+}
+
+.be-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(16, 22, 24, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.be-lightbox__dialog {
+  position: relative;
+  max-width: min(92vw, 860px);
+  max-height: 90vh;
+}
+
+.be-lightbox__image {
+  display: block;
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 18px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+}
+
+.be-lightbox__close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1d2a2f;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 767px) {
+  .be-template .be-gallery-fallback {
+    grid-template-columns: 1fr;
+  }
+
+  .be-lightbox {
+    padding: 16px;
+  }
+}

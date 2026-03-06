@@ -1,0 +1,44 @@
+@font-face {
+					font-family: 'spring-in-may';
+					src: url('../../fonts/useanyfont/3298Spring-in-may.woff2') format('woff2'),
+						url('../../fonts/useanyfont/3298Spring-in-may.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.spring-in-may{font-family: 'spring-in-may' !important;}
+
+@font-face {
+					font-family: 'adinekir';
+					src: url('../../fonts/useanyfont/4647adinekir.woff2') format('woff2'),
+						url('../../fonts/useanyfont/4647adinekir.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.adinekir{font-family: 'adinekir' !important;}
+
+@font-face {
+					font-family: 'analogue';
+					src: url('../../fonts/useanyfont/4149Analogue.woff2') format('woff2'),
+						url('../../fonts/useanyfont/4149Analogue.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.analogue{font-family: 'analogue' !important;}
+
+@font-face {
+					font-family: 'hatolie';
+					src: url('../../fonts/useanyfont/1670Hatolie.woff2') format('woff2'),
+						url('../../fonts/useanyfont/1670Hatolie.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.hatolie{font-family: 'hatolie' !important;}
+
+@font-face {
+					font-family: 'anabele';
+					src: url('../../fonts/useanyfont/3740Anabele.woff2') format('woff2'),
+						url('../../fonts/useanyfont/3740Anabele.woff') format('woff');
+					  font-display: auto;
+				}
+
+				.anabele{font-family: 'anabele' !important;}
