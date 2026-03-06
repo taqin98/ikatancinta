@@ -832,7 +832,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
       <div className="elementor-element elementor-element-49235f22 e-con-full e-flex e-con e-child" data-id="49235f22" data-element_type="container" data-settings='{"background_background":"classic"}'>
         <div className="elementor-element elementor-element-3aca2b1b reveal elementor-widget elementor-widget-image" data-id="3aca2b1b" data-element_type="widget" data-widget_type="image.default">
           <div className="elementor-widget-container">
-            <img fetchpriority="high" decoding="async" width="455" height="768" src="assets/images/local/wp-content__uploads__2024__09__Picture5-1-1-178x300.webp" className="attachment-full size-full wp-image-6989" alt="" srcSet="assets/images/local/wp-content__uploads__2024__09__Picture5-1-1-178x300.webp 178w" sizes="(max-width: 455px) 100vw, 455px" />
+            <img fetchpriority="high" decoding="async" width="455" height="768" src={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__Picture5-1-1-178x300.webp")} className="attachment-full size-full wp-image-6989" alt="" srcSet={rewriteSrcset("assets/images/local/wp-content__uploads__2024__09__Picture5-1-1-178x300.webp 178w")} sizes="(max-width: 455px) 100vw, 455px" />
           </div>
         </div>
         <div className="elementor-element elementor-element-4b85a326 reveal elementor-widget elementor-widget-heading" data-id="4b85a326" data-element_type="widget" data-widget_type="heading.default">
@@ -917,7 +917,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
           <div className="elementor-widget-container">
             <div className="elementor-social-icons-wrapper elementor-grid">
               <span className="elementor-grid-item">
-                <a className="elementor-icon elementor-social-icon elementor-social-icon-instagram elementor-animation-grow elementor-repeater-item-6154405" href="assets/www.instagram.com/wekita.id/" target="_blank">
+                <a className="elementor-icon elementor-social-icon elementor-social-icon-instagram elementor-animation-grow elementor-repeater-item-6154405" href="https://instagram.com/wekita.id" target="_blank">
                   <span className="elementor-screen-only">
                     Instagram
                   </span>
@@ -974,7 +974,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
           <div className="elementor-widget-container">
             <div className="elementor-social-icons-wrapper elementor-grid">
               <span className="elementor-grid-item">
-                <a className="elementor-icon elementor-social-icon elementor-social-icon-instagram elementor-animation-grow elementor-repeater-item-6154405" href="assets/www.instagram.com/wekita.id/" target="_blank">
+                <a className="elementor-icon elementor-social-icon elementor-social-icon-instagram elementor-animation-grow elementor-repeater-item-6154405" href="https://instagram.com/wekita.id" target="_blank">
                   <span className="elementor-screen-only">
                     Instagram
                   </span>
@@ -1080,7 +1080,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
           <div className="elementor-element elementor-element-46140128 elementor-align-center elementor-tablet-align-center elementor-mobile-align-center revealin elementor-widget elementor-widget-button" data-id="46140128" data-element_type="widget" data-widget_type="button.default">
             <div className="elementor-widget-container">
               <div className="elementor-button-wrapper">
-                <a className="elementor-button elementor-button-link elementor-size-sm" href="assets/misc/maps.app.goo.gl/D914WhqsNx1qxTRm6" target="_blank">
+                <a className="elementor-button elementor-button-link elementor-size-sm" href="https://maps.app.goo.gl/D914WhqsNx1qxTRm6" target="_blank">
                   <span className="elementor-button-content-wrapper">
                     <span className="elementor-button-icon">
                       <i aria-hidden="true" className="fas fa-map-marker-alt"></i>
@@ -1156,7 +1156,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
           <div className="elementor-element elementor-element-5deddaeb elementor-align-center elementor-tablet-align-center elementor-mobile-align-center revealin elementor-widget elementor-widget-button" data-id="5deddaeb" data-element_type="widget" data-widget_type="button.default">
             <div className="elementor-widget-container">
               <div className="elementor-button-wrapper">
-                <a className="elementor-button elementor-button-link elementor-size-sm" href="assets/misc/maps.app.goo.gl/D914WhqsNx1qxTRm6" target="_blank">
+                <a className="elementor-button elementor-button-link elementor-size-sm" href="https://maps.app.goo.gl/D914WhqsNx1qxTRm6" target="_blank">
                   <span className="elementor-button-content-wrapper">
                     <span className="elementor-button-icon">
                       <i aria-hidden="true" className="fas fa-map-marker-alt"></i>
@@ -1228,7 +1228,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
         <div className="elementor-element elementor-element-25605cc7 elementor-align-center reveal elementor-widget elementor-widget-button" data-id="25605cc7" data-element_type="widget" data-widget_type="button.default">
           <div className="elementor-widget-container">
             <div className="elementor-button-wrapper">
-              <a className="elementor-button elementor-button-link elementor-size-sm" href="assets/www.instagram.com/wekita.id/" target="_blank">
+              <a className="elementor-button elementor-button-link elementor-size-sm" href="https://instagram.com/wekita.id" target="_blank">
                 <span className="elementor-button-content-wrapper">
                   <span className="elementor-button-icon">
                     <i aria-hidden="true" className="fas fa-long-arrow-alt-right"></i>
@@ -1372,24 +1372,24 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
         <div className="elementor-element elementor-element-2d7b3f8d reveal elementor-widget elementor-widget-gallery" data-id="2d7b3f8d" data-element_type="widget" data-settings='{"ideal_row_height_tablet":{"unit":"px","size":163,"sizes":[]},"ideal_row_height":{"unit":"px","size":250,"sizes":[]},"gallery_layout":"justified","ideal_row_height_mobile":{"unit":"px","size":250,"sizes":[]},"gap":{"unit":"px","size":10,"sizes":[]},"gap_tablet":{"unit":"px","size":10,"sizes":[]},"gap_mobile":{"unit":"px","size":10,"sizes":[]},"link_to":"file","overlay_background":"yes","content_hover_animation":"fade-in"}' data-widget_type="gallery.default">
           <div className="elementor-widget-container">
             <div className="elementor-gallery__container">
-              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href="assets/images/local/wp-content__uploads__2024__09__sm-sm-1-5.jpg" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM3OSwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvc20tc20tMS01LmpwZyIsInNsaWRlc2hvdyI6IjJkN2IzZjhkIn0%3D">
-                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail="assets/images/local/wp-content__uploads__2024__09__sm-sm-1-5.jpg" data-width="1152" data-height="768" aria-label="" role="img"></div>
+              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__sm-sm-1-5.jpg")} data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM3OSwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvc20tc20tMS01LmpwZyIsInNsaWRlc2hvdyI6IjJkN2IzZjhkIn0%3D">
+                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__sm-sm-1-5.jpg")} data-width="1152" data-height="768" aria-label="" role="img"></div>
                 <div className="elementor-gallery-item__overlay"></div>
               </a>
-              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href="assets/images/local/wp-content__uploads__2024__09__foto-1-1.jpg" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM4MSwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvZm90by0xLTEuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
-                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail="assets/images/local/wp-content__uploads__2024__09__foto-1-1.jpg" data-width="1024" data-height="1535" aria-label="" role="img"></div>
+              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__foto-1-1.jpg")} data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM4MSwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvZm90by0xLTEuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
+                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__foto-1-1.jpg")} data-width="1024" data-height="1535" aria-label="" role="img"></div>
                 <div className="elementor-gallery-item__overlay"></div>
               </a>
-              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href="assets/images/local/wp-content__uploads__2024__09__foto-1-2.jpg" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM4MiwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvZm90by0xLTIuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
-                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail="assets/images/local/wp-content__uploads__2024__09__foto-1-2.jpg" data-width="1024" data-height="1535" aria-label="" role="img"></div>
+              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__foto-1-2.jpg")} data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM4MiwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvZm90by0xLTIuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
+                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__foto-1-2.jpg")} data-width="1024" data-height="1535" aria-label="" role="img"></div>
                 <div className="elementor-gallery-item__overlay"></div>
               </a>
-              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href="assets/images/local/wp-content__uploads__2024__09__foto-1-6.jpg" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM3OCwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvZm90by0xLTYuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
-                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail="assets/images/local/wp-content__uploads__2024__09__foto-1-6.jpg" data-width="1151" data-height="768" aria-label="" role="img"></div>
+              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__foto-1-6.jpg")} data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM3OCwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvZm90by0xLTYuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
+                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__foto-1-6.jpg")} data-width="1151" data-height="768" aria-label="" role="img"></div>
                 <div className="elementor-gallery-item__overlay"></div>
               </a>
-              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href="assets/images/local/wp-content__uploads__2024__09__sm-1-5-1-e1725518237570.jpg" data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM3MiwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvc20tMS01LTEtZTE3MjU1MTgyMzc1NzAuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
-                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail="assets/images/local/wp-content__uploads__2024__09__sm-1-5-1-e1725518237570.jpg" data-width="1100" data-height="768" aria-label="" role="img"></div>
+              <a className="e-gallery-item elementor-gallery-item elementor-animated-content" href={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__sm-1-5-1-e1725518237570.jpg")} data-elementor-open-lightbox="yes" data-elementor-lightbox-slideshow="2d7b3f8d" data-e-action-hash="#elementor-action%3Aaction%3Dlightbox%26settings%3DeyJpZCI6NzM3MiwidXJsIjoiaHR0cHM6XC9cL2ludi5ydW1haHVuZGFuZ2FuLmlkXC93cC1jb250ZW50XC91cGxvYWRzXC8yMDI0XC8wOVwvc20tMS01LTEtZTE3MjU1MTgyMzc1NzAuanBnIiwic2xpZGVzaG93IjoiMmQ3YjNmOGQifQ%3D%3D">
+                <div className="e-gallery-image elementor-gallery-item__image" data-thumbnail={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__sm-1-5-1-e1725518237570.jpg")} data-width="1100" data-height="768" aria-label="" role="img"></div>
                 <div className="elementor-gallery-item__overlay"></div>
               </a>
             </div>
@@ -1418,7 +1418,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
         <div className="elementor-element elementor-element-4a27389b e-con-full reveal e-flex e-con e-child" data-id="4a27389b" data-element_type="container" data-settings='{"background_background":"classic"}'>
           <div className="elementor-element elementor-element-149eb079 wyKR elementor-widget elementor-widget-image" data-id="149eb079" data-element_type="widget" data-widget_type="image.default">
             <div className="elementor-widget-container">
-              <img decoding="async" width="378" height="768" src="assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp" className="attachment-large size-large wp-image-7383" alt="" srcSet="assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp 378w, assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1-148x300.webp 148w" sizes="(max-width: 378px) 100vw, 378px" />
+              <img decoding="async" width="378" height="768" src={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp")} className="attachment-large size-large wp-image-7383" alt="" srcSet={rewriteSrcset("assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp 378w, assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1-148x300.webp 148w")} sizes="(max-width: 378px) 100vw, 378px" />
             </div>
           </div>
           <div className="elementor-element elementor-element-56dac0be reveal elementor-widget elementor-widget-text-editor" data-id="56dac0be" data-element_type="widget" data-widget_type="text-editor.default">
@@ -1455,12 +1455,12 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
             <div className="elementor-element elementor-element-372a8dc8 e-con-full animated-slow e-flex elementor-invisible e-con e-child" data-id="372a8dc8" data-element_type="container" data-settings='{"background_background":"classic","animation":"zoomIn"}'>
               <div className="elementor-element elementor-element-3deecddf elementor-widget elementor-widget-image" data-id="3deecddf" data-element_type="widget" data-widget_type="image.default">
                 <div className="elementor-widget-container">
-                  <img decoding="async" width="2048" height="650" src="assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png" className="attachment-full size-full wp-image-6963" alt="" srcSet="assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png 2048w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-300x95.png 300w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-1024x325.png 1024w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-768x244.png 768w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-1536x488.png 1536w" sizes="(max-width: 2048px) 100vw, 2048px" />
+                  <img decoding="async" width="2048" height="650" src={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png")} className="attachment-full size-full wp-image-6963" alt="" srcSet={rewriteSrcset("assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png 2048w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-300x95.png 300w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-1024x325.png 1024w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-768x244.png 768w, assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1-1536x488.png 1536w")} sizes="(max-width: 2048px) 100vw, 2048px" />
                 </div>
               </div>
               <div className="elementor-element elementor-element-6c76d365 elementor-widget elementor-widget-image" data-id="6c76d365" data-element_type="widget" data-widget_type="image.default">
                 <div className="elementor-widget-container">
-                  <img loading="lazy" decoding="async" width="150" height="150" src="assets/images/local/wp-content__uploads__2024__09__chip-atm-1-2-4.png" className="attachment-full size-full wp-image-7384" alt="" />
+                  <img loading="lazy" decoding="async" width="150" height="150" src={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__chip-atm-1-2-4.png")} className="attachment-full size-full wp-image-7384" alt="" />
                 </div>
               </div>
               <div className="elementor-element elementor-element-6e0c2eb1 elementor-widget elementor-widget-heading" data-id="6e0c2eb1" data-element_type="widget" data-widget_type="heading.default">
@@ -1500,7 +1500,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
             <div className="elementor-element elementor-element-5c65d12a e-con-full animated-slow e-flex elementor-invisible e-con e-child" data-id="5c65d12a" data-element_type="container" data-settings='{"background_background":"classic","animation":"zoomIn"}'>
               <div className="elementor-element elementor-element-378cbbc0 elementor-widget elementor-widget-image" data-id="378cbbc0" data-element_type="widget" data-widget_type="image.default">
                 <div className="elementor-widget-container">
-                  <img loading="lazy" decoding="async" width="1200" height="342" src="assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png" className="attachment-full size-full wp-image-7385" alt="" srcSet="assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png 1200w, assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1-300x86.png 300w, assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1-1024x292.png 1024w, assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1-768x219.png 768w" sizes="(max-width: 1200px) 100vw, 1200px" />
+                  <img loading="lazy" decoding="async" width="1200" height="342" src={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png")} className="attachment-full size-full wp-image-7385" alt="" srcSet={rewriteSrcset("assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png 1200w, assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1-300x86.png 300w, assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1-1024x292.png 1024w, assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1-768x219.png 768w")} sizes="(max-width: 1200px) 100vw, 1200px" />
                 </div>
               </div>
               <div className="elementor-element elementor-element-65c833ad elementor-widget elementor-widget-spacer" data-id="65c833ad" data-element_type="widget" data-widget_type="spacer.default">
@@ -1587,7 +1587,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
         <div className="elementor-element elementor-element-5f102532 e-con-full revealatas e-flex e-con e-child" data-id="5f102532" data-element_type="container" id="ucapan" data-settings='{"background_background":"classic"}'>
           <div className="elementor-element elementor-element-4ad0ff79 wyKR elementor-widget elementor-widget-image" data-id="4ad0ff79" data-element_type="widget" data-widget_type="image.default">
             <div className="elementor-widget-container">
-              <img decoding="async" width="378" height="768" src="assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp" className="attachment-large size-large wp-image-7383" alt="" srcSet="assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp 378w, assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1-148x300.webp 148w" sizes="(max-width: 378px) 100vw, 378px" />
+              <img decoding="async" width="378" height="768" src={resolveAssetUrl("assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp")} className="attachment-large size-large wp-image-7383" alt="" srcSet={rewriteSrcset("assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1.webp 378w, assets/images/local/wp-content__uploads__2024__09__Asset-1@4x-8-1-1-148x300.webp 148w")} sizes="(max-width: 378px) 100vw, 378px" />
             </div>
           </div>
           <div className="elementor-element elementor-element-74c77e18 reveal elementor-widget elementor-widget-text-editor" data-id="74c77e18" data-element_type="widget" data-widget_type="text-editor.default">
@@ -1765,7 +1765,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
           <div className="elementor-widget-container">
             <p>
               Made with 
-              <img decoding="async" className="emoji" role="img" draggable="false" src="assets/images/s.w.org/images__core__emoji__13.0.1__svg__2764.svg" alt="❤" />
+              <img decoding="async" className="emoji" role="img" draggable="false" src={resolveAssetUrl("assets/images/s.w.org/images__core__emoji__13.0.1__svg__2764.svg")} alt="❤" />
               by Ikatancinta.in
             </p>
           </div>
@@ -1774,7 +1774,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
           <div className="elementor-widget-container">
             <div id="audio-container" className="audio-box">
               <audio id="song" loop>
-                <source src="assets/misc/local/wp-content__uploads__2024__09__y2mate.com-PREP-As-It-Was-Harry-Styles-Cover-Official-Visualizer-1-1.mp3" type="audio/mp3" />
+                <source src={resolveAssetUrl("assets/misc/local/wp-content__uploads__2024__09__y2mate.com-PREP-As-It-Was-Harry-Styles-Cover-Official-Visualizer-1-1.mp3")} type="audio/mp3" />
               </audio>
               <div className="elementor-icon-wrapper" id="unmute-sound" style={{display: "none"}}>
                 <div className="elementor-icon elementor-animation-shrink">

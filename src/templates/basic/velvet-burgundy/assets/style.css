@@ -1,71 +1,71 @@
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__modules__bdt-uikit.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__modules__ep-helper.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__exad-styles.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__addons__comment-kit2__css__cui_style.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__new-icon.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__themes__hello-elementor__assets__css__reset.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__themes__hello-elementor__assets__css__theme.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__themes__hello-elementor__assets__css__header-footer.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__frontend.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__css__post-5.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__eicons__css__elementor-icons.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__wdp.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__weddingpress__assets__css__guest-book.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-spacer.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-heading.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__zoomIn.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__fadeInUp.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-divider.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__fadeIn.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-image.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-grow.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__widget-social-icons.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__conditionals__apple-webkit.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__swiper__v8__css__swiper.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__css__conditionals__e-swiper.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor-pro__assets__css__widget-gallery.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__e-gallery__css__e-gallery.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor-pro__assets__css__conditionals__transitions.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-shrink.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor-pro__assets__css__modules__sticky.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-pulse-grow.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__css__post-5856.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__roboto.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__robotoslab.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__cormorant.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__poppins.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__portlligatsans.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__cinzel.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__nunito.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__jura.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__italiana.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__uploads__elementor__google-fonts__css__montserrat.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__fontawesome.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__solid.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__brands.min.css");
-@import url("/templates/basic/velvet-burgundy/assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__regular.min.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__assets__css__modules__bdt-uikit.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__assets__css__modules__ep-helper.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__assets__css__exad-styles.min.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__addons__comment-kit2__css__cui_style.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__assets__css__new-icon.min.css");
+@import url("./assets/css/local/wp-content__themes__hello-elementor__assets__css__reset.css");
+@import url("./assets/css/local/wp-content__themes__hello-elementor__assets__css__theme.css");
+@import url("./assets/css/local/wp-content__themes__hello-elementor__assets__css__header-footer.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__frontend.min.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__css__post-5.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__eicons__css__elementor-icons.min.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__assets__css__wdp.css");
+@import url("./assets/css/local/wp-content__plugins__weddingpress__assets__css__guest-book.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__widget-spacer.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__widget-heading.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__zoomIn.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__fadeInUp.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__widget-divider.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__fadeIn.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__widget-image.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-grow.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__widget-social-icons.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__conditionals__apple-webkit.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__swiper__v8__css__swiper.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__css__conditionals__e-swiper.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor-pro__assets__css__widget-gallery.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__e-gallery__css__e-gallery.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor-pro__assets__css__conditionals__transitions.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-shrink.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor-pro__assets__css__modules__sticky.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__animations__styles__e-animation-pulse-grow.min.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__css__post-5856.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__roboto.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__robotoslab.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__cormorant.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__poppins.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__portlligatsans.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__cinzel.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__nunito.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__jura.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__italiana.css");
+@import url("./assets/css/local/wp-content__uploads__elementor__google-fonts__css__montserrat.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__fontawesome.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__solid.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__brands.min.css");
+@import url("./assets/css/local/wp-content__plugins__elementor__assets__lib__font-awesome__css__regular.min.css");
 
 @font-face {
   font-family: "hatolie";
-  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__1670Hatolie.woff2") format("woff2");
+  src: url("./assets/fonts/local/fonts__uploads__useanyfont__1670Hatolie.woff2") format("woff2");
   font-display: swap;
 }
 
 @font-face {
   font-family: "analogue";
-  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__4149Analogue.woff2") format("woff2");
+  src: url("./assets/fonts/local/fonts__uploads__useanyfont__4149Analogue.woff2") format("woff2");
   font-display: swap;
 }
 
 @font-face {
   font-family: "strawberrycupcakes";
-  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__9965StrawberryCupcakes.woff2") format("woff2");
+  src: url("./assets/fonts/local/fonts__uploads__useanyfont__9965StrawberryCupcakes.woff2") format("woff2");
   font-display: swap;
 }
 
 @font-face {
   font-family: "photograph";
-  src: url("/templates/basic/velvet-burgundy/assets/fonts/local/fonts__uploads__useanyfont__9069photograph.woff2") format("woff2");
+  src: url("./assets/fonts/local/fonts__uploads__useanyfont__9069photograph.woff2") format("woff2");
   font-display: swap;
 }
 
