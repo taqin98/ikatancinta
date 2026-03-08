@@ -1,65 +1,11 @@
 import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
 import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TEMA-05-2-6c5f3dc1.webp";
-import timelessPromiseThumbnail from "../templates/basic/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
-import mistyRomanceThumbnail from "../templates/basic/misty-romance/assets/images/cover/cover-main.webp";
-import velvetBurgundyThumbnail from "../templates/basic/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
-import botanicalEleganceThumbnail from "../templates/premium/botanical-elegance/assets/media/uploads/2025/11/PREMIUM-01_SPESIAL-FOTO.jpg";
+import timelessPromiseThumbnail from "../templates/premium/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
+import mistyRomanceThumbnail from "../templates/premium/misty-romance/assets/images/cover/cover-main.webp";
+import velvetBurgundyThumbnail from "../templates/premium/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
+import botanicalEleganceThumbnail from "../templates/exclusive/botanical-elegance/assets/media/uploads/2025/11/PREMIUM-01_SPESIAL-FOTO.jpg";
 
 export const themes = [
-  {
-    slug: "light-blue-floral",
-    presetId: "lbf-basic-001",
-    name: "Light Blue Floral",
-    category: "Floral",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
-    description: "Elegan pastel biru muda dengan sentuhan ornamen floral ringan.",
-    title: "The Wedding Of",
-    couple: "Habib & Adiba",
-    thumbnail:
-      "https://images.unsplash.com/photo-1519741347686-c1e0aadf4611?auto=format&fit=crop&w=600&q=80",
-    image:
-      "https://images.unsplash.com/photo-1522673607200-164d1b6ce486?auto=format&fit=crop&w=600&q=80",
-    overlayClass: "bg-blue-900/20",
-    cardClass: "bg-blue-50/50 hover:bg-blue-50",
-    templateRoute: "/undangan/light-blue-floral",
-  },
-  {
-    slug: "rose-gold-minimalist",
-    presetId: "rgm-basic-001",
-    name: "Rose Gold Minimalist",
-    category: "Minimalist",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
-    description: "Elegan dan bersih dengan sentuhan Rose Gold hangat dan tipografi serif anggun.",
-    title: "Wedding Invitation",
-    couple: "Habib & Adiba",
-    thumbnail:
-      "https://images.unsplash.com/photo-1543168256-418811576931?auto=format&fit=crop&w=600&q=80",
-    image:
-      "https://images.unsplash.com/photo-1519741347686-c1e0aadf4611?auto=format&fit=crop&w=600&q=80",
-    overlayClass: "bg-rose-900/10",
-    cardClass: "bg-rose-50/50 hover:bg-rose-50",
-    templateRoute: "/undangan/rose-gold-minimalist",
-  },
-  {
-    slug: "beige-natural",
-    presetId: "bgn-basic-001",
-    name: "Beige Natural",
-    category: "Natural",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
-    description: "Nuansa krem natural dengan floral beige dan tipografi klasik hangat.",
-    title: "The Wedding Of",
-    couple: "Habib & Adiba",
-    thumbnail:
-      "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80",
-    image:
-      "https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=600&q=80",
-    overlayClass: "bg-amber-900/10",
-    cardClass: "bg-amber-50/60 hover:bg-amber-50",
-    templateRoute: "/undangan/beige-natural",
-  },
   {
     slug: "blue-nature",
     presetId: "bun-basic-001",
@@ -94,11 +40,11 @@ export const themes = [
   },
   {
     slug: "timeless-promise",
-    presetId: "tlp-basic-001",
+    presetId: "tlp-premium-001",
     name: "Timeless Promise",
     category: "Floral",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
+    packageTier: "PREMIUM",
+    price: "Rp 149.000",
     description: "Template klasik hasil migrasi pixel-perfect dari source WordPress/Elementor.",
     title: "The Wedding Of",
     couple: "Adiba & Habib",
@@ -110,11 +56,11 @@ export const themes = [
   },
   {
     slug: "misty-romance",
-    presetId: "mtr-basic-001",
+    presetId: "mtr-premium-001",
     name: "Misty Romance",
     category: "Floral",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
+    packageTier: "PREMIUM",
+    price: "Rp 149.000",
     description: "Template romantis dengan ambience misty, lottie burung, dan layout Elementor pixel-perfect.",
     title: "The Wedding Of",
     couple: "Habib & Adiba",
@@ -126,11 +72,11 @@ export const themes = [
   },
   {
     slug: "velvet-burgundy",
-    presetId: "vlb-basic-001",
+    presetId: "vlb-premium-001",
     name: "Velvet Burgundy",
     category: "Classic",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
+    packageTier: "PREMIUM",
+    price: "Rp 149.000",
     description: "Migrasi pixel-perfect dari template WordPress/Elementor dengan nuansa burgundy elegan.",
     title: "The Wedding Of",
     couple: "Habib & Adiba",
@@ -142,10 +88,10 @@ export const themes = [
   },
   {
     slug: "botanical-elegance",
-    presetId: "bte-premium-001",
+    presetId: "bte-exclusive-001",
     name: "Botanical Elegance",
     category: "Classic",
-    packageTier: "PREMIUM",
+    packageTier: "EKSLUSIF",
     price: "Rp 149.000",
     description: "Migrasi pixel-perfect dari template premium WordPress/Elementor dengan detail botanical elegan.",
     title: "The Wedding Of",

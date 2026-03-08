@@ -1,75 +1,75 @@
-/** @type {import('../blue-nature/schema/invitationSchema').defaultSchema} */
+/** @type {import('../../basic/blue-nature/schema/invitationSchema').defaultSchema} */
 export const defaultSchema = {
     guest: {
         name: "Nama Tamu",
-        greetingLabel: "Dear,",
+        greetingLabel: "Kepada Bapak/Ibu/Saudara/i",
         code: "",
     },
     couple: {
         groom: {
             nameFull: "Habib Yulianto",
             nickName: "Habib",
-            instagram: "habibyulianto",
+            instagram: "wekita.id",
             photo: "",
-            parentInfo: "Putra Kedua Bapak M. Dawam & Ibu Dewi Sudarwati",
+            parentInfo: "Putra Kedua Bapak M. Dawam & (Almh) Ibu Dewi Sudarwati",
         },
         bride: {
             nameFull: "Adiba Putri Syakila",
             nickName: "Adiba",
-            instagram: "adibaputri",
+            instagram: "wekita.id",
             photo: "",
             parentInfo: "Putri Pertama Bapak Anas & Ibu Kholifah",
         },
         heroPhoto: "",
     },
     event: {
-        dateISO: "2026-03-30T10:00:00",
+        dateISO: "2025-03-30T10:00:00+07:00",
         akad: {
-            date: "Minggu, 30 Maret 2026",
+            date: "Minggu, 30 Maret 2025",
             time: "10.00 WIB",
             address: "Ds Pagu Kec. Wates Kab. Kediri",
             mapsUrl: "https://maps.google.com",
         },
         resepsi: {
-            date: "Minggu, 30 Maret 2026",
+            date: "Minggu, 30 Maret 2025",
             time: "10.00 WIB",
             address: "Ds Pagu Kec. Wates Kab. Kediri",
             mapsUrl: "https://maps.google.com",
         },
         livestream: {
-            date: "Minggu, 30 Maret 2026",
+            date: "Minggu, 30 Maret 2025",
             time: "10.00 WIB",
             platformLabel: "Instagram",
             url: "https://instagram.com",
         },
     },
     copy: {
-        openingGreeting: "We're Getting Married",
+        openingGreeting: "The Wedding Of",
         openingText:
-            "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami.",
+            "Tanpa mengurangi rasa hormat. Kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami :",
         quote:
-            "Dan segala sesuatu Kami ciptakan berpasang-pasangan agar kamu mengingat (kebesaran Allah).",
-        quoteSource: "QS. Az-Zariyat 49",
+            "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya.",
+        quoteSource: "QS. Ar-Rum (30): 21",
         closingText:
             "Merupakan suatu kehormatan dan kebahagiaan bagi kami, apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya, kami mengucapkan terima kasih.",
     },
     lovestory: [
         {
             title: "Awal Cerita",
-            date: "11-11-2017",
-            text: "Berawal dari teman kuliah bersama-sama memperjuangkan S1 Teknik Sipil, bertemu pada tahun 2016 hingga selalu bertemu untuk sesekali makan bersama, lalu menjalin hubungan pacaran 11-11-2017.",
+            date: "2020",
+            text: "Berawal dari perkenalan sederhana, kami tumbuh bersama dalam perjalanan yang penuh syukur.",
             photo: "",
         },
         {
             title: "Lamaran",
-            date: "23-03-2019",
-            text: "Pada tanggal 23-03-2019 kami mengikat diri pada pertunangan dan pada tanggal 29-10-2020 kami mengadakan akad nikah. Alhamdulillah perjalanan ini sampai pada akhirnya.",
+            date: "2024",
+            text: "Dengan restu keluarga, kami memantapkan hati untuk melangkah ke jenjang pernikahan.",
             photo: "",
         },
         {
-            title: "Resepsi Pernikahan",
-            date: "30-03-2026",
-            text: "Kami bisa melakukan acara resepsi yang insyaAllah diadakan pada Minggu, 30 Maret 2026.",
+            title: "Hari Istimewa",
+            date: "2025",
+            text: "InsyaAllah kami akan memulai kehidupan baru bersama dengan doa terbaik dari keluarga dan sahabat.",
             photo: "",
         },
     ],
@@ -80,8 +80,8 @@ export const defaultSchema = {
         digitalEnvelopeEnabled: true,
         digitalEnvelopeInfo: {
             bankList: [
-                { bank: "BCA", account: "1234567890", name: "Habib Yulianto" },
-                { bank: "DANA", account: "081234567890", name: "Habib Yulianto" },
+                { bank: "BCA", account: "1234 5678 90", name: "Habib" },
+                { bank: "DANA", account: "1234 5678 90", name: "Habib" },
             ],
         },
         rsvpEnabled: true,

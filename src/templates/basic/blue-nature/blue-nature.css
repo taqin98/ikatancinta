@@ -236,7 +236,7 @@
   background: linear-gradient(180deg, rgba(46, 63, 84, 0.1) 20%, rgba(46, 63, 84, 0.82) 100%);
 }
 
-.bn-cover-gate__content > * {
+.bn-cover-gate__content>* {
   position: relative;
   z-index: 2;
 }
@@ -431,7 +431,7 @@
   opacity: 0.84;
 }
 
-.bn-profile > * {
+.bn-profile>* {
   position: relative;
   z-index: 1;
 }
@@ -449,6 +449,8 @@
 }
 
 .bn-profile__photo {
+  margin-left: auto;
+  margin-right: auto;
   width: 170px;
   height: 260px;
   object-fit: cover;
@@ -551,7 +553,7 @@
   background: rgba(255, 255, 255, 0.62);
 }
 
-.bn-event-card > * {
+.bn-event-card>* {
   position: relative;
   z-index: 1;
 }
@@ -623,7 +625,7 @@
   background: rgba(255, 255, 255, 0.73);
 }
 
-.bn-live__card > * {
+.bn-live__card>* {
   position: relative;
   z-index: 1;
 }
@@ -655,7 +657,7 @@
   background: linear-gradient(180deg, #fff 0%, rgba(255, 255, 255, 0.82) 65%);
 }
 
-.bn-gallery > * {
+.bn-gallery>* {
   position: relative;
   z-index: 1;
 }
@@ -707,7 +709,7 @@
   background: linear-gradient(180deg, transparent 12%, #fff 75%);
 }
 
-.bn-love-hero > * {
+.bn-love-hero>* {
   position: relative;
   z-index: 1;
 }
@@ -752,7 +754,7 @@
   padding: 16px;
 }
 
-.bn-timeline__item + .bn-timeline__item {
+.bn-timeline__item+.bn-timeline__item {
   border-top: 1px solid rgba(64, 79, 106, 0.25);
   margin-top: 12px;
   padding-top: 12px;
@@ -805,7 +807,7 @@
   background: rgba(255, 255, 255, 0.58);
 }
 
-.bn-gift__card > * {
+.bn-gift__card>* {
   position: relative;
   z-index: 1;
 }
@@ -938,7 +940,7 @@
   background: rgba(255, 255, 255, 0.72);
 }
 
-.bn-wishes__card > * {
+.bn-wishes__card>* {
   position: relative;
   z-index: 1;
 }
@@ -1103,7 +1105,7 @@
   background: linear-gradient(180deg, var(--bn-bg-light) 0%, transparent 100%);
 }
 
-.bn-closing__message > * {
+.bn-closing__message>* {
   position: relative;
   z-index: 1;
 }

@@ -1,4 +1,4 @@
-/** @type {import('../../light-blue-floral/schema/invitationSchema').defaultSchema} */
+/** @type {import('./invitationSchema').defaultSchema} */
 export const defaultSchema = {
     guest: {
         name: "Nama Tamu",

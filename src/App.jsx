@@ -10,17 +10,16 @@ import Navbar from "./components/Navbar";
 import OrderConfirmationPage from "./components/OrderConfirmationPage";
 import Pricing from "./components/Pricing";
 import {
-  BeigeNaturalTemplate,
   BlueNatureTemplate,
-  LightBlueFloralTemplate,
   NoirFloralTemplate,
-  RoseGoldMinimalistTemplate,
+} from "./templates/basic";
+import {
+  PremiumThemePreviewPage,
   TimelessPromiseTemplate,
   MistyRomanceTemplate,
   VelvetBurgundyTemplate,
-} from "./templates/basic";
-import { BotanicalEleganceTemplate, PremiumThemePreviewPage } from "./templates/premium";
-import { ExclusiveThemePreviewPage } from "./templates/exclusive";
+} from "./templates/premium";
+import { BotanicalEleganceTemplate, ExclusiveThemePreviewPage } from "./templates/exclusive";
 import InvitationPreviewPage from "./components/InvitationPreviewPage";
 import ThemeDetailPage from "./components/ThemeDetailPage";
 import ThemeGalleryPage from "./components/ThemeGalleryPage";
@@ -111,18 +110,6 @@ function App() {
     return <InvitationPreviewPage />;
   }
 
-
-  if (pathname === "/undangan/light-blue-floral") {
-    return <LightBlueFloralTemplate />;
-  }
-
-  if (pathname === "/undangan/rose-gold-minimalist") {
-    return <RoseGoldMinimalistTemplate />;
-  }
-
-  if (pathname === "/undangan/beige-natural") {
-    return <BeigeNaturalTemplate />;
-  }
 
   if (pathname === "/undangan/blue-nature") {
     return <BlueNatureTemplate />;
