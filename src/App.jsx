@@ -12,7 +12,6 @@ import Pricing from "./components/Pricing";
 import {
   BlueNatureTemplate,
   IvoryGraceTemplate,
-  NoirFloralTemplate,
   NoirMinimalistTemplate,
 } from "./templates/basic";
 import {
@@ -115,10 +114,6 @@ function App() {
 
   if (pathname === "/undangan/blue-nature") {
     return <BlueNatureTemplate />;
-  }
-
-  if (pathname === "/undangan/noir-floral") {
-    return <NoirFloralTemplate />;
   }
 
   if (pathname === "/undangan/noir-minimalist") {

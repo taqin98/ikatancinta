@@ -1,5 +1,4 @@
 import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
-import noirFloralThumbnail from "../templates/basic/noir-floral/assets/images/TEMA-05-2-6c5f3dc1.webp";
 import noirMinimalistThumbnail from "../templates/basic/noir-minimalist/assets/images/LUXURY-01-1.webp";
 import ivoryGraceThumbnail from "../templates/basic/ivory-grace/assets/images/LUXURY-02-1.webp";
 import timelessPromiseThumbnail from "../templates/premium/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
@@ -23,22 +22,6 @@ export const themes = [
     overlayClass: "bg-slate-900/20",
     cardClass: "bg-slate-100/70 hover:bg-slate-100",
     templateRoute: "/undangan/blue-nature",
-  },
-  {
-    slug: "noir-floral",
-    presetId: "nrf-basic-001",
-    name: "Noir Floral",
-    category: "Floral",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
-    description: "Nuansa dark floral elegan dengan detail krem klasik dan tipografi romantis.",
-    title: "The Wedding Of",
-    couple: "Habib & Adiba",
-    thumbnail: noirFloralThumbnail,
-    image: noirFloralThumbnail,
-    overlayClass: "bg-zinc-900/30",
-    cardClass: "bg-zinc-100/70 hover:bg-zinc-100",
-    templateRoute: "/undangan/noir-floral",
   },
   {
     slug: "noir-minimalist",
@@ -135,107 +118,7 @@ export const themes = [
     overlayClass: "bg-slate-900/20",
     cardClass: "bg-slate-100/70 hover:bg-slate-100",
     templateRoute: "/undangan/botanical-elegance",
-  },
-  {
-    slug: "sage-romance",
-    presetId: "6970876768272a8c0e70176b",
-    name: "Sage Romance",
-    category: "Modern",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
-    description: "Nuansa clean, elegan, dan modern.",
-    title: "The Wedding",
-    couple: "Lestari & Dimas",
-    thumbnail:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDww_cCj1cLqjGgjlxH44eK1G8UB4UoxD-rTcUT0awQZDTRQMoJJSDFO4Qx7ILa-7ubzr_j0rwFFXHrcTsSRm7DuglmdZSztMzPVZih95LIXAj1DTVGyXgPBEX9Zm1L7z0VdqWqv4gIQGU0C78lW6siwNhNvWoL72Pf_oqqmPxE9LVIUF_2IrG0SW9AcrQWvDRImJGRU0Xhf3fvtF4zCiMXmQEuPZ-_Ur_xspB-gDf927QVZm6A3eXF8T3ZqdHhVqDmBefH0WK7P-ls",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDww_cCj1cLqjGgjlxH44eK1G8UB4UoxD-rTcUT0awQZDTRQMoJJSDFO4Qx7ILa-7ubzr_j0rwFFXHrcTsSRm7DuglmdZSztMzPVZih95LIXAj1DTVGyXgPBEX9Zm1L7z0VdqWqv4gIQGU0C78lW6siwNhNvWoL72Pf_oqqmPxE9LVIUF_2IrG0SW9AcrQWvDRImJGRU0Xhf3fvtF4zCiMXmQEuPZ-_Ur_xspB-gDf927QVZm6A3eXF8T3ZqdHhVqDmBefH0WK7P-ls",
-    overlayClass: "bg-black/10",
-    cardClass: "bg-secondary-soft/50 hover:bg-secondary-soft",
-  },
-  {
-    slug: "blushing-peony",
-    presetId: "698b257f0b976e6c66b38b4a",
-    name: "Blushing Peony",
-    category: "Floral",
-    packageTier: "PREMIUM",
-    price: "Rp 149.000",
-    description: "Lembut dan romantis dengan sentuhan bunga.",
-    title: "Save the Date",
-    couple: "Putri & Rizky",
-    thumbnail:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAsflsl_adbn0oqqfiu9fjq3ItiJKrlPqU17VYLBEjZnri1tWHP-Yn5tnoYJ1f4pGjNEflgA4ETPg9zVoGGQCd27yCXhpIFdEzRLVLzdu6Bieotx9uIig3pLXnxTxWIeOW1OpP1rKCt4o3gVLdrLUShKnyOOAhPrmLtbDxnwie8ISMb-oSwZQL3lF07wHNqta-QaEunG0t68ewnLARRF89uZX5gqkFUAkhErZVaMEnWH5qFRyjyqBA7pab70XdlPezeeVn1pRQC3QqA",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAsflsl_adbn0oqqfiu9fjq3ItiJKrlPqU17VYLBEjZnri1tWHP-Yn5tnoYJ1f4pGjNEflgA4ETPg9zVoGGQCd27yCXhpIFdEzRLVLzdu6Bieotx9uIig3pLXnxTxWIeOW1OpP1rKCt4o3gVLdrLUShKnyOOAhPrmLtbDxnwie8ISMb-oSwZQL3lF07wHNqta-QaEunG0t68ewnLARRF89uZX5gqkFUAkhErZVaMEnWH5qFRyjyqBA7pab70XdlPezeeVn1pRQC3QqA",
-    overlayClass: "bg-black/20",
-    cardClass: "bg-primary-soft/50 hover:bg-primary-soft",
-  },
-  {
-    slug: "classic-elegance",
-    presetId: "69a0c2b1c0e11f5a78420001",
-    name: "Classic Elegance",
-    category: "Minimalis",
-    packageTier: "PREMIUM",
-    price: "Rp 129.000",
-    description: "Simple, clean, dan tetap berkelas.",
-    title: "Wedding Invitation",
-    couple: "Sarah & John",
-    thumbnail:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC_i6qVstOl5xlJ8zKWI8zvtR0nMVHLQxnbOpd6DmFKD1rZjzlayY6Xralsrv7Gc2hPLvGpGOZz0zi0uJ7iEw6xrZ2icBh1sXpK0ifUYVvvaABPLomYJ9DacxtpyT-vgRvqfem73GyKbqWXkcRmvHLtvO_EGBsSW2gWvXpabZksZ-zIJvf4KVca4LOu6MqSwMIijqECph7FC2rreB2FrjDuSE9e_6gv4Y2b-9nSGisO_5f9HsDbxYhcgI7OelTaml4kK84jpPYe6A4N",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuC_i6qVstOl5xlJ8zKWI8zvtR0nMVHLQxnbOpd6DmFKD1rZjzlayY6Xralsrv7Gc2hPLvGpGOZz0zi0uJ7iEw6xrZ2icBh1sXpK0ifUYVvvaABPLomYJ9DacxtpyT-vgRvqfem73GyKbqWXkcRmvHLtvO_EGBsSW2gWvXpabZksZ-zIJvf4KVca4LOu6MqSwMIijqECph7FC2rreB2FrjDuSE9e_6gv4Y2b-9nSGisO_5f9HsDbxYhcgI7OelTaml4kK84jpPYe6A4N",
-    overlayClass: "bg-gradient-to-t from-black/80 via-transparent to-transparent",
-    cardClass: "bg-accent-soft/50 hover:bg-accent-soft",
-  },
-  {
-    slug: "wooden-dream",
-    presetId: "69a0c2b1c0e11f5a78420002",
-    name: "Wooden Dream",
-    category: "Rustic",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
-    description: "Karakter rustic hangat dengan tekstur natural.",
-    title: "Undangan Pernikahan",
-    couple: "Rina & Fajar",
-    thumbnail:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAQSQ_836cyL6XxKE54c2eQuFCVsuD0_YQRo_22tNpIXnhqQBUTmnMfxuuujHTXXIVNxV3xsKOa0qqFOAr8WEvEt77zyE4SXDcKGqiA5J7aBAqkqpi8T7Vhpz2onShLU6KgmxKLkuZY6fI8BOZ09P7pEqKkQEnAso7jM9lgcsdHLLWW8ySai_3kBZSIhl8Tl0dLRR07mhX01AIq594s8p9A0fkQzE1TNJUxznfakSllgWewDMkg-niAy9SFrXwy-XqxsDHaqyYMm3KR",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuAQSQ_836cyL6XxKE54c2eQuFCVsuD0_YQRo_22tNpIXnhqQBUTmnMfxuuujHTXXIVNxV3xsKOa0qqFOAr8WEvEt77zyE4SXDcKGqiA5J7aBAqkqpi8T7Vhpz2onShLU6KgmxKLkuZY6fI8BOZ09P7pEqKkQEnAso7jM9lgcsdHLLWW8ySai_3kBZSIhl8Tl0dLRR07mhX01AIq594s8p9A0fkQzE1TNJUxznfakSllgWewDMkg-niAy9SFrXwy-XqxsDHaqyYMm3KR",
-    overlayClass: "bg-black/30",
-    cardClass: "bg-white dark:bg-slate-800 border border-slate-100 hover:border-slate-200",
-  },
-  {
-    slug: "emerald-syari",
-    presetId: "69a0c2b1c0e11f5a78420003",
-    name: "Emerald Syar'i",
-    category: "Islami",
-    packageTier: "EKSLUSIF",
-    price: "Rp 129.000",
-    description: "Aksen islami berkelas dengan motif tegas.",
-    title: "Walimatul Ursy",
-    couple: "Aisyah & Yusuf",
-    thumbnail:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuDQYbqkCcTu1-9T17kpI582nfZS3VxrUp69H45yUTRwRYaHuE5rShgy8ycvRDDUQC_CR9nM6J1wl2bZ5GA59OLUkaOGGnyV43aFh_u_B5Qf1H7zcfRs5aAxm0pSzB53i8ahrISuc8tG_dG2OKAo7H4m0F896gzNI1vK2Xl7RrTJhIcc2x2VWlwe8kgEqeYbCZT5uLcLaKfkJsi9fzP-x-dN-pxxvKBW2HzWlFLLeEEFzSpJnLc4puEyWi8UIC_kt1Gs4MwSbeBLHC8z",
-    usePattern: true,
-    cardClass: "bg-secondary-soft/50 hover:bg-secondary-soft",
-  },
-  {
-    slug: "pastel-love",
-    presetId: "69a0c2b1c0e11f5a78420004",
-    name: "Pastel Love",
-    category: "Modern",
-    packageTier: "PREMIUM",
-    price: "Rp 149.000",
-    description: "Warna pastel untuk tampilan manis dan estetik.",
-    title: "Our Forever",
-    couple: "Diana & Eko",
-    thumbnail:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCq5o2G6c8U43H69KadZyZ3qDZfA_DbIMYqgrAOMjuJ31b75f0jLCnjgpapNc7YhJeIDoX-k9fQkjKTAKuhXVBI7Y0OpRnTwbvQ7DGjjOXouZFftquGyOPii1WxRpIpNhBCO72RiNUb0VGwgxWM0Ek7tqeDgSGn56I1K1LmKcPclP28cHMhU7hnwf17pzNk_ukLSh2f1lKS9omJc8_8RGfM83DTYerzk-zpMTi54F4fSUcJgEqrVmca9d_AMRULHi6MKBB6CGlz9U8I",
-    image:
-      "https://lh3.googleusercontent.com/aida-public/AB6AXuCq5o2G6c8U43H69KadZyZ3qDZfA_DbIMYqgrAOMjuJ31b75f0jLCnjgpapNc7YhJeIDoX-k9fQkjKTAKuhXVBI7Y0OpRnTwbvQ7DGjjOXouZFftquGyOPii1WxRpIpNhBCO72RiNUb0VGwgxWM0Ek7tqeDgSGn56I1K1LmKcPclP28cHMhU7hnwf17pzNk_ukLSh2f1lKS9omJc8_8RGfM83DTYerzk-zpMTi54F4fSUcJgEqrVmca9d_AMRULHi6MKBB6CGlz9U8I",
-    overlayClass: "bg-black/20",
-    cardClass: "bg-primary-soft/50 hover:bg-primary-soft",
-  },
+  }
 ];
 
 export function getThemeBySlug(slug) {
