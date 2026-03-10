@@ -1,0 +1,118 @@
+{
+  "title": "Undangan Website Minimalist Luxury 02",
+  "guest": {
+    "greetingLabel": "DEAR",
+    "name": "Nama Tamu"
+  },
+  "couple": {
+    "groom": {
+      "nameFull": "Habib Yulianto",
+      "nickName": "Habib",
+      "instagram": "wekita.id",
+      "parentInfo": "Putra dari Bapak Putra\n& Ibu Putri"
+    },
+    "bride": {
+      "nameFull": "Adiba Putri Syakila",
+      "nickName": "Adiba",
+      "instagram": "wekita.id",
+      "parentInfo": "Putri dari Bapak Putra\n& Ibu Putri"
+    }
+  },
+  "event": {
+    "dateISO": "2025-03-30T10:00:00+07:00",
+    "akad": {
+      "date": "Minggu, 30 Maret 2025",
+      "time": "09.00 WIB",
+      "address": "Simpang Lima Gumul, Tugurejo, Kec. Ngasem, Kabupaten Kediri, Jawa Timur 64182",
+      "mapsUrl": "https://maps.app.goo.gl/"
+    },
+    "resepsi": {
+      "date": "Minggu, 30 Maret 2025",
+      "time": "10.00 WIB",
+      "address": "Simpang Lima Gumul, Tugurejo, Kec. Ngasem, Kabupaten Kediri, Jawa Timur 64182",
+      "mapsUrl": "https://maps.app.goo.gl/"
+    },
+    "livestream": {
+      "date": "Minggu, 30 Maret 2025",
+      "time": "10.00 WIB",
+      "platformLabel": "YouTube",
+      "url": "https://www.youtube.com/watch?v=8h7pbb4A4JI"
+    }
+  },
+  "copy": {
+    "openingGreeting": "THE WEDDING OF",
+    "openingText": "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami.",
+    "quote": "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sungguh, pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir",
+    "quoteSource": "QS Ar-rum 21",
+    "closingText": "Merupakan suatu kebahagiaan dan kehormatan bagi kami, apabila Bapak/Ibu/Saudara/i, berkenan hadir dan memberikan do’a restu kepada kami.",
+    "closingLabel": "KAMI YANG BERBAHAGIA",
+    "supportText": "Support with ❤ by ikatancinta.in"
+  },
+  "lovestory": [
+    {
+      "title": "7 SEPTEMBER 2022",
+      "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s,",
+      "photo": ""
+    },
+    {
+      "title": "19 AGUSTUS 2023",
+      "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s,",
+      "photo": ""
+    },
+    {
+      "title": "5 SEPTEMBER 2023",
+      "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry’s standard dummy text ever since the 1500s,",
+      "photo": ""
+    }
+  ],
+  "gallery": [
+    "assets/images/fres-G-10-1.jpg",
+    "assets/images/fres-G-11-1.jpg",
+    "assets/images/fres-G-12-1.jpg",
+    "assets/images/fres-G-13.jpg",
+    "assets/images/fres-G-15.jpg",
+    "assets/images/fres-G-14-e1725604862814.jpg",
+    "assets/images/fres-G-9-e1725604758674.jpg"
+  ],
+  "gift": {
+    "bankList": [
+      {
+        "bank": "BCA",
+        "account": "1234 5678 90",
+        "name": "Habib"
+      },
+      {
+        "bank": "DANA",
+        "account": "1234 5678 90",
+        "name": "Habib"
+      }
+    ],
+    "shipping": {
+      "recipient": "Habib Yulianto",
+      "phone": "1234 5678 90",
+      "address": "Ds Pagu Kec.Wates Kab. Kediri"
+    }
+  },
+  "audio": {
+    "src": "assets/audio/Rizky-Febian-Feat.-Mahalini-Bermuara-Official-Lyric-Video-dt-58.mp3",
+    "autoplay": true,
+    "loop": true
+  },
+  "wishes": {
+    "title": "Ucapan Sesuatu",
+    "initial": [
+      {
+        "author": "Tamu",
+        "comment": "Selamat menempuh hidup baru.",
+        "attendance": "Hadir",
+        "createdAt": "Baru saja"
+      },
+      {
+        "author": "Kerabat",
+        "comment": "Semoga acara lancar sampai hari bahagia.",
+        "attendance": "Tidak Hadir",
+        "createdAt": "Baru saja"
+      }
+    ]
+  }
+}
