@@ -1764,9 +1764,9 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
               <div className="elementor-element elementor-element-27a9fef5 elementor-widget elementor-widget-text-editor" data-id="27a9fef5" data-element_type="widget" data-widget_type="text-editor.default">
                 <div className="elementor-widget-container">
                   <p>
-                    Made with
+                    Support with
                     <img decoding="async" className="emoji" role="img" draggable="false" src={resolveAssetUrl("assets/images/s.w.org/images__core__emoji__13.0.1__svg__2764.svg")} alt="❤" />
-                    by Ikatancinta.in
+                    by ikatancinta.in
                   </p>
                 </div>
               </div>

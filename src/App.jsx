@@ -12,6 +12,7 @@ import Pricing from "./components/Pricing";
 import {
   BlueNatureTemplate,
   NoirFloralTemplate,
+  NoirMinimalistTemplate,
 } from "./templates/basic";
 import {
   PremiumThemePreviewPage,
@@ -117,6 +118,10 @@ function App() {
 
   if (pathname === "/undangan/noir-floral") {
     return <NoirFloralTemplate />;
+  }
+
+  if (pathname === "/undangan/noir-minimalist") {
+    return <NoirMinimalistTemplate />;
   }
 
   if (pathname === "/undangan/timeless-promise") {

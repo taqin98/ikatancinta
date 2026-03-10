@@ -739,9 +739,9 @@ export default function BlueNatureTemplate() {
 
                         <footer className="bn-footer">
                             <p className="bn-footer__credit">
-                                Made with
+                                Support with
                                 <img src={HeartEmoji} alt="heart" />
-                                by Ikatancinta.in
+                                by ikatancinta.in
                             </p>
                         </footer>
 

@@ -727,7 +727,7 @@ export default function NoirFloralTemplate() {
 
                         <footer className="nf-footer">
                             <p>
-                                Made with <img src={HeartEmoji} alt="heart" /> by Ikatancinta.in
+                                Support with <img src={HeartEmoji} alt="heart" /> by ikatancinta.in
                             </p>
                         </footer>
 
