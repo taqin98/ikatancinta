@@ -44,6 +44,21 @@ const BODY_CLASSES = [
 const STYLE_LINK_ID = "puspa-asmara-style";
 const STYLE_HREF = `${PUBLIC_TEMPLATE_PREFIX}style.css?v=20260311-1`;
 const LOTTIE_HREF = `${PUBLIC_ASSET_PREFIX}js/lottie.min.js`;
+const WISHES_STORAGE_KEY = "premium_02_ucapan_13735";
+const DUMMY_WISHES = [
+  {
+    author: "Ayu",
+    comment: "Selamat menempuh hidup baru. Semoga sakinah mawaddah warahmah.",
+    attendance: "Hadir",
+    createdAt: "Baru saja",
+  },
+  {
+    author: "Rizky",
+    comment: "Doa terbaik untuk kedua mempelai.",
+    attendance: "Tidak Hadir",
+    createdAt: "2 menit lalu",
+  },
+];
 
 function mergeInvitationData(base, ...sources) {
   const output = JSON.parse(JSON.stringify(base || {}));
@@ -101,6 +116,33 @@ function normalizeWishItem(item) {
   };
 }
 
+function readStoredWishes() {
+  try {
+    const raw = window.localStorage.getItem(WISHES_STORAGE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const normalized = Array.isArray(parsed) ? parsed.map(normalizeWishItem).filter(Boolean) : [];
+    return normalized.length > 0 ? normalized : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredWishes(entries) {
+  try {
+    window.localStorage.setItem(WISHES_STORAGE_KEY, JSON.stringify(entries));
+  } catch {
+    // ignore storage failures
+  }
+}
+
+function buildWishKey(item) {
+  const author = normalizeText(item?.author).toLowerCase();
+  const comment = normalizeText(item?.comment).toLowerCase();
+  const attendance = normalizeText(item?.attendance).toLowerCase();
+  return `${author}::${comment}::${attendance}`;
+}
+
 function setText(root, selector, value) {
   const node = root.querySelector(selector);
   if (!node) return;
@@ -132,10 +174,11 @@ export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
   const { data: fetchedData } = useInvitationData("puspa-asmara");
   const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData, fetchedData), [propData, fetchedData]);
   const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
-  const wishes = useMemo(() => {
-    const list = Array.isArray(mergedData?.wishes) ? mergedData.wishes : defaultSchema.wishes;
-    return (Array.isArray(list) ? list : []).map(normalizeWishItem).filter(Boolean);
-  }, [mergedData]);
+  const fallbackWishes = useMemo(() => {
+    const fromSchema = (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : []).map(normalizeWishItem).filter(Boolean);
+    if (fromSchema.length > 0) return fromSchema;
+    return DUMMY_WISHES.map(normalizeWishItem).filter(Boolean);
+  }, []);
 
   const rootRef = useRef(null);
   const lottieInstancesRef = useRef([]);
@@ -144,6 +187,7 @@ export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
   const audioResumeRef = useRef(false);
   const unlockTimerRef = useRef(null);
   const [lightboxImage, setLightboxImage] = useState("");
+  const [wishes, setWishes] = useState(() => fallbackWishes);
 
   useEffect(() => {
     let styleNode = document.getElementById(STYLE_LINK_ID);
@@ -193,6 +237,26 @@ export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
       offset: 40,
     });
   }, []);
+
+  useEffect(() => {
+    const seeded = Array.isArray(mergedData?.wishes) ? mergedData.wishes.map(normalizeWishItem).filter(Boolean) : [];
+    const fallbackSeed = seeded.length > 0 ? seeded : fallbackWishes;
+    const stored = typeof window !== "undefined" ? readStoredWishes() : null;
+    if (stored?.length) {
+      const seen = new Set(stored.map(buildWishKey));
+      const merged = [...stored];
+      fallbackSeed.forEach((entry) => {
+        const key = buildWishKey(entry);
+        if (!seen.has(key)) {
+          merged.push(entry);
+          seen.add(key);
+        }
+      });
+      setWishes(merged);
+      return;
+    }
+    setWishes(fallbackSeed);
+  }, [mergedData, fallbackWishes]);
 
   useEffect(
     () => () => {
@@ -414,39 +478,120 @@ export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
     setText(root, ".elementor-element-3437d66e .elementor-heading-title", copy.wishesTitle || "Wishes");
     setHtml(root, ".elementor-element-59922aab .elementor-widget-container", `<p>${escapeHtml(copy.wishesIntro || "")}</p>`);
 
+    const wishesWidget = root.querySelector(".elementor-element-44eea63b .cui-wrapper");
+    if (wishesWidget) wishesWidget.classList.remove("cui-comments-closed");
+
     const wishesWrap = root.querySelector("#cui-wrap-commnent-13735");
     if (wishesWrap) wishesWrap.style.display = "block";
 
-    const wishesList = root.querySelector("#cui-container-comment-13735");
-    if (wishesList) {
-      wishesList.innerHTML = wishes
-        .map(
-          (entry) => `
-            <li class="cui-item-comment">
-              <div class="cui-comment-content">
-                <div class="cui-comment-info">
-                  <a class="cui-commenter-name" href="#">${escapeHtml(entry.author)}</a>
-                  <span class="cui-comment-time">${escapeHtml(formatWishTimestamp(entry.createdAt))}</span>
-                </div>
-                <div class="cui-comment-text">
-                  <p>${escapeHtml(entry.comment)}</p>
-                </div>
-                <div class="cui-comment-actions">
-                  <a href="#">${escapeHtml(entry.attendance)}</a>
-                </div>
-              </div>
-            </li>
-          `
-        )
-        .join("");
+    const wishesFormContainer = root.querySelector("#cui-container-form-13735");
+    if (wishesFormContainer && !wishesFormContainer.querySelector("#commentform-13735")) {
+      wishesFormContainer.innerHTML = `
+        <div class="respond">
+          <form action="#" method="post" id="commentform-13735" class="comment-form">
+            <p class="comment-form-author cui-field-1">
+              <input id="author" name="author" type="text" class="cui-input" maxlength="50" placeholder="Nama" autocomplete="name" required />
+            </p>
+            <div class="cui-wrap-textarea">
+              <textarea id="comment" name="comment" class="cui-textarea" rows="4" placeholder="Ucapan" required></textarea>
+            </div>
+            <div class="cui-field-wrap">
+              <select id="attendance-13735" name="attendance" class="cui-select" required>
+                <option value="" selected disabled>Pilih Kehadiran</option>
+                <option value="Hadir">Hadir</option>
+                <option value="Absen">Absen</option>
+              </select>
+            </div>
+            <div class="cui-wrap-submit">
+              <p class="form-submit">
+                <input name="submit" type="submit" id="submit-13735" class="submit" value="Kirim" />
+              </p>
+            </div>
+          </form>
+        </div>
+      `;
     }
 
-    const hadirCount = wishes.filter((entry) => /hadir/i.test(entry.attendance)).length;
-    const tidakHadirCount = wishes.filter((entry) => /tidak/i.test(entry.attendance)).length;
-    const hadirCounter = root.querySelector(".cui_card-hadir span");
-    const tidakHadirCounter = root.querySelector(".cui_card-tidak_hadir span");
-    if (hadirCounter) hadirCounter.textContent = String(hadirCount);
-    if (tidakHadirCounter) tidakHadirCounter.textContent = String(tidakHadirCount);
+    const countLink = root.querySelector("#cui-link-13735");
+    const attendanceWrap = root.querySelector("#invitation-count-13735");
+    const wishesBox = root.querySelector("#cui-box");
+    const wishesList = root.querySelector("#cui-container-comment-13735");
+    const renderWishes = (entries) => {
+      if (!wishesList || !countLink || !attendanceWrap) return;
+      const items = Array.isArray(entries) && entries.length > 0 ? entries : fallbackWishes;
+
+      wishesList.style.display = "block";
+      if (wishesBox) wishesBox.style.display = "block";
+
+      const hadirCount = items.filter((entry) => /hadir/i.test(entry.attendance) && !/(tidak|absen)/i.test(entry.attendance)).length;
+      const tidakHadirCount = items.filter((entry) => /(tidak|absen)/i.test(entry.attendance)).length;
+
+      wishesList.innerHTML = items
+        .map(
+          (entry) =>
+            `<li class="cui-item-comment"><div class="cui-comment-content"><div class="cui-comment-info"><a href="#" class="cui-commenter-name" onclick="return false;">${escapeHtml(
+              entry.author
+            )}</a><span class="cui-post-author">${escapeHtml(entry.attendance)}</span><span class="cui-comment-time">${escapeHtml(
+              formatWishTimestamp(entry.createdAt)
+            )}</span></div><div class="cui-comment-text"><p>${escapeHtml(entry.comment)}</p></div></div></li>`
+        )
+        .join("");
+
+      countLink.innerHTML = `<span>${items.length}</span> Comments`;
+      countLink.setAttribute("title", `${items.length} Comments`);
+
+      const countCards = attendanceWrap.querySelectorAll(".cui_comment_count_card span:first-child");
+      if (countCards.length >= 2) {
+        countCards[0].textContent = String(hadirCount);
+        countCards[1].textContent = String(tidakHadirCount);
+      }
+    };
+    renderWishes(wishes);
+
+    const onCountLinkClick = (event) => {
+      event.preventDefault();
+      const target = root.querySelector(".elementor-element-44eea63b");
+      target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    countLink?.addEventListener("click", onCountLinkClick);
+    registerCleanup(() => countLink?.removeEventListener("click", onCountLinkClick));
+
+    const commentStatus = root.querySelector("#cui-comment-status-13735");
+    const wishForm = root.querySelector("#commentform-13735");
+    const onWishSubmit = (event) => {
+      event.preventDefault();
+      const author = wishForm?.querySelector("#author");
+      const comment = wishForm?.querySelector("#comment");
+      const attendance = wishForm?.querySelector("#attendance-13735");
+      if (!author || !comment || !attendance) return;
+      if (!author.reportValidity() || !comment.reportValidity() || !attendance.reportValidity()) return;
+
+      const nextEntry = normalizeWishItem({
+        author: author.value,
+        comment: comment.value,
+        attendance: attendance.value,
+        createdAt: new Date().toISOString(),
+      });
+      if (!nextEntry) return;
+
+      setWishes((prev) => {
+        const next = [nextEntry, ...prev];
+        writeStoredWishes(next);
+        return next;
+      });
+      wishForm.reset();
+
+      if (commentStatus) {
+        commentStatus.textContent = "Ucapan berhasil disimpan di browser ini.";
+        commentStatus.style.display = "block";
+        window.setTimeout(() => {
+          commentStatus.textContent = "";
+          commentStatus.style.display = "";
+        }, 2500);
+      }
+    };
+    wishForm?.addEventListener("submit", onWishSubmit);
+    registerCleanup(() => wishForm?.removeEventListener("submit", onWishSubmit));
 
     setHtml(root, ".elementor-element-5308cf9a .elementor-widget-container", `<p>${escapeHtml(copy.closingText || "")}</p>`);
     setText(root, ".elementor-element-189716e3 .elementor-heading-title", coupleDisplay);
