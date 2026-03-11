@@ -3,6 +3,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import defaultSchema from "./schema/invitationSchema";
 import { aosPreset, tokens } from "./tokens";
 import "./blue-nature.css";
 
@@ -23,6 +24,119 @@ import LogoBca from "./assets/images/logo-bca.png";
 import LogoDana from "./assets/images/logo-dana.png";
 import HeartEmoji from "./assets/images/heart-emoji.svg";
 import BackgroundMusic from "./assets/audio/background-music.mp3";
+
+const LOCAL_ASSET_MAP = {
+    "assets/images/bg-cover.webp": BgCover,
+    "assets/images/hero-photo.jpg": HeroPhoto,
+    "assets/images/bg-texture.jpg": BgTexture,
+    "assets/images/bg-pattern-light.webp": BgPatternLight,
+    "assets/images/bg-pattern-gallery.webp": BgPatternGallery,
+    "assets/images/groom-photo.jpg": GroomPhoto,
+    "assets/images/bride-photo.jpg": BridePhoto,
+    "assets/images/story-photo.jpg": StoryPhoto,
+    "assets/images/gallery-1.jpg": Gallery1,
+    "assets/images/gallery-2.jpg": Gallery2,
+    "assets/images/gallery-3.jpg": Gallery3,
+    "assets/images/floral-decoration.webp": FloralDecoration,
+    "assets/images/chip-atm.png": ChipAtm,
+    "assets/images/logo-bca.png": LogoBca,
+    "assets/images/logo-dana.png": LogoDana,
+    "assets/images/heart-emoji.svg": HeartEmoji,
+    "assets/audio/background-music.mp3": BackgroundMusic,
+};
+
+function resolveLocalAsset(path, fallback = "") {
+    if (!path) return fallback;
+    return LOCAL_ASSET_MAP[path] || path || fallback;
+}
+
+function mergeInvitationData(baseSchema, incomingData) {
+    if (!incomingData || typeof incomingData !== "object") return baseSchema;
+
+    return {
+        ...baseSchema,
+        ...incomingData,
+        guest: { ...baseSchema.guest, ...(incomingData.guest || {}) },
+        couple: {
+            ...baseSchema.couple,
+            ...(incomingData.couple || {}),
+            groom: {
+                ...baseSchema.couple.groom,
+                ...(incomingData.couple?.groom || {}),
+            },
+            bride: {
+                ...baseSchema.couple.bride,
+                ...(incomingData.couple?.bride || {}),
+            },
+        },
+        event: {
+            ...baseSchema.event,
+            ...(incomingData.event || {}),
+            akad: { ...baseSchema.event.akad, ...(incomingData.event?.akad || {}) },
+            resepsi: { ...baseSchema.event.resepsi, ...(incomingData.event?.resepsi || {}) },
+            livestream: { ...baseSchema.event.livestream, ...(incomingData.event?.livestream || {}) },
+        },
+        copy: {
+            ...baseSchema.copy,
+            ...(incomingData.copy || {}),
+        },
+        lovestory: Array.isArray(incomingData.lovestory) ? incomingData.lovestory : baseSchema.lovestory,
+        gallery: Array.isArray(incomingData.gallery) ? incomingData.gallery : baseSchema.gallery,
+        gift: {
+            ...(baseSchema.gift || {}),
+            ...(incomingData.gift || {}),
+            shipping: {
+                ...(baseSchema.gift?.shipping || {}),
+                ...(incomingData.gift?.shipping || {}),
+            },
+        },
+        features: {
+            ...baseSchema.features,
+            ...(incomingData.features || {}),
+            digitalEnvelopeInfo: {
+                ...baseSchema.features.digitalEnvelopeInfo,
+                ...(incomingData.features?.digitalEnvelopeInfo || {}),
+            },
+        },
+        audio: {
+            ...baseSchema.audio,
+            ...(incomingData.audio || {}),
+        },
+        wishes: {
+            ...(baseSchema.wishes || {}),
+            ...(incomingData.wishes || {}),
+            initial: Array.isArray(incomingData.wishes?.initial)
+                ? incomingData.wishes.initial
+                : Array.isArray(baseSchema.wishes?.initial)
+                    ? baseSchema.wishes.initial
+                    : [],
+        },
+        behavior: {
+            ...(baseSchema.behavior || {}),
+            ...(incomingData.behavior || {}),
+            audio: {
+                ...(baseSchema.behavior?.audio || {}),
+                ...(incomingData.behavior?.audio || {}),
+            },
+            cover: {
+                ...(baseSchema.behavior?.cover || {}),
+                ...(incomingData.behavior?.cover || {}),
+            },
+            gift: {
+                ...(baseSchema.behavior?.gift || {}),
+                ...(incomingData.behavior?.gift || {}),
+            },
+            countdown: {
+                ...(baseSchema.behavior?.countdown || {}),
+                ...(incomingData.behavior?.countdown || {}),
+            },
+            lightbox: {
+                ...(baseSchema.behavior?.lightbox || {}),
+                ...(incomingData.behavior?.lightbox || {}),
+            },
+        },
+    };
+}
 
 function formatEventDate(dateText) {
     if (!dateText) return "";
@@ -51,10 +165,10 @@ function formatCountdown(targetISO) {
     };
 }
 
-function downloadICS(data) {
-    const eventStart = data?.event?.dateISO || "";
+function downloadICS(invitationData) {
+    const eventStart = invitationData?.event?.dateISO || "";
     const cleanDate = eventStart.replace(/[-:]/g, "").slice(0, 15);
-    const title = `${data.couple.groom.nickName} & ${data.couple.bride.nickName}`;
+    const title = `${invitationData?.couple?.groom?.nickName || ""} & ${invitationData?.couple?.bride?.nickName || ""}`;
     const icsContent = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -62,8 +176,8 @@ function downloadICS(data) {
         "BEGIN:VEVENT",
         `SUMMARY:Pernikahan ${title}`,
         `DTSTART:${cleanDate}`,
-        `DESCRIPTION:${data.copy.openingText}`,
-        `LOCATION:${data.event.akad.address}`,
+        `DESCRIPTION:${invitationData?.copy?.openingText || ""}`,
+        `LOCATION:${invitationData?.event?.akad?.address || ""}`,
         "END:VEVENT",
         "END:VCALENDAR",
     ].join("\r\n");
@@ -104,8 +218,12 @@ function EventCard({ title, detail, patternImage, delay = 0 }) {
     );
 }
 
-export default function BlueNatureTemplate() {
-    const { data, loading } = useInvitationData("blue-nature");
+export default function BlueNatureTemplate({ data: propData = null }) {
+    const { data: fetchedData, loading } = useInvitationData("blue-nature");
+    const mergedData = useMemo(
+        () => mergeInvitationData(defaultSchema, { ...(fetchedData || {}), ...(propData || {}) }),
+        [fetchedData, propData]
+    );
 
     const [opened, setOpened] = useState(false);
     const [gateClosing, setGateClosing] = useState(false);
@@ -114,38 +232,32 @@ export default function BlueNatureTemplate() {
     const [giftOpen, setGiftOpen] = useState(false);
     const [copiedAccount, setCopiedAccount] = useState("");
     const [lightboxIndex, setLightboxIndex] = useState(-1);
-    const [wishes, setWishes] = useState([
-        {
-            author: "Dina",
-            comment: "Selamat menempuh hidup baru. Semoga sakinah mawaddah warahmah.",
-            attendance: "Hadir",
-            createdAt: "1 Mar 2026, 09.20",
-        },
-        {
-            author: "Aldi",
-            comment: "Turut berbahagia, semoga acara lancar sampai hari H.",
-            attendance: "Tidak Hadir",
-            createdAt: "1 Mar 2026, 10.05",
-        },
-    ]);
+    const initialWishes = useMemo(
+        () => (Array.isArray(mergedData?.wishes?.initial) ? mergedData.wishes.initial : defaultSchema.wishes.initial),
+        [mergedData]
+    );
+    const [wishes, setWishes] = useState(() => initialWishes);
     const [wishForm, setWishForm] = useState({ author: "", comment: "", attendance: "" });
     const [countdown, setCountdown] = useState({ days: "00", hours: "00", minutes: "00", seconds: "00", ended: false });
 
     const audioRef = useRef(null);
 
-    const guest = data?.guest;
-    const couple = data?.couple;
-    const event = data?.event;
-    const copy = data?.copy;
-    const lovestory = data?.lovestory;
-    const features = data?.features;
+    const guest = mergedData?.guest;
+    const couple = mergedData?.couple;
+    const event = mergedData?.event;
+    const copy = mergedData?.copy;
+    const lovestory = mergedData?.lovestory;
+    const features = mergedData?.features;
+    const behavior = mergedData?.behavior || defaultSchema.behavior;
+    const audio = mergedData?.audio || defaultSchema.audio;
+    const gift = mergedData?.gift || defaultSchema.gift;
 
     const galleryItems = useMemo(() => {
-        if (Array.isArray(data?.gallery) && data.gallery.length > 0) {
-            return data.gallery;
+        if (Array.isArray(mergedData?.gallery) && mergedData.gallery.length > 0) {
+            return mergedData.gallery.map((item) => resolveLocalAsset(item, item));
         }
         return [Gallery1, Gallery2, StoryPhoto, HeroPhoto, Gallery3];
-    }, [data?.gallery]);
+    }, [mergedData]);
 
     const timelineItems = useMemo(() => {
         if (Array.isArray(lovestory) && lovestory.length > 0) {
@@ -158,6 +270,10 @@ export default function BlueNatureTemplate() {
         ];
     }, [lovestory]);
 
+    useEffect(() => {
+        setWishes(Array.isArray(initialWishes) ? initialWishes : []);
+    }, [initialWishes]);
+
     const attendanceSummary = useMemo(() => {
         return wishes.reduce(
             (acc, item) => {
@@ -169,16 +285,17 @@ export default function BlueNatureTemplate() {
         );
     }, [wishes]);
 
-    const bankList = features?.digitalEnvelopeInfo?.bankList || [];
+    const bankList = features?.digitalEnvelopeInfo?.bankList || gift?.bankList || [];
 
     useEffect(() => {
+        if (!behavior?.aos) return;
         AOS.init({
             duration: tokens.aos.duration,
             offset: tokens.aos.offset,
             easing: tokens.aos.easing,
             once: tokens.aos.once,
         });
-    }, []);
+    }, [behavior?.aos]);
 
     useEffect(() => {
         if (!opened) return;
@@ -187,24 +304,29 @@ export default function BlueNatureTemplate() {
     }, [opened]);
 
     useEffect(() => {
-        if (!opened || !event?.dateISO) return;
+        if (!opened || !event?.dateISO || !features?.countdownEnabled || !behavior?.countdown?.enabled) return;
         const update = () => setCountdown(formatCountdown(event.dateISO));
         update();
         const interval = setInterval(update, 1000);
         return () => clearInterval(interval);
-    }, [opened, event?.dateISO]);
+    }, [opened, event?.dateISO, features?.countdownEnabled, behavior?.countdown?.enabled]);
 
     useEffect(() => {
-        if (opened) return;
+        if (opened || behavior?.cover?.lockScrollUntilOpen === false) return;
         const originalOverflow = document.body.style.overflow;
         document.body.style.overflow = "hidden";
         return () => {
             document.body.style.overflow = originalOverflow;
         };
-    }, [opened]);
+    }, [opened, behavior?.cover?.lockScrollUntilOpen]);
+
+    useEffect(() => {
+        setGiftOpen(behavior?.gift?.startHidden === false);
+    }, [behavior?.gift?.startHidden]);
 
     useEffect(() => {
         if (!opened) return;
+        if (behavior?.reveal === false) return;
         const nodes = Array.from(document.querySelectorAll(".bn-reveal"));
         const observer = new IntersectionObserver(
             (entries) => {
@@ -221,14 +343,14 @@ export default function BlueNatureTemplate() {
         nodes.forEach((node) => observer.observe(node));
 
         return () => observer.disconnect();
-    }, [opened]);
+    }, [opened, behavior?.reveal]);
 
     useEffect(() => {
         if (!opened) return;
         const sectionIds = ["hero", "events", "gallery"];
-        if (features?.rsvpEnabled) {
+        if (features?.rsvpEnabled && behavior?.wishes?.enabled !== false) {
             sectionIds.push("rsvp");
-        } else if (features?.digitalEnvelopeEnabled) {
+        } else if (features?.digitalEnvelopeEnabled && behavior?.gift?.toggleEnabled !== false) {
             sectionIds.push("gift");
         }
         sectionIds.push("closing");
@@ -249,24 +371,25 @@ export default function BlueNatureTemplate() {
         });
 
         return () => observer.disconnect();
-    }, [opened, features?.rsvpEnabled, features?.digitalEnvelopeEnabled]);
+    }, [opened, features?.rsvpEnabled, features?.digitalEnvelopeEnabled, behavior?.wishes?.enabled, behavior?.gift?.toggleEnabled]);
 
     useEffect(() => {
         const handleVisibility = () => {
             const audio = audioRef.current;
             if (!audio) return;
-            if (document.visibilityState === "hidden") {
+            if (document.visibilityState === "hidden" && behavior?.audio?.pauseOnHidden !== false) {
                 audio.pause();
-            } else if (document.visibilityState === "visible" && audioPlaying) {
+            } else if (document.visibilityState === "visible" && audioPlaying && behavior?.audio?.enabled !== false) {
                 audio.play().catch(() => {});
             }
         };
 
         document.addEventListener("visibilitychange", handleVisibility);
         return () => document.removeEventListener("visibilitychange", handleVisibility);
-    }, [audioPlaying]);
+    }, [audioPlaying, behavior?.audio?.pauseOnHidden, behavior?.audio?.enabled]);
 
     async function playAudio() {
+        if (behavior?.audio?.enabled === false) return;
         const audio = audioRef.current;
         if (!audio) return;
         try {
@@ -278,6 +401,7 @@ export default function BlueNatureTemplate() {
     }
 
     async function toggleAudio() {
+        if (behavior?.audio?.enabled === false) return;
         const audio = audioRef.current;
         if (!audio) return;
         if (audio.paused) {
@@ -297,8 +421,10 @@ export default function BlueNatureTemplate() {
         if (opened || gateClosing) return;
         setOpened(true);
         setGateClosing(true);
-        setTimeout(() => setGateClosing(false), 950);
-        playAudio();
+        setTimeout(() => setGateClosing(false), behavior?.cover?.closeTransitionMs || 950);
+        if (behavior?.audio?.enabled !== false && behavior?.audio?.autoplayOnOpen !== false) {
+            playAudio();
+        }
     }
 
     function handleCopy(account) {
@@ -366,7 +492,7 @@ export default function BlueNatureTemplate() {
         );
     }
 
-    if (loading || !data || !couple || !event || !copy || !guest) {
+    if (loading || !mergedData || !couple || !event || !copy || !guest) {
         return (
             <div className="bn-template" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
                 Memuat undangan...
@@ -379,12 +505,10 @@ export default function BlueNatureTemplate() {
             <div className="bn-shell">
                 {(!opened || gateClosing) && (
                     <section className={`bn-cover-gate ${gateClosing ? "bn-cover-gate--closing" : ""}`}>
-                        <div className="bn-cover-gate__content" style={{ backgroundImage: `url(${couple.heroPhoto || HeroPhoto})` }}>
-                            <img src={FloralDecoration} alt="" aria-hidden="true" className="bn-cover-ornament bn-cover-ornament--tl" />
-                            <img src={FloralDecoration} alt="" aria-hidden="true" className="bn-cover-ornament bn-cover-ornament--tr" />
-                            <img src={FloralDecoration} alt="" aria-hidden="true" className="bn-cover-ornament bn-cover-ornament--bl" />
-                            <img src={FloralDecoration} alt="" aria-hidden="true" className="bn-cover-ornament bn-cover-ornament--br" />
-
+                        <div
+                            className="bn-cover-gate__content"
+                            style={{ backgroundImage: `url(${resolveLocalAsset(couple.heroPhoto, HeroPhoto)})` }}
+                        >
                             <p className="bn-cover-gate__label" data-aos={aosPreset("heading").aos}>
                                 The Wedding Of
                             </p>
@@ -406,7 +530,10 @@ export default function BlueNatureTemplate() {
                         <section id="section-hero" className="bn-section bn-hero" style={{ backgroundImage: `url(${BgCover})` }}>
                             <div className="bn-hero__panel">
                                 <div className="bn-hero__photo" data-aos={aosPreset("photo").aos}>
-                                    <img src={couple.heroPhoto || HeroPhoto} alt={`Foto ${couple.groom.nickName} dan ${couple.bride.nickName}`} />
+                                    <img
+                                        src={resolveLocalAsset(couple.heroPhoto, HeroPhoto)}
+                                        alt={`Foto ${couple.groom.nickName} dan ${couple.bride.nickName}`}
+                                    />
                                 </div>
                                 <p className="bn-hero__label" data-aos={aosPreset("heading").aos}>The Wedding Of</p>
                                 <h1 className="bn-hero__names" data-aos={aosPreset("title").aos}>
@@ -422,7 +549,7 @@ export default function BlueNatureTemplate() {
                                         style={{ marginTop: 8 }}
                                         data-aos="zoom-in"
                                         data-aos-delay="240"
-                                        onClick={() => downloadICS(data)}
+                                        onClick={() => downloadICS(mergedData)}
                                     >
                                         Save The Date
                                     </button>
@@ -448,7 +575,12 @@ export default function BlueNatureTemplate() {
                         <section id="section-groom" className="bn-section bn-profile" style={{ backgroundImage: `url(${BgPatternLight})` }}>
                             <h2 className="bn-title-script bn-profile__title" data-aos="fade-down">Our Special Day</h2>
                             <p className="bn-profile__intro" data-aos="fade-up">{copy.openingText}</p>
-                            <img className="bn-profile__photo" src={couple.groom.photo || GroomPhoto} alt={couple.groom.nameFull} data-aos="zoom-in" />
+                            <img
+                                className="bn-profile__photo"
+                                src={resolveLocalAsset(couple.groom.photo, GroomPhoto)}
+                                alt={couple.groom.nameFull}
+                                data-aos="zoom-in"
+                            />
                             <h3 className="bn-profile__name" data-aos="fade-up">{couple.groom.nameFull}</h3>
                             <p className="bn-profile__parents" data-aos="fade-up" data-aos-delay="100">
                                 {couple.groom.parentInfo}
@@ -472,7 +604,12 @@ export default function BlueNatureTemplate() {
                             <h2 className="bn-profile__name" style={{ marginTop: 0 }} data-aos="fade-up">
                                 &amp;
                             </h2>
-                            <img className="bn-profile__photo" src={couple.bride.photo || BridePhoto} alt={couple.bride.nameFull} data-aos="zoom-in" />
+                            <img
+                                className="bn-profile__photo"
+                                src={resolveLocalAsset(couple.bride.photo, BridePhoto)}
+                                alt={couple.bride.nameFull}
+                                data-aos="zoom-in"
+                            />
                             <h3 className="bn-profile__name" data-aos="fade-up">{couple.bride.nameFull}</h3>
                             <p className="bn-profile__parents" data-aos="fade-up" data-aos-delay="100">
                                 {couple.bride.parentInfo}
@@ -552,7 +689,10 @@ export default function BlueNatureTemplate() {
                                         type="button"
                                         className="bn-gallery__item"
                                         key={`${image}-${index}`}
-                                        onClick={() => setLightboxIndex(index)}
+                                        onClick={() => {
+                                            if (behavior?.lightbox?.enabled === false) return;
+                                            setLightboxIndex(index);
+                                        }}
                                         data-aos="fade-up"
                                         data-aos-delay={index * 80}
                                         aria-label={`Buka foto galeri ${index + 1}`}
@@ -568,7 +708,7 @@ export default function BlueNatureTemplate() {
                             <p className="bn-love-hero__sub" data-aos="fade-up">Story</p>
                             <img
                                 className="bn-love-hero__image"
-                                src={timelineItems[0]?.photo || StoryPhoto}
+                                src={resolveLocalAsset(timelineItems[0]?.photo, StoryPhoto)}
                                 alt="Foto Love Story"
                                 data-aos="zoom-in"
                             />
@@ -586,7 +726,7 @@ export default function BlueNatureTemplate() {
                             </article>
                         </section>
 
-                        {features.digitalEnvelopeEnabled ? (
+                        {features.digitalEnvelopeEnabled && behavior?.gift?.toggleEnabled !== false ? (
                             <section id="section-gift" className="bn-section bn-gift">
                                 <article className="bn-gift__card" data-aos="fade-up">
                                     <h2 className="bn-title-script bn-gift__title" data-aos="fade-down">Wedding Gift</h2>
@@ -638,9 +778,9 @@ export default function BlueNatureTemplate() {
                                                 </div>
                                                 <h3 className="bn-gift-address__title">Kirim Hadiah</h3>
                                                 <div className="bn-gift-address__info">
-                                                    <p>Nama Penerima: {couple.groom.nameFull}</p>
-                                                    <p>No. HP: 0812 3456 7890</p>
-                                                    <p>Jl. Cinta Bahagia No. 12, Yogyakarta</p>
+                                                    <p>Nama Penerima: {gift?.shipping?.recipient || couple.groom.nameFull}</p>
+                                                    <p>No. HP: {gift?.shipping?.phone || "-"}</p>
+                                                    <p>{gift?.shipping?.address || "-"}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -649,10 +789,12 @@ export default function BlueNatureTemplate() {
                             </section>
                         ) : null}
 
-                        {features.rsvpEnabled ? (
+                        {features.rsvpEnabled && behavior?.wishes?.enabled !== false ? (
                             <section id="section-rsvp" className="bn-section bn-wishes">
                                 <article className="bn-wishes__card" data-aos="fade-up">
-                                    <h2 className="bn-title-script bn-wishes__title" data-aos="fade-down">Wishes</h2>
+                                    <h2 className="bn-title-script bn-wishes__title" data-aos="fade-down">
+                                        {mergedData?.wishes?.title || "Wishes"}
+                                    </h2>
                                     <p className="bn-wishes__desc" data-aos="fade-up">
                                         Berikan ucapan, harapan, dan doa untuk kedua mempelai.
                                     </p>
@@ -724,7 +866,10 @@ export default function BlueNatureTemplate() {
                         ) : null}
 
                         <section id="section-closing" className="bn-closing">
-                            <div className="bn-closing__image" style={{ backgroundImage: `url(${timelineItems[2]?.photo || StoryPhoto})` }}>
+                            <div
+                                className="bn-closing__image"
+                                style={{ backgroundImage: `url(${resolveLocalAsset(timelineItems[2]?.photo, StoryPhoto)})` }}
+                            >
                                 <h2 className="bn-closing__thanks" data-aos="fade-down">Terimakasih</h2>
                             </div>
                             <div className="bn-closing__message" style={{ backgroundImage: `url(${BgPatternLight})` }}>
@@ -750,33 +895,35 @@ export default function BlueNatureTemplate() {
                                 ["hero", "home", "Home"],
                                 ["events", "event", "Acara"],
                                 ["gallery", "photo_library", "Galeri"],
-                                ...(features.rsvpEnabled
+                                ...(features.rsvpEnabled && behavior?.wishes?.enabled !== false
                                     ? [["rsvp", "chat", "Wishes"]]
-                                    : features.digitalEnvelopeEnabled
+                                    : features.digitalEnvelopeEnabled && behavior?.gift?.toggleEnabled !== false
                                         ? [["gift", "redeem", "Gift"]]
                                         : []),
                                 ["closing", "favorite", "Akhir"],
                             ].map(([id, icon, label]) => navItem(id, icon, label))}
                         </nav>
 
-                        <div className="bn-audio-player">
-                            <button
-                                type="button"
-                                className={`bn-audio-player__btn ${audioPlaying ? "is-playing" : ""}`}
-                                onClick={toggleAudio}
-                                aria-label={audioPlaying ? "Pause musik" : "Play musik"}
-                            >
-                                <i className={audioPlaying ? "bn-fas bn-fa-compact-disc" : "bn-fas bn-fa-play-circle"} />
-                            </button>
-                            <audio ref={audioRef} loop preload="auto">
-                                <source src={BackgroundMusic} type="audio/mp3" />
-                            </audio>
-                        </div>
+                        {behavior?.audio?.enabled !== false ? (
+                            <div className="bn-audio-player">
+                                <button
+                                    type="button"
+                                    className={`bn-audio-player__btn ${audioPlaying ? "is-playing" : ""}`}
+                                    onClick={toggleAudio}
+                                    aria-label={audioPlaying ? "Pause musik" : "Play musik"}
+                                >
+                                    <i className={audioPlaying ? "bn-fas bn-fa-compact-disc" : "bn-fas bn-fa-play-circle"} />
+                                </button>
+                                <audio ref={audioRef} loop={audio?.loop !== false} preload="auto">
+                                    <source src={resolveLocalAsset(audio?.src, BackgroundMusic)} type="audio/mp3" />
+                                </audio>
+                            </div>
+                        ) : null}
                     </main>
                 )}
             </div>
 
-            {lightboxIndex >= 0 ? (
+            {lightboxIndex >= 0 && behavior?.lightbox?.enabled !== false ? (
                 <div className="bn-lightbox" onClick={() => setLightboxIndex(-1)} role="presentation">
                     <button type="button" className="bn-lightbox__close" onClick={() => setLightboxIndex(-1)} aria-label="Tutup galeri">
                         <span className="material-symbols-outlined">close</span>

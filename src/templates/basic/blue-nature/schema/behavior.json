@@ -1,0 +1,46 @@
+{
+  "aos": true,
+  "reveal": true,
+  "particles": {
+    "enabled": false
+  },
+  "lottie": {
+    "enabled": false
+  },
+  "audio": {
+    "enabled": true,
+    "autoplayOnOpen": true,
+    "pauseOnHidden": true
+  },
+  "countdown": {
+    "enabled": true,
+    "freezeOnPast": true
+  },
+  "cover": {
+    "lockScrollUntilOpen": true,
+    "closeTransitionMs": 950
+  },
+  "gift": {
+    "toggleEnabled": true,
+    "startHidden": true,
+    "toggleDurationMs": 500
+  },
+  "copy": {
+    "enabled": true,
+    "feedbackDurationMs": 1600
+  },
+  "lightbox": {
+    "enabled": true
+  },
+  "motionText": {
+    "enabled": false,
+    "staggerMs": 150
+  },
+  "viewportVh": {
+    "enabled": true
+  },
+  "wishes": {
+    "enabled": true,
+    "mode": "adapter"
+  }
+}

@@ -396,12 +396,14 @@
 }
 
 .bn-quote__floral {
-  position: absolute;
-  width: 56%;
-  top: -68px;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
+    position: absolute;
+    margin-right: auto;
+    margin-left: auto;
+    width: 56%;
+    top: -139px;
+    left: 0;
+    right: 0;
+    pointer-events: none;
 }
 
 .bn-quote__initials {
@@ -1264,7 +1266,7 @@
 
 .bn-reveal.bn-visible {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateY(0) scale(.4);
 }
 
 @media (max-width: 767px) {

@@ -1,0 +1,118 @@
+{
+  "title": "Undangan Website Blue Nature",
+  "guest": {
+    "greetingLabel": "Kepada Bapak/Ibu/Saudara/i",
+    "name": "Nama Tamu"
+  },
+  "couple": {
+    "groom": {
+      "nameFull": "Habib Yulianto",
+      "nickName": "Habib",
+      "instagram": "habibyulianto",
+      "parentInfo": "Putra dari Bapak H. M. Dawam & Ibu Dewi Sudarwati (Almh)"
+    },
+    "bride": {
+      "nameFull": "Adiba Putri Syakila",
+      "nickName": "Adiba",
+      "instagram": "adibaputris",
+      "parentInfo": "Putri dari Bapak Anas Rifai & Ibu Kholifah"
+    }
+  },
+  "event": {
+    "dateISO": "2026-06-12T10:00:00+07:00",
+    "akad": {
+      "date": "Jumat, 12 Juni 2026",
+      "time": "10.00 WIB - Selesai",
+      "address": "Sportorium UMY, Jl. Brawijaya, Ngebel, Tamantirto, Kec. Kasihan, Kabupaten Bantul, DIY",
+      "mapsUrl": "https://maps.google.com"
+    },
+    "resepsi": {
+      "date": "Jumat, 12 Juni 2026",
+      "time": "13.00 WIB - 16.00 WIB",
+      "address": "Sportorium UMY, Jl. Brawijaya, Ngebel, Tamantirto, Kec. Kasihan, Kabupaten Bantul, DIY",
+      "mapsUrl": "https://maps.google.com"
+    },
+    "livestream": {
+      "date": "Jumat, 12 Juni 2026",
+      "time": "10.00 WIB",
+      "platformLabel": "Instagram Live",
+      "url": "https://www.instagram.com/"
+    }
+  },
+  "copy": {
+    "openingGreeting": "The Wedding Of",
+    "openingText": "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami.",
+    "quote": "Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan-pasangan dari jenismu sendiri supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang.",
+    "quoteSource": "Qs. Ar-Rum (30): 21",
+    "closingText": "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya kami mengucapkan terima kasih.",
+    "supportText": "Support with ❤ by ikatancinta.in"
+  },
+  "lovestory": [
+    {
+      "title": "Awal Bertemu",
+      "date": "2019",
+      "text": "Kami dipertemukan dalam sebuah momen sederhana. Obrolan yang awalnya singkat berubah menjadi perjalanan panjang yang penuh makna.",
+      "photo": "assets/images/story-photo.jpg"
+    },
+    {
+      "title": "Lamaran",
+      "date": "2025",
+      "text": "Dengan restu keluarga, kami mengikat janji untuk melangkah ke jenjang yang lebih serius dan menata masa depan bersama.",
+      "photo": "assets/images/story-photo.jpg"
+    },
+    {
+      "title": "Pernikahan",
+      "date": "2026",
+      "text": "InsyaAllah kami akan memulai babak baru sebagai pasangan suami istri dengan doa terbaik dari keluarga dan sahabat tercinta.",
+      "photo": "assets/images/story-photo.jpg"
+    }
+  ],
+  "gallery": [
+    "assets/images/gallery-1.jpg",
+    "assets/images/gallery-2.jpg",
+    "assets/images/gallery-3.jpg",
+    "assets/images/story-photo.jpg",
+    "assets/images/hero-photo.jpg"
+  ],
+  "gift": {
+    "bankList": [
+      {
+        "bank": "BCA",
+        "account": "1234567890",
+        "name": "Habib Yulianto"
+      },
+      {
+        "bank": "DANA",
+        "account": "081234567890",
+        "name": "Habib Yulianto"
+      }
+    ],
+    "shipping": {
+      "recipient": "Habib Yulianto",
+      "phone": "0812 3456 7890",
+      "address": "Jl. Cinta Bahagia No. 12, Yogyakarta"
+    }
+  },
+  "audio": {
+    "src": "assets/audio/background-music.mp3",
+    "autoplay": true,
+    "loop": true
+  },
+  "wishes": {
+    "title": "Wishes",
+    "initial": [
+      {
+        "author": "Ayu",
+        "comment": "Selamat menempuh hidup baru. Semoga sakinah mawaddah warahmah.",
+        "attendance": "Hadir",
+        "createdAt": "Baru saja"
+      },
+      {
+        "author": "Rizky",
+        "comment": "Doa terbaik untuk kedua mempelai.",
+        "attendance": "Tidak Hadir",
+        "createdAt": "2 menit lalu"
+      }
+    ]
+  }
+}

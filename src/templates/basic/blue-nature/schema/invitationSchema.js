@@ -1,90 +1,84 @@
-/** @type {import('./invitationSchema').defaultSchema} */
+import contentDefaults from "./content.json";
+import behaviorDefaults from "./behavior.json";
+
+/** @type {import('../blue-nature/schema/invitationSchema').defaultSchema & {behavior?: object}} */
 export const defaultSchema = {
     guest: {
-        name: "Nama Tamu",
-        greetingLabel: "Kepada Bapak/Ibu/Saudara/i",
+        name: contentDefaults?.guest?.name || "Nama Tamu",
+        greetingLabel: contentDefaults?.guest?.greetingLabel || "Kepada Bapak/Ibu/Saudara/i",
         code: "",
     },
     couple: {
         groom: {
-            nameFull: "Habib Yulianto",
-            nickName: "Habib",
-            instagram: "habibyulianto",
-            photo: "",
-            parentInfo: "Putra dari Bapak H. M. Dawam & Ibu Dewi Sudarwati (Almh)",
+            nameFull: contentDefaults?.couple?.groom?.nameFull || "Habib Yulianto",
+            nickName: contentDefaults?.couple?.groom?.nickName || "Habib",
+            instagram: contentDefaults?.couple?.groom?.instagram || "habibyulianto",
+            photo: contentDefaults?.couple?.groom?.photo || "",
+            parentInfo: contentDefaults?.couple?.groom?.parentInfo || "Putra dari Bapak Putra & Ibu Putri",
         },
         bride: {
-            nameFull: "Adiba Putri Syakila",
-            nickName: "Adiba",
-            instagram: "adibaputris",
-            photo: "",
-            parentInfo: "Putri dari Bapak Anas Rifai & Ibu Kholifah",
+            nameFull: contentDefaults?.couple?.bride?.nameFull || "Adiba Putri Syakila",
+            nickName: contentDefaults?.couple?.bride?.nickName || "Adiba",
+            instagram: contentDefaults?.couple?.bride?.instagram || "adibaputris",
+            photo: contentDefaults?.couple?.bride?.photo || "",
+            parentInfo: contentDefaults?.couple?.bride?.parentInfo || "Putri dari Bapak Putra & Ibu Putri",
         },
-        heroPhoto: "",
+        heroPhoto: contentDefaults?.couple?.heroPhoto || "",
     },
     event: {
-        dateISO: "2026-06-12T10:00:00",
+        dateISO: contentDefaults?.event?.dateISO || "2026-06-12T10:00:00+07:00",
         akad: {
-            date: "Jumat, 12 Juni 2026",
-            time: "10.00 WIB - Selesai",
-            address: "Sportorium UMY, Jl. Brawijaya, Ngebel, Tamantirto, Kec. Kasihan, Kabupaten Bantul, DIY",
-            mapsUrl: "https://maps.google.com",
+            date: contentDefaults?.event?.akad?.date || "Jumat, 12 Juni 2026",
+            time: contentDefaults?.event?.akad?.time || "10.00 WIB - Selesai",
+            address: contentDefaults?.event?.akad?.address || "Sportorium UMY, Yogyakarta",
+            mapsUrl: contentDefaults?.event?.akad?.mapsUrl || "https://maps.google.com",
         },
         resepsi: {
-            date: "Jumat, 12 Juni 2026",
-            time: "13.00 WIB - 16.00 WIB",
-            address: "Sportorium UMY, Jl. Brawijaya, Ngebel, Tamantirto, Kec. Kasihan, Kabupaten Bantul, DIY",
-            mapsUrl: "https://maps.google.com",
+            date: contentDefaults?.event?.resepsi?.date || "Jumat, 12 Juni 2026",
+            time: contentDefaults?.event?.resepsi?.time || "13.00 WIB - 16.00 WIB",
+            address: contentDefaults?.event?.resepsi?.address || "Sportorium UMY, Yogyakarta",
+            mapsUrl: contentDefaults?.event?.resepsi?.mapsUrl || "https://maps.google.com",
         },
         livestream: {
-            date: "Jumat, 12 Juni 2026",
-            time: "10.00 WIB",
-            platformLabel: "Instagram Live",
-            url: "https://www.instagram.com/",
+            date: contentDefaults?.event?.livestream?.date || "Jumat, 12 Juni 2026",
+            time: contentDefaults?.event?.livestream?.time || "10.00 WIB",
+            platformLabel: contentDefaults?.event?.livestream?.platformLabel || "Instagram Live",
+            url: contentDefaults?.event?.livestream?.url || "https://www.instagram.com/",
         },
     },
     copy: {
-        openingGreeting: "The Wedding Of",
+        openingGreeting: contentDefaults?.copy?.openingGreeting || "The Wedding Of",
         openingText:
+            contentDefaults?.copy?.openingText ||
             "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami.",
-        quote:
-            "Dan di antara tanda-tanda kekuasaan-Nya ialah Dia menciptakan untukmu pasangan-pasangan dari jenismu sendiri supaya kamu cenderung dan merasa tenteram kepadanya, dan dijadikan-Nya di antaramu rasa kasih dan sayang.",
-        quoteSource: "Qs. Ar-Rum (30): 21",
-        closingText:
-            "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya kami mengucapkan terima kasih.",
+        quote: contentDefaults?.copy?.quote || "",
+        quoteSource: contentDefaults?.copy?.quoteSource || "",
+        closingText: contentDefaults?.copy?.closingText || "",
+        supportText: contentDefaults?.copy?.supportText || "Support with ❤ by ikatancinta.in",
     },
-    lovestory: [
-        {
-            title: "Awal Bertemu",
-            date: "2019",
-            text: "Kami dipertemukan dalam sebuah momen sederhana. Obrolan yang awalnya singkat berubah menjadi perjalanan panjang yang penuh makna.",
-            photo: "",
-        },
-        {
-            title: "Lamaran",
-            date: "2025",
-            text: "Dengan restu keluarga, kami mengikat janji untuk melangkah ke jenjang yang lebih serius dan menata masa depan bersama.",
-            photo: "",
-        },
-        {
-            title: "Pernikahan",
-            date: "2026",
-            text: "InsyaAllah kami akan memulai babak baru sebagai pasangan suami istri dengan doa terbaik dari keluarga dan sahabat tercinta.",
-            photo: "",
-        },
-    ],
-    gallery: [],
+    lovestory: Array.isArray(contentDefaults?.lovestory) ? contentDefaults.lovestory : [],
+    gallery: Array.isArray(contentDefaults?.gallery) ? contentDefaults.gallery : [],
+    gift: {
+        bankList: contentDefaults?.gift?.bankList || [],
+        shipping: contentDefaults?.gift?.shipping || {},
+    },
     features: {
         countdownEnabled: true,
         saveTheDateEnabled: true,
         digitalEnvelopeEnabled: true,
         digitalEnvelopeInfo: {
-            bankList: [
-                { bank: "BCA", account: "1234567890", name: "Habib Yulianto" },
-                { bank: "DANA", account: "081234567890", name: "Habib Yulianto" },
-            ],
+            bankList: contentDefaults?.gift?.bankList || [],
         },
         rsvpEnabled: true,
         livestreamEnabled: true,
     },
+    audio: {
+        src: contentDefaults?.audio?.src || "",
+        autoplay: Boolean(contentDefaults?.audio?.autoplay),
+        loop: contentDefaults?.audio?.loop !== false,
+    },
+    wishes: contentDefaults?.wishes || { title: "Wishes", initial: [] },
+    behavior: behaviorDefaults,
 };
+
+export default defaultSchema;
