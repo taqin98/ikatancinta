@@ -1,0 +1,171 @@
+@import url("./assets/css/bdt-uikit.css");
+@import url("./assets/css/ep-helper.css");
+@import url("./assets/css/uaf.css");
+@import url("./assets/css/exad-styles.min.css");
+@import url("./assets/css/cui_style.css");
+@import url("./assets/css/new-icon.min.css");
+@import url("./assets/css/reset.css");
+@import url("./assets/css/theme.css");
+@import url("./assets/css/header-footer.css");
+@import url("./assets/css/frontend.min.css");
+@import url("./assets/css/post-5.css");
+@import url("./assets/css/elementor-icons.min.css");
+@import url("./assets/css/wdp.css");
+@import url("./assets/css/guest-book.css");
+@import url("./assets/css/widget-heading.min.css");
+@import url("./assets/css/widget-spacer.min.css");
+@import url("./assets/css/zoomIn.min.css");
+@import url("./assets/css/fadeInDown.min.css");
+@import url("./assets/css/widget-image.min.css");
+@import url("./assets/css/fadeInUp.min.css");
+@import url("./assets/css/widget-lottie.min.css");
+@import url("./assets/css/fadeInLeft.min.css");
+@import url("./assets/css/fadeInRight.min.css");
+@import url("./assets/css/widget-social-icons.min.css");
+@import url("./assets/css/apple-webkit.min.css");
+@import url("./assets/css/widget-divider.min.css");
+@import url("./assets/css/swiper.min.css");
+@import url("./assets/css/e-swiper.min.css");
+@import url("./assets/css/widget-gallery.min.css");
+@import url("./assets/css/e-gallery.min.css");
+@import url("./assets/css/transitions.min.css");
+@import url("./assets/css/sticky.min.css");
+@import url("./assets/css/fadeIn.min.css");
+@import url("./assets/css/post-13735.css");
+@import url("./assets/css/roboto.css");
+@import url("./assets/css/robotoslab.css");
+@import url("./assets/css/cormorantgaramond.css");
+@import url("./assets/css/playfairdisplay.css");
+@import url("./assets/css/cormorant.css");
+@import url("./assets/css/jura.css");
+@import url("./assets/css/montserrat.css");
+@import url("./assets/css/fontawesome.min.css");
+@import url("./assets/css/brands.min.css");
+@import url("./assets/css/solid.min.css");
+@import url("./assets/css/regular.min.css");
+@import url("./assets/vendor/aos.css");
+
+/* Substituted missing source files with closest local assets:
+   PRE-VINT-02-COVER-LANDS3-PII.webp, PRE-VINT-02-COVER-PII.webp,
+   PRE-VINT-02-PRAYER-PII.webp, PRE-02-BUILD-EVENT-LONG2-PII.webp,
+   P2G-FALLBACK-PII.webp, SUJA-24SK1173-PII-3.jpg, bg-bank-1-1-2.webp */
+
+.pa-template,
+.pa-template * {
+  box-sizing: border-box;
+}
+
+.pa-template {
+  position: relative;
+  isolation: isolate;
+}
+
+body.pa-lock-scroll {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: calc(var(--vh, 1vh) * 100);
+  overflow-y: scroll;
+}
+
+.pa-template #amplop {
+  display: none;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 1000ms ease, opacity 1000ms ease;
+}
+
+.pa-template #amplop.pa-open {
+  display: block;
+}
+
+.pa-template #open {
+  cursor: pointer;
+}
+
+.pa-template .aw {
+  display: none;
+}
+
+.pa-template.pa-opened .aw {
+  display: block !important;
+}
+
+.pa-template.pa-opened .elementor-invisible {
+  visibility: visible !important;
+}
+
+.pa-template .pa-gallery-fallback {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.pa-template .pa-gallery-fallback .e-gallery-item {
+  display: block !important;
+  width: 100% !important;
+}
+
+.pa-template .pa-gallery-fallback .e-gallery-image {
+  padding-bottom: 145% !important;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.pa-template .cui-wrapper .cui-holder {
+  display: none !important;
+}
+
+.pa-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(12, 14, 16, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.pa-lightbox__dialog {
+  position: relative;
+  max-width: min(92vw, 860px);
+  max-height: 90vh;
+}
+
+.pa-lightbox__image {
+  display: block;
+  max-width: 100%;
+  max-height: 90vh;
+  border-radius: 18px;
+  box-shadow: 0 28px 80px rgba(0, 0, 0, 0.38);
+}
+
+.pa-lightbox__close {
+  position: absolute;
+  top: -12px;
+  right: -12px;
+  width: 42px;
+  height: 42px;
+  border: 0;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1d2a2f;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.24);
+}
+
+@media (max-width: 767px) {
+  .pa-template .pa-gallery-fallback {
+    grid-template-columns: 1fr;
+  }
+
+  .pa-lightbox {
+    padding: 16px;
+  }
+}

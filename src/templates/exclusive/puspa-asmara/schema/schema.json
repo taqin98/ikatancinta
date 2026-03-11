@@ -1,0 +1,141 @@
+{
+  "guest": {
+    "name": "Nama Tamu"
+  },
+  "groom": {
+    "nickName": "Habib",
+    "fullName": "Habib Yulianto",
+    "parentInfo": "Putra Ketiga dari Bapak Putra & Ibu Putri",
+    "instagram": "https://www.instagram.com/",
+    "image": "assets/images/SUJA-24SK1173-P-PII.webp"
+  },
+  "bride": {
+    "nickName": "Adiba",
+    "fullName": "Adiba Putri Syakila",
+    "parentInfo": "Putri Ketiga dari Bapak Putra & Ibu Putri",
+    "instagram": "https://www.instagram.com/",
+    "image": "assets/images/SUJA-24SK1173-W-PII.webp"
+  },
+  "event": {
+    "dateISO": "2025-12-28T10:00:00+07:00",
+    "displayDate": "28. 12. 2025",
+    "akad": {
+      "title": "Akad Nikah",
+      "date": "Minggu, 28 Desember 2025",
+      "time": "Pukul : 09.00 WIB",
+      "addressName": "Kediaman Mempelai Wanita",
+      "mapsUrl": "https://maps.google.com/"
+    },
+    "resepsi": {
+      "title": "Resepsi",
+      "date": "Minggu, 28 Desember 2025",
+      "time": "Pukul : 09.00 WIB",
+      "addressName": "Kediaman Mempelai Wanita",
+      "mapsUrl": "https://maps.google.com/"
+    }
+  },
+  "streaming": {
+    "label": "@Instagram",
+    "date": "Minggu, 28 Desember 2025",
+    "time": "Pukul : 10.00 WIB",
+    "url": "https://www.instagram.com/"
+  },
+  "gallery": [
+    "assets/images/SUJA-24SK1173-PII-1.jpg",
+    "assets/images/SUJA-24SK1173-PII-8.jpg",
+    "assets/images/SUJA-24SK1173-PII-7.jpg",
+    "assets/images/SUJA-24SK1173-PII-6.jpg",
+    "assets/images/SUJA-24SK1173-PII-4.jpg",
+    "assets/images/SUJA-24SK1173-PII-2.jpg"
+  ],
+  "gifts": {
+    "bankAccounts": [
+      {
+        "bankName": "BCA",
+        "accountNumber": "1234 5678 90",
+        "accountHolder": "Habib",
+        "logo": "assets/images/BCA_logo_Bank_Central_Asia-1-3-5-2-1-scaled.png",
+        "chip": "assets/images/chip-atm-1-2-4-3.png"
+      },
+      {
+        "bankName": "DANA",
+        "accountNumber": "1234 5678 90",
+        "accountHolder": "Habib",
+        "logo": "assets/images/1200px-Logo_dana_blue.svg-1-1-1-1-1-2.png"
+      }
+    ],
+    "shipping": {
+      "recipient": "Habib Yulianto",
+      "phone": "1234 5678 90",
+      "address": "Ds Pagu Kec.Wates Kab. Kediri"
+    }
+  },
+  "wishes": [
+    {
+      "author": "Ayu",
+      "comment": "Selamat menempuh hidup baru. Semoga sakinah mawaddah warahmah.",
+      "attendance": "Hadir",
+      "createdAt": "Baru saja"
+    },
+    {
+      "author": "Rizky",
+      "comment": "Doa terbaik untuk kedua mempelai.",
+      "attendance": "Tidak Hadir",
+      "createdAt": "2 menit lalu"
+    }
+  ],
+  "loveStory": [
+    {
+      "title": "Awal Bertemu",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    },
+    {
+      "title": "Lamaran",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    },
+    {
+      "title": "Pernikahan",
+      "description": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    }
+  ],
+  "copy": {
+    "coverTitle": "The Wedding of",
+    "coverDear": "Dear",
+    "openButton": "BUKA UNDANGAN",
+    "heroTitle": "The Wedding of",
+    "heroCouple": "Habib & Adiba",
+    "heroDate": "28. 12. 2025",
+    "saveTheDate": "Save The Date",
+    "quranTitle": "Ha",
+    "quranText": "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang. Sungguh, pada yang demikian itu benar-benar terdapat tanda-tanda (kebesaran Allah) bagi kaum yang berpikir",
+    "quranSource": "(Qs. Ar. Rum (30) : 21)",
+    "greeting": "Assalamu'alaikum Wr. Wb.",
+    "intro": "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami :",
+    "countdownTitle": "MENUJU HARI BAHAGIA",
+    "eventIntro": "Dengan segala kerendahan hati dan dengan ucapan syukur atas karunia Tuhan, kami bermaksud mengundang Bapak/Ibu/Saudara/i untuk hadir di acara pernikahan kami yang akan dilaksanakan pada:",
+    "livestreamTitle": "Live Streaming",
+    "livestreamIntro": "Kami mengundang Bapak/Ibu/Saudara/i untuk menyaksikan pernikahan kami secara virtual yang disiarkan langsung melalui media sosial di bawah ini:",
+    "galleryTitle": "Our Gallery",
+    "loveStoryTitle": "Love Story",
+    "giftTitle": "Wedding Gift",
+    "giftIntro": "Doa restu Anda merupakan karunia yang sangat berarti bagi kami, dan jika memberi adalah ungkapan tanda kasih, Anda dapat memberi kado secara cashless.",
+    "giftToggleLabel": "Klik di sini",
+    "shippingTitle": "Kirim Hadiah",
+    "wishesTitle": "Wishes",
+    "wishesIntro": "Berikan ucapan harapan dan do’a kepada kedua mempelai",
+    "closingText": "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan do’a restunya untuk keberkahan pernikahan kami.",
+    "creditText": "Made with ❤ by Rumah Undangan"
+  },
+  "media": {
+    "audio": "assets/audio/Donkgedank-GANGSINGAN-Backsound-Nusantara.mp3",
+    "lottieBird": "assets/lottie/bird-hitam.json",
+    "lottieBird2": "assets/lottie/bird-hitam-2.json"
+  },
+  "features": {
+    "audioEnabled": true,
+    "lottieEnabled": true,
+    "lightboxEnabled": true,
+    "wishesEnabled": true,
+    "digitalEnvelopeEnabled": true
+  }
+}

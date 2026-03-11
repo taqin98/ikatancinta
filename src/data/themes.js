@@ -5,6 +5,7 @@ import timelessPromiseThumbnail from "../templates/premium/timeless-promise/asse
 import mistyRomanceThumbnail from "../templates/premium/misty-romance/assets/images/cover/cover-main.webp";
 import velvetBurgundyThumbnail from "../templates/premium/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
 import botanicalEleganceThumbnail from "../templates/exclusive/botanical-elegance/assets/media/uploads/2025/11/PREMIUM-01_SPESIAL-FOTO.jpg";
+import puspaAsmaraThumbnail from "../templates/exclusive/puspa-asmara/assets/images/PREMIUM-02_SPESIAL-FOTO.jpg";
 
 export const themes = [
   {
@@ -118,6 +119,22 @@ export const themes = [
     overlayClass: "bg-slate-900/20",
     cardClass: "bg-slate-100/70 hover:bg-slate-100",
     templateRoute: "/undangan/botanical-elegance",
+  },
+  {
+    slug: "puspa-asmara",
+    presetId: "psa-exclusive-001",
+    name: "Puspa Asmara",
+    category: "Classic",
+    packageTier: "EKSLUSIF",
+    price: "Rp 149.000",
+    description: "Migrasi pixel-perfect dari template WordPress/Elementor dengan komposisi floral klasik dan interaksi undangan lengkap.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: puspaAsmaraThumbnail,
+    image: puspaAsmaraThumbnail,
+    overlayClass: "bg-amber-900/20",
+    cardClass: "bg-amber-100/70 hover:bg-amber-100",
+    templateRoute: "/undangan/puspa-asmara",
   }
 ];
 

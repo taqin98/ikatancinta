@@ -20,7 +20,7 @@ import {
   MistyRomanceTemplate,
   VelvetBurgundyTemplate,
 } from "./templates/premium";
-import { BotanicalEleganceTemplate, ExclusiveThemePreviewPage } from "./templates/exclusive";
+import { BotanicalEleganceTemplate, ExclusiveThemePreviewPage, PuspaAsmaraTemplate } from "./templates/exclusive";
 import InvitationPreviewPage from "./components/InvitationPreviewPage";
 import ThemeDetailPage from "./components/ThemeDetailPage";
 import ThemeGalleryPage from "./components/ThemeGalleryPage";
@@ -138,6 +138,10 @@ function App() {
 
   if (pathname === "/undangan/botanical-elegance") {
     return <BotanicalEleganceTemplate />;
+  }
+
+  if (pathname === "/undangan/puspa-asmara") {
+    return <PuspaAsmaraTemplate />;
   }
 
   if (pathname === "/preview-undangan-premium") {
