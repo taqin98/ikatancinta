@@ -3,10 +3,10 @@ import { navigateTo } from "../utils/navigation";
 const plans = [
   {
     name: "BASIC",
-    description: "Untuk kamu yang hanya ingin menyebarkan informasi undangan kamu saja.",
+    description: "Untuk kamu yang hanya ingin menyebarkan informasi undangan secara sederhana.",
     oldPrice: "IDR 110.000",
-    price: "IDR 50.000",
-    discount: "55% OFF",
+    price: "IDR 59.000",
+    discount: "46% OFF",
     cta: "Pilih BASIC",
     highlighted: false,
     features: [
@@ -15,62 +15,62 @@ const plans = [
       "Detail Info Acara",
       "Profil Pasangan",
       "Catatan khusus untuk tamu",
-      "Galeri foto (maks. 2)",
+      "Galeri foto (maks. 4)",
       "Background music (list)",
-      "Navigasi Lokasi",
-      "Menambahkan ke Google Calendar",
+      "Navigasi Lokasi (Google Maps)",
+      "Tambahkan ke Google Calendar",
       "Unlimited jadwal acara",
       "RSVP (Konfirmasi kehadiran)",
       "Masa Aktif Selamanya",
-      "Edit Tanpa Batas",
+      "Revisi Tanpa Batas",
     ],
   },
   {
     name: "PREMIUM",
     description:
-      "Sebarkan informasi, dan tamu bisa memberikan kado, ucapan, serta konfirmasi kehadiran dengan jumlah tamu terbatas.",
+      "Paket paling populer. Selain informasi undangan, tamu dapat memberikan ucapan, kado digital, dan konfirmasi kehadiran.",
     oldPrice: "IDR 250.000",
     price: "IDR 110.000",
     discount: "56% OFF",
     cta: "Pilih PREMIUM",
     highlighted: true,
     features: [
-      "Semua yang ada di paket BASIC",
+      "Semua fitur paket BASIC",
       "Amplop digital (nomor rekening)",
       "Kirim ucapan",
-      "Galeri foto (maks. 10)",
+      "Galeri foto (maks. 8)",
       "Love stories",
       "Buku Tamu",
-      "Share Eksklusif - nama tamu (maks. 100)",
+      "Share Eksklusif - nama tamu (maks. 150)",
       "Background music (list dan custom)",
-      "Custom domain (opsional)",
       "Preset/Desain premium",
+      "Custom domain (opsional, biaya domain tidak termasuk)",
       "Masa Aktif Selamanya",
-      "Edit Tanpa Batas",
+      "Revisi Tanpa Batas",
     ],
   },
   {
-    name: "EKSLUSIF",
-    description: "Jumlah tamu tanpa batas dengan tampilan yang lebih eksklusif.",
+    name: "EKSKLUSIF",
+    description:
+      "Undangan dengan fitur lengkap dan jumlah tamu tanpa batas untuk pengalaman yang lebih eksklusif.",
     oldPrice: "IDR 400.000",
-    price: "IDR 180.000",
-    discount: "55% OFF",
-    cta: "Pilih EKSLUSIF",
+    price: "IDR 209.000",
+    discount: "48% OFF",
+    cta: "Pilih EKSKLUSIF",
     highlighted: false,
     features: [
-      "Semua yang ada di paket PREMIUM, BASIC",
-      "Galeri (maks. 20)",
+      "Semua fitur paket PREMIUM",
+      "Galeri foto (maks. 14)",
       "Share Eksklusif - nama tamu (unlimited)",
-      "Bisa membeli preset luxury",
-      "Semua jenis preset (add on luxury)",
+      "Preset luxury (add-on tersedia)",
       "Support Prioritas",
-      "Bahasa Indonesia/Inggris",
+      "Bahasa Indonesia / Inggris",
       "Free: Undangan Gambar",
       "Custom Background Gambar Layout Section",
-      "Custom domain (opsional)",
       "Live Streaming",
+      "Custom domain (opsional, biaya domain tidak termasuk)",
       "Masa Aktif Selamanya",
-      "Edit Tanpa Batas",
+      "Revisi Tanpa Batas",
     ],
   },
 ];
@@ -101,7 +101,7 @@ export default function Pricing() {
             >
               {plan.highlighted && (
                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-orange-400 text-white text-xs font-bold px-4 py-1.5 rounded-full uppercase tracking-wider shadow-lg">
-                  Paling Laris
+                  Pilihan User
                 </div>
               )}
 
