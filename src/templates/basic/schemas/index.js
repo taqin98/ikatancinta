@@ -5,6 +5,7 @@ import { defaultSchema as timelessPromiseSchema } from "../../premium/timeless-p
 import { defaultSchema as mistyRomanceSchema } from "../../premium/misty-romance/schema/InvitationSchema";
 import { defaultSchema as velvetBurgundySchema } from "../../premium/velvet-burgundy/schema/invitationSchema";
 import { defaultSchema as botanicalEleganceSchema } from "../../exclusive/botanical-elegance/schema/invitationSchema";
+import { defaultSchema as eternalSummitSchema } from "../../exclusive/eternal-summit/schema/invitationSchema";
 import { defaultSchema as puspaAsmaraSchema } from "../../exclusive/puspa-asmara/schema/invitationSchema";
 
 const schemaBySlug = {
@@ -15,6 +16,7 @@ const schemaBySlug = {
     "misty-romance": mistyRomanceSchema,
     "velvet-burgundy": velvetBurgundySchema,
     "botanical-elegance": botanicalEleganceSchema,
+    "eternal-summit": eternalSummitSchema,
     "puspa-asmara": puspaAsmaraSchema,
 };
 

@@ -6,6 +6,7 @@ import mistyRomanceThumbnail from "../templates/premium/misty-romance/assets/ima
 import velvetBurgundyThumbnail from "../templates/premium/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
 import botanicalEleganceThumbnail from "../templates/exclusive/botanical-elegance/assets/media/uploads/2025/11/PREMIUM-01_SPESIAL-FOTO.jpg";
 import puspaAsmaraThumbnail from "../templates/exclusive/puspa-asmara/assets/images/PREMIUM-02_SPESIAL-FOTO.jpg";
+import eternalSummitThumbnail from "../templates/exclusive/eternal-summit/assets/images/PREMIUM-03_SPESIAL-FOTO.jpg";
 
 export const themes = [
   {
@@ -135,6 +136,22 @@ export const themes = [
     overlayClass: "bg-amber-900/20",
     cardClass: "bg-amber-100/70 hover:bg-amber-100",
     templateRoute: "/undangan/puspa-asmara",
+  },
+  {
+    slug: "eternal-summit",
+    presetId: "ets-exclusive-001",
+    name: "Eternal Summit",
+    category: "Classic",
+    packageTier: "EKSLUSIF",
+    price: "Rp 149.000",
+    description: "Migrasi pixel-perfect dari template WordPress/Elementor Premium 03 dengan tata letak ornamental merah marun.",
+    title: "The Wedding Of",
+    couple: "Habib & Adiba",
+    thumbnail: eternalSummitThumbnail,
+    image: eternalSummitThumbnail,
+    overlayClass: "bg-rose-900/20",
+    cardClass: "bg-rose-100/70 hover:bg-rose-100",
+    templateRoute: "/undangan/eternal-summit",
   }
 ];
 
