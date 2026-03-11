@@ -4,32 +4,32 @@ const faqs = [
   {
     question: "Berapa lama proses membuat undangan digital?",
     answer:
-      "Prosesnya cepat, bisa selesai sekitar 5 menit. Alurnya: konsultasi singkat, isi info acara, pilih preset, lalu aktifkan undangan.",
+      "Prosesnya cukup cepat. Setelah mengisi data undangan dan memilih paket, kamu perlu melakukan pembayaran terlebih dahulu. Setelah pembayaran dikonfirmasi melalui WhatsApp, undangan akan diproses dan dipublikasikan.",
   },
   {
     question: "Fitur apa saja yang tersedia di undangan?",
     answer:
-      "Fitur yang tersedia mencakup RSVP, galeri foto, navigasi lokasi, background music, amplop digital, live streaming, hingga custom domain.",
+      "Fitur yang tersedia antara lain RSVP konfirmasi kehadiran, galeri foto, navigasi lokasi Google Maps, background music, buku tamu, love story, amplop digital, hingga live streaming pada paket tertentu.",
   },
   {
-    question: "Apakah bisa kirim undangan langsung ke WhatsApp?",
+    question: "Bagaimana cara membagikan undangan ke tamu?",
     answer:
-      "Bisa. Platform mendukung broadcast undangan via WhatsApp agar proses penyebaran ke tamu jadi lebih praktis.",
+      "Setelah undangan dipublikasikan, kamu akan mendapatkan link undangan yang bisa dibagikan ke tamu melalui WhatsApp, media sosial, atau platform lainnya.",
   },
   {
-    question: "Apakah bisa versi undangan berbeda untuk tiap tamu?",
+    question: "Apakah bisa menampilkan nama tamu di undangan?",
     answer:
-      "Bisa. Tersedia dukungan versi undangan berbeda dan personalisasi nama tamu agar pengalaman undangan lebih eksklusif.",
+      "Bisa. Fitur Share Eksklusif memungkinkan kamu membuat link undangan dengan nama tamu sehingga undangan terlihat lebih personal untuk setiap tamu.",
   },
   {
-    question: "Bagaimana metode pembayarannya?",
+    question: "Apakah bisa menggunakan custom domain?",
     answer:
-      "Metode pembayaran yang tersedia saat ini: transfer BCA, DANA, ShopeePay, dan QRIS BCA.",
+      "Bisa. Custom domain tersedia sebagai fitur opsional dengan biaya tambahan untuk pembelian domain.",
   },
   {
-    question: "Apakah perlu registrasi akun pelanggan?",
+    question: "Apakah data undangan bisa diedit setelah dipublikasikan?",
     answer:
-      "Tidak wajib registrasi akun pelanggan. Kamu bisa langsung konsultasi, pilih tema, isi data, lalu publish undangan.",
+      "Untuk saat ini perubahan data undangan dapat dilakukan dengan menghubungi admin melalui WhatsApp.",
   },
 ];
 

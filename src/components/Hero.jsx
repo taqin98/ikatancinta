@@ -35,7 +35,7 @@ export default function Hero() {
                     <div className="flex-1 text-center lg:text-left animate-enter-up">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary-soft mb-5 sm:mb-6 border border-secondary/20 max-[390px]:px-2.5">
                             <span className="material-symbols-outlined text-sm text-secondary">verified</span>
-                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Platform #1 di Indonesia</span>
+                            <span className="text-xs font-bold uppercase tracking-wider text-slate-600">Platform Undangan Digital Modern</span>
                         </div>
 
                         <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold leading-[1.08] mb-5 sm:mb-6 text-slate-900 dark:text-white">

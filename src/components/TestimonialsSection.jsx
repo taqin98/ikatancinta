@@ -2,38 +2,38 @@ const testimonials = [
   {
     name: "Nadia & Arif",
     city: "Bandung",
-    rating: "5.0",
-    text: "Undangannya cantik banget, proses edit cepat, dan tamu langsung paham info acara. Fitur RSVP-nya simpel dan membantu.",
+    rating: "4.9",
+    text: "Awalnya kami ragu pakai undangan digital, tapi ternyata praktis banget. Desainnya juga rapi dan tamu langsung bisa lihat lokasi acara dengan mudah.",
   },
   {
     name: "Rina & Fajar",
     city: "Yogyakarta",
-    rating: "4.9",
-    text: "Tema modernnya elegan. Kami pakai fitur kirim link WhatsApp dan hemat banyak waktu.",
+    rating: "4.8",
+    text: "Temanya simpel tapi tetap elegan. Kami tinggal bagikan link undangannya ke keluarga dan teman, jadi tidak perlu repot cetak undangan.",
   },
   {
     name: "Dewi & Bagus",
     city: "Surabaya",
     rating: "5.0",
-    text: "Support responsif, revisi mudah, hasil akhirnya premium. Banyak tamu puji desain undangannya.",
+    text: "Proses dari isi data sampai undangan jadi cukup cepat. Beberapa tamu juga bilang tampilannya modern dan mudah dibuka di HP.",
   },
   {
     name: "Salsa & Ilham",
     city: "Jakarta",
-    rating: "4.8",
-    text: "Galeri foto, maps, dan musik latar jalan lancar di semua device. Experience-nya smooth.",
+    rating: "4.7",
+    text: "Kami suka bagian galeri foto dan musik latarnya. Undangannya terasa lebih hidup dan sejauh ini semua tamu bisa buka tanpa masalah.",
   },
   {
     name: "Aisyah & Yusuf",
     city: "Makassar",
-    rating: "5.0",
-    text: "Kami pilih tema islami dan hasilnya sesuai ekspektasi. Proses konfirmasi tamu jadi lebih rapi.",
+    rating: "4.9",
+    text: "Yang paling membantu itu fitur konfirmasi kehadiran. Jadi lebih mudah memperkirakan jumlah tamu sebelum hari acara.",
   },
   {
     name: "Putri & Rizky",
     city: "Semarang",
-    rating: "4.9",
-    text: "Fitur amplop digital dan RSVP bikin semuanya lebih praktis. Setup dari awal sampai publish cepat.",
+    rating: "4.8",
+    text: "Fitur amplop digitalnya cukup membantu, terutama untuk teman yang tidak bisa hadir langsung. Setup undangannya juga tidak ribet.",
   },
 ];
 
@@ -76,15 +76,15 @@ export default function TestimonialsSection() {
       <div className="container mx-auto px-4 relative z-10">
         <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-3 gap-4 mb-8 animate-enter-up anim-delay-1">
           <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 sm:p-6 text-center">
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">4.9/5</p>
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">4.8/5</p>
             <p className="text-sm text-slate-500 mt-1">Rata-rata rating pelanggan</p>
           </div>
           <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 sm:p-6 text-center">
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">2.000+</p>
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">700+</p>
             <p className="text-sm text-slate-500 mt-1">Undangan telah dipublikasikan</p>
           </div>
           <div className="rounded-2xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-5 sm:p-6 text-center min-[420px]:col-span-2 md:col-span-1">
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">99%</p>
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white">97%</p>
             <p className="text-sm text-slate-500 mt-1">Menyatakan puas dengan layanan</p>
           </div>
         </div>
