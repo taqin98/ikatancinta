@@ -1,4 +1,4 @@
-import { defaultSchema as blueNatureSchema } from "../blue-nature/schema/invitationSchema";
+import { defaultSchema as blueNatureSchema } from "../../premium/blue-nature/schema/invitationSchema";
 import { defaultSchema as noirMinimalistSchema } from "../noir-minimalist/schema/invitationSchema";
 import { defaultSchema as ivoryGraceSchema } from "../ivory-grace/schema/invitationSchema";
 import { defaultSchema as timelessPromiseSchema } from "../../premium/timeless-promise/schema/invitationSchema";

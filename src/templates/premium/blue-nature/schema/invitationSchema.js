@@ -1,7 +1,7 @@
 import contentDefaults from "./content.json";
 import behaviorDefaults from "./behavior.json";
 
-/** @type {import('../blue-nature/schema/invitationSchema').defaultSchema & {behavior?: object}} */
+/** @type {import('./invitationSchema').defaultSchema & {behavior?: object}} */
 export const defaultSchema = {
     guest: {
         name: contentDefaults?.guest?.name || "Nama Tamu",

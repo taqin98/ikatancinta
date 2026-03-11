@@ -1,3 +1,2 @@
-export { default as BlueNatureTemplate } from "./blue-nature/BlueNatureTemplate";
 export { default as NoirMinimalistTemplate } from "./noir-minimalist/NoirMinimalistTemplate";
 export { default as IvoryGraceTemplate } from "./ivory-grace/IvoryGraceTemplate";

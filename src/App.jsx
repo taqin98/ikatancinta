@@ -10,11 +10,11 @@ import Navbar from "./components/Navbar";
 import OrderConfirmationPage from "./components/OrderConfirmationPage";
 import Pricing from "./components/Pricing";
 import {
-  BlueNatureTemplate,
   IvoryGraceTemplate,
   NoirMinimalistTemplate,
 } from "./templates/basic";
 import {
+  BlueNatureTemplate,
   PremiumThemePreviewPage,
   TimelessPromiseTemplate,
   MistyRomanceTemplate,

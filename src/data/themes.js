@@ -1,4 +1,4 @@
-import blueNatureThumbnail from "../templates/basic/blue-nature/assets/images/og-image.webp";
+import blueNatureThumbnail from "../templates/premium/blue-nature/assets/images/og-image.webp";
 import noirMinimalistThumbnail from "../templates/basic/noir-minimalist/assets/images/LUXURY-01-1.webp";
 import ivoryGraceThumbnail from "../templates/basic/ivory-grace/assets/images/LUXURY-02-1.webp";
 import timelessPromiseThumbnail from "../templates/premium/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
@@ -10,11 +10,11 @@ import puspaAsmaraThumbnail from "../templates/exclusive/puspa-asmara/assets/ima
 export const themes = [
   {
     slug: "blue-nature",
-    presetId: "bun-basic-001",
+    presetId: "bun-premium-001",
     name: "Blue Nature",
     category: "Natural",
-    packageTier: "BASIC",
-    price: "Rp 99.000",
+    packageTier: "PREMIUM",
+    price: "Rp 149.000",
     description: "Nuansa biru natural dengan sentuhan gold dan tekstur floral yang hangat.",
     title: "The Wedding Of",
     couple: "Habib & Adiba",
@@ -138,12 +138,17 @@ export const themes = [
   }
 ];
 
+const presetIdAliases = {
+  "bun-basic-001": "bun-premium-001",
+};
+
 export function getThemeBySlug(slug) {
   return themes.find((theme) => theme.slug === slug);
 }
 
 export function getThemeByPresetId(presetId) {
-  return themes.find((theme) => theme.presetId === presetId);
+  const normalizedPresetId = presetIdAliases[presetId] || presetId;
+  return themes.find((theme) => theme.presetId === normalizedPresetId);
 }
 
 export const invitationsByTheme = {
