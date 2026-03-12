@@ -1,6 +1,7 @@
 import blueNatureThumbnail from "../templates/premium/blue-nature/assets/images/og-image.webp";
 import noirMinimalistThumbnail from "../templates/basic/noir-minimalist/assets/images/LUXURY-01-1.webp";
 import ivoryGraceThumbnail from "../templates/basic/ivory-grace/assets/images/LUXURY-02-1.webp";
+import navyBlossomThumbnail from "../templates/basic/navy-blossom/assets/images/LUXURY-08-FOTO.jpg";
 import timelessPromiseThumbnail from "../templates/premium/timeless-promise/assets/image/ornament/tema-08-scaled-1-1.webp";
 import mistyRomanceThumbnail from "../templates/premium/misty-romance/assets/images/cover/cover-main.webp";
 import velvetBurgundyThumbnail from "../templates/premium/velvet-burgundy/assets/images/local/wp-content__uploads__2024__09__04-1-1.webp";
@@ -56,6 +57,22 @@ export const themes = [
     overlayClass: "bg-zinc-900/20",
     cardClass: "bg-zinc-100/70 hover:bg-zinc-100",
     templateRoute: "/undangan/ivory-grace",
+  },
+  {
+    slug: "navy-blossom",
+    presetId: "nvb-basic-001",
+    name: "Navy Blossom",
+    category: "Classic",
+    packageTier: "BASIC",
+    price: "Rp 99.000",
+    description: "Migrasi pixel-perfect dari source Luxury 08 dengan cover lock, dual particles, countdown, gift toggle, dan wishes adapter.",
+    title: "The Wedding Of",
+    couple: "Adiba & Habib",
+    thumbnail: navyBlossomThumbnail,
+    image: navyBlossomThumbnail,
+    overlayClass: "bg-slate-900/20",
+    cardClass: "bg-slate-100/70 hover:bg-slate-100",
+    templateRoute: "/undangan/navy-blossom",
   },
   {
     slug: "timeless-promise",

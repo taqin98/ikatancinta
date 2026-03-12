@@ -11,6 +11,7 @@ import OrderConfirmationPage from "./components/OrderConfirmationPage";
 import Pricing from "./components/Pricing";
 import {
   IvoryGraceTemplate,
+  NavyBlossomTemplate,
   NoirMinimalistTemplate,
 } from "./templates/basic";
 import {
@@ -127,6 +128,10 @@ function App() {
 
   if (pathname === "/undangan/ivory-grace") {
     return <IvoryGraceTemplate />;
+  }
+
+  if (pathname === "/undangan/navy-blossom") {
+    return <NavyBlossomTemplate />;
   }
 
   if (pathname === "/undangan/timeless-promise") {
