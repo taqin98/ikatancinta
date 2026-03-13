@@ -73,6 +73,9 @@ Proyek ini adalah frontend single-page application (SPA) untuk:
 ## Struktur Folder
 ```text
 .
+├── admin-dashboard-next-refine/ # Dashboard admin terpisah (Next.js + Refine + Tremor)
+├── backend-express-starter/     # Backend Express + JWT admin + bridge Apps Script
+├── google-apps-script-starter/  # Storage adapter Apps Script ke Sheets + Drive
 ├── public/                      # Aset statis (audio, video, payment icon, dll)
 ├── src/
 │   ├── components/              # Komponen halaman/section utama
@@ -99,6 +102,14 @@ Proyek ini adalah frontend single-page application (SPA) untuk:
 Prasyarat:
 - Node.js 18+ (disarankan Node.js 20 LTS)
 - npm 9+
+
+Proyek tambahan yang juga sudah siap:
+
+- `admin-dashboard-next-refine/`
+  - Next.js App Router
+  - Refine untuk auth/data admin
+  - Tremor untuk UI ringkasan dan detail order
+  - default local URL: `http://127.0.0.1:3100`
 
 ## Menjalankan Proyek
 Install dependency:

@@ -2,13 +2,29 @@ import Footer from "./Footer";
 import Navbar from "./Navbar";
 import WhatsAppButton from "./WhatsAppButton";
 import { navigateTo, openInNewTab } from "../utils/navigation";
-import { getThemeBySlug, invitationsByTheme } from "../data/themes";
+import { useThemeBySlug, useThemeInvitations } from "../hooks/useCatalogData";
 import { getCurrentPathname } from "../utils/navigation";
 
 export default function ThemeDetailPage() {
   const pathname = getCurrentPathname();
   const slug = pathname.slice("/tema/".length);
-  const theme = getThemeBySlug(slug);
+  const { theme, loading } = useThemeBySlug(slug);
+  const { invitations: invitationsUsingPreset } = useThemeInvitations(slug);
+
+  if (loading && !theme) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-24 sm:pt-32 pb-20 px-4">
+          <div className="container mx-auto text-center">
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-3">Memuat detail tema</h1>
+            <p className="text-slate-500">Mengambil data tema dari API katalog.</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!theme) {
     return (
@@ -35,13 +51,12 @@ export default function ThemeDetailPage() {
 
   const getPreviewPathByPackageTier = (packageTier) => {
     if (packageTier === "PREMIUM") return "/preview-undangan-premium";
-    if (packageTier === "EKSLUSIF") return "/preview-undangan-eksklusif";
+    if (packageTier === "EKSKLUSIF" || packageTier === "EKSLUSIF") return "/preview-undangan-eksklusif";
     return null;
   };
 
-  const invitationsUsingPreset = invitationsByTheme[theme.slug] || [];
   const previewBackground = theme.thumbnail || theme.image;
-  // templateRoute is required for new templates; fall back to tier-based path for legacy PREMIUM/EKSLUSIF
+  // templateRoute is required for new templates; fall back to tier-based path for legacy PREMIUM/EKSKLUSIF
   const legacyPath = getPreviewPathByPackageTier(theme.packageTier);
   const previewHref = theme.templateRoute
     ? theme.templateRoute

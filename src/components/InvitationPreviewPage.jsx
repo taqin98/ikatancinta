@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { getThemeByPresetId } from "../data/themes";
+import { useThemeByPresetId } from "../hooks/useCatalogData";
 import { toAppPath } from "../utils/navigation";
 
 function getPresetIdFromUrl() {
@@ -9,7 +9,7 @@ function getPresetIdFromUrl() {
 
 export default function InvitationPreviewPage() {
   const presetId = getPresetIdFromUrl();
-  const theme = getThemeByPresetId(presetId);
+  const { theme, loading } = useThemeByPresetId(presetId);
   const [isOpened, setIsOpened] = useState(false);
 
   const mapLink = "https://maps.app.goo.gl/5Qh9MvaS7wq4QnBCA";
@@ -36,6 +36,17 @@ export default function InvitationPreviewPage() {
     ],
     [theme?.image, theme?.thumbnail]
   );
+
+  if (loading && !theme) {
+    return (
+      <main className="min-h-screen bg-[#f7f1e8] text-[#5f4d2f] px-4 py-10">
+        <div className="mx-auto max-w-xl rounded-3xl border border-[#e7dccd] bg-white p-8 text-center shadow-soft">
+          <h1 className="font-serif text-3xl font-bold mb-2">Memuat preview</h1>
+          <p className="text-sm text-[#8f7a57]">Mengambil preset dari API katalog.</p>
+        </div>
+      </main>
+    );
+  }
 
   if (!theme) {
     return (

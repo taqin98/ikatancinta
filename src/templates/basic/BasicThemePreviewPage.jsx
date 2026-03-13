@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { getThemeByPresetId } from "../../data/themes";
+import { useThemeByPresetId } from "../../hooks/useCatalogData";
 import { toAppPath } from "../../utils/navigation";
 
 function getPresetIdFromUrl() {
@@ -9,7 +9,7 @@ function getPresetIdFromUrl() {
 
 export default function BasicThemePreviewPage() {
   const presetId = getPresetIdFromUrl();
-  const theme = getThemeByPresetId(presetId);
+  const { theme, loading } = useThemeByPresetId(presetId);
 
   const [brideFirstName, groomFirstName] = useMemo(() => {
     const parts = (theme?.couple || "Adinda & John")
@@ -18,6 +18,17 @@ export default function BasicThemePreviewPage() {
       .filter(Boolean);
     return [parts[0] || "Adinda", parts[1] || "John"];
   }, [theme?.couple]);
+
+  if (loading && !theme) {
+    return (
+      <main className="min-h-screen bg-[#f9f6f0] px-4 py-10">
+        <div className="mx-auto max-w-md rounded-3xl bg-white/90 border border-[#e9dfd0] p-7 text-center shadow-soft">
+          <h1 className="font-serif text-3xl font-bold text-[#6b6e2e] mb-2">Memuat preview</h1>
+          <p className="text-sm text-slate-600">Mengambil preset dari API katalog.</p>
+        </div>
+      </main>
+    );
+  }
 
   if (!theme) {
     return (

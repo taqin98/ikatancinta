@@ -1,8 +1,8 @@
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import WhatsAppButton from "./WhatsAppButton";
+import { useThemeByPresetId } from "../hooks/useCatalogData";
 import { navigateTo } from "../utils/navigation";
-import { getThemeByPresetId } from "../data/themes";
 
 function getPresetIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -11,7 +11,22 @@ function getPresetIdFromUrl() {
 
 export default function ThemePreviewPage() {
   const presetId = getPresetIdFromUrl();
-  const theme = getThemeByPresetId(presetId);
+  const { theme, loading } = useThemeByPresetId(presetId);
+
+  if (loading && !theme) {
+    return (
+      <>
+        <Navbar />
+        <main className="pt-28 pb-20 px-4">
+          <div className="container mx-auto text-center">
+            <h1 className="font-serif text-2xl sm:text-3xl font-bold mb-3">Memuat preset</h1>
+            <p className="text-slate-500 mb-6">Mengambil data preview dari API katalog.</p>
+          </div>
+        </main>
+        <Footer />
+      </>
+    );
+  }
 
   if (!theme) {
     return (

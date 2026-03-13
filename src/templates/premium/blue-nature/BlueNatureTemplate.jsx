@@ -3,6 +3,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { postInvitationWish } from "../../../services/wishesApi";
 import defaultSchema from "./schema/invitationSchema";
 import { aosPreset, tokens } from "./tokens";
 import "./blue-nature.css";
@@ -448,7 +449,7 @@ export default function BlueNatureTemplate({ data: propData = null }) {
         setTimeout(() => setCopiedAccount(""), 1600);
     }
 
-    function handleWishSubmit(submitEvent) {
+    async function handleWishSubmit(submitEvent) {
         submitEvent.preventDefault();
         if (!wishForm.author.trim() || !wishForm.comment.trim() || !wishForm.attendance) return;
 
@@ -459,6 +460,16 @@ export default function BlueNatureTemplate({ data: propData = null }) {
             hour: "2-digit",
             minute: "2-digit",
         }).format(new Date());
+
+        try {
+            await postInvitationWish("blue-nature", {
+                author: wishForm.author.trim(),
+                comment: wishForm.comment.trim(),
+                attendance: wishForm.attendance,
+            });
+        } catch {
+            // Keep optimistic local render even if API is unavailable.
+        }
 
         setWishes((prev) => [
             {

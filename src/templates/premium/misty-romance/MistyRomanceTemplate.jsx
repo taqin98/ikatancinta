@@ -3,6 +3,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { postInvitationWish } from "../../../services/wishesApi";
 import sourceHtml from "./schema/source.html?raw";
 import { defaultSchema } from "./schema/InvitationSchema";
 import { aosPreset, tokens } from "./tokens";
@@ -1152,7 +1153,7 @@ export default function MistyRomanceTemplate() {
 
         const commentForm = root.querySelector("#commentform-13455");
         if (commentForm) {
-            const onSubmit = (event) => {
+            const onSubmit = async (event) => {
                 event.preventDefault();
 
                 const name = normalizeText(root.querySelector("#author")?.value || mergedData?.guest?.name || "");
@@ -1165,6 +1166,16 @@ export default function MistyRomanceTemplate() {
                 if (!name || !message) return;
 
                 const nextAttendance = normalizeAttendanceLabel(attendanceText || attendanceValue);
+
+                try {
+                    await postInvitationWish("misty-romance", {
+                        author: name,
+                        comment: message,
+                        attendance: nextAttendance,
+                    });
+                } catch {
+                    // Keep optimistic local render even if API is unavailable.
+                }
 
                 setWishes((prev) => [
                     {

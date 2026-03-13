@@ -49,6 +49,10 @@ export function clearInvitationDraft() {
  * @param {object|null} params.coverImage  — { url, name }
  * @param {object[]} params.galleryImages  — [{ url }]
  * @param {object[]} params.stories        — [{ title, description, date }]
+ * @param {object} params.selectedPackage
+ * @param {string} params.musicMode
+ * @param {object} params.selectedMusicTrack
+ * @param {object|null} params.uploadedMusicFile
  * @param {object} params.defaultSchema
  * @returns {object} merged invitation data
  */
@@ -61,6 +65,10 @@ export function mapFormToInvitationSchema({
     coverImage,
     galleryImages,
     stories,
+    selectedPackage,
+    musicMode,
+    selectedMusicTrack,
+    uploadedMusicFile,
     defaultSchema,
 }) {
     // Format date string: "2026-05-15" → "Jumat, 15 Mei 2026"
@@ -123,6 +131,12 @@ export function mapFormToInvitationSchema({
         ? galleryImages.map((img) => img.url)
         : defaultSchema.gallery;
 
+    const packageCapabilities = selectedPackage?.capabilities || {};
+    const galleryLimit = selectedPackage?.limits?.galleryMax || mappedGallery.length;
+    const resolvedAudioSrc = musicMode === "upload"
+        ? uploadedMusicFile?.dataUrl || defaultSchema.audio?.src || ""
+        : selectedMusicTrack?.previewUrl || defaultSchema.audio?.src || "";
+
     return {
         ...defaultSchema,
         couple: {
@@ -149,7 +163,17 @@ export function mapFormToInvitationSchema({
             akad: mappedAkad,
             resepsi: mappedResepsi,
         },
-        lovestory: mappedLovestory,
-        gallery: mappedGallery,
+        lovestory: packageCapabilities.loveStory === false ? [] : mappedLovestory,
+        gallery: mappedGallery.slice(0, galleryLimit),
+        features: {
+            ...defaultSchema.features,
+            digitalEnvelopeEnabled: packageCapabilities.digitalEnvelope ?? defaultSchema.features?.digitalEnvelopeEnabled,
+            rsvpEnabled: packageCapabilities.rsvp ?? defaultSchema.features?.rsvpEnabled,
+            livestreamEnabled: packageCapabilities.livestream ?? defaultSchema.features?.livestreamEnabled,
+        },
+        audio: {
+            ...defaultSchema.audio,
+            src: resolvedAudioSrc,
+        },
     };
 }

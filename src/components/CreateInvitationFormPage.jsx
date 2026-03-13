@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { navigateTo, toAppPath } from "../utils/navigation";
-import { getThemeByPresetId, getThemeBySlug, themes } from "../data/themes";
+import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
+import { useThemeCatalog } from "../hooks/useCatalogData";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { submitOrder } from "../services/orderApi";
 import { saveInvitationDraft, mapFormToInvitationSchema } from "../services/invitationDataBridge";
+import { uploadOrderAsset } from "../services/uploadApi";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
+import { createOrderId } from "../utils/orderId";
 
 const APP_BASE_URL = import.meta.env.BASE_URL || "/";
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
@@ -97,6 +100,74 @@ function readFileAsDataUrl(file) {
   });
 }
 
+function inferMimeTypeFromDataUrl(dataUrl, fallback = "application/octet-stream") {
+  if (typeof dataUrl !== "string") return fallback;
+  const match = dataUrl.match(/^data:([^;]+);base64,/i);
+  return match?.[1] || fallback;
+}
+
+async function prepareOrderAssetsForSubmission({ orderId, coverImage, galleryImages, musicMode, uploadedMusicFile }) {
+  const uploadedCover = coverImage
+    ? await uploadOrderAsset({
+      orderId,
+      kind: "cover",
+      name: coverImage.name,
+      size: coverImage.size,
+      mimeType: inferMimeTypeFromDataUrl(coverImage.url, "image/jpeg"),
+      dataUrl: coverImage.url,
+    })
+    : null;
+
+  const uploadedGallery = await Promise.all(
+    (galleryImages || []).map((image) =>
+      uploadOrderAsset({
+        orderId,
+        kind: "gallery",
+        name: image.name,
+        size: image.size,
+        mimeType: inferMimeTypeFromDataUrl(image.url, "image/jpeg"),
+        dataUrl: image.url,
+      }),
+    ),
+  );
+
+  const uploadedMusic =
+    musicMode === "upload" && uploadedMusicFile
+      ? await uploadOrderAsset({
+        orderId,
+        kind: "music",
+        name: uploadedMusicFile.name,
+        size: uploadedMusicFile.size,
+        mimeType: uploadedMusicFile.type || inferMimeTypeFromDataUrl(uploadedMusicFile.dataUrl, "audio/mpeg"),
+        dataUrl: uploadedMusicFile.dataUrl,
+      })
+      : null;
+
+  return { uploadedCover, uploadedGallery, uploadedMusic };
+}
+
+function resolveInitialTheme(themesList) {
+  const params = new URLSearchParams(window.location.search);
+  const themeSlug = params.get("theme");
+  const presetId = params.get("preset_id");
+  const packageTier = normalizePackageTier(params.get("package"));
+
+  if (themeSlug) {
+    const bySlug = themesList.find((theme) => theme.slug === themeSlug);
+    if (bySlug) return bySlug;
+  }
+  if (presetId) {
+    const byPreset = themesList.find((theme) => theme.presetId === presetId);
+    if (byPreset) return byPreset;
+  }
+  if (packageTier) {
+    const byPackage = themesList.find((theme) => theme.packageTier === packageTier);
+    if (byPackage) return byPackage;
+  }
+
+  return themesList.find((theme) => theme.packageTier === "BASIC") || themesList[0] || null;
+}
+
 function StepOneMempelai({
   customer,
   setCustomer,
@@ -105,6 +176,7 @@ function StepOneMempelai({
   bride,
   setBride,
   selectedTheme,
+  availableThemes,
   onSelectTheme,
 }) {
   const handleInput = (setter, key) => (event) => setter((prev) => ({ ...prev, [key]: event.target.value }));
@@ -114,20 +186,20 @@ function StepOneMempelai({
   const filteredThemes = useMemo(() => {
     const keyword = themeQuery.trim().toLowerCase();
     if (!keyword) {
-      return themes;
+      return availableThemes;
     }
 
-    return themes.filter((theme) =>
+    return availableThemes.filter((theme) =>
       [theme.name, theme.category, theme.packageTier].join(" ").toLowerCase().includes(keyword)
     );
-  }, [themeQuery]);
+  }, [availableThemes, themeQuery]);
   const sortedThemes = useMemo(() => {
     const list = [...filteredThemes];
-    const originalOrder = new Map(themes.map((theme, index) => [theme.slug, index]));
+    const originalOrder = new Map(availableThemes.map((theme, index) => [theme.slug, index]));
     const rankBySort = {
-      popular: { BASIC: 0, PREMIUM: 1, EKSLUSIF: 2 },
-      basic: { BASIC: 0, PREMIUM: 1, EKSLUSIF: 2 },
-      premium: { PREMIUM: 0, BASIC: 1, EKSLUSIF: 2 },
+      popular: { BASIC: 0, PREMIUM: 1, EKSKLUSIF: 2 },
+      basic: { BASIC: 0, PREMIUM: 1, EKSKLUSIF: 2 },
+      premium: { PREMIUM: 0, BASIC: 1, EKSKLUSIF: 2 },
     };
     const rank = rankBySort[sortBy];
     if (!rank) {
@@ -142,7 +214,7 @@ function StepOneMempelai({
       return (originalOrder.get(a.slug) ?? 999) - (originalOrder.get(b.slug) ?? 999);
     });
     return list;
-  }, [filteredThemes, sortBy]);
+  }, [availableThemes, filteredThemes, sortBy]);
 
   return (
     <>
@@ -422,7 +494,11 @@ function StepThreeFoto({
   onChangeMusicTrack,
   onUploadCustomMusic,
   onToggleMusicPreview,
+  packageConfig,
 }) {
+  const galleryLimit = packageConfig?.limits?.galleryMax || 4;
+  const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
+  const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
 
   return (
     <>
@@ -472,7 +548,7 @@ function StepThreeFoto({
       <section className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Galeri Prewedding</h3>
-          <span className="text-xs font-medium text-slate-500">{galleryImages.length}/6 Terupload</span>
+          <span className="text-xs font-medium text-slate-500">{galleryImages.length}/{galleryLimit} Terupload</span>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -485,7 +561,7 @@ function StepThreeFoto({
             </div>
           ))}
 
-          {galleryImages.length < 6 && (
+          {galleryImages.length < galleryLimit && (
             <label className="aspect-square rounded-xl border-2 border-dashed border-primary/30 hover:border-primary bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-1 text-primary hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group cursor-pointer">
               <div className="w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-colors">
                 <span className="material-symbols-outlined text-lg">add</span>
@@ -495,12 +571,15 @@ function StepThreeFoto({
             </label>
           )}
 
-          {Array.from({ length: Math.max(0, 6 - galleryImages.length - 1) }).map((_, idx) => (
+          {Array.from({ length: Math.max(0, galleryLimit - galleryImages.length - 1) }).map((_, idx) => (
             <div key={idx} className="aspect-square rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-transparent flex items-center justify-center text-gray-300 dark:text-gray-700">
               <span className="material-symbols-outlined text-xl">image</span>
             </div>
           ))}
         </div>
+        <p className="px-1 text-xs text-slate-500 dark:text-slate-400">
+          Paket {packageConfig?.tier || "BASIC"} mendukung maksimal {galleryLimit} foto galeri.
+        </p>
       </section>
 
       <section className="space-y-4 mb-8">
@@ -569,28 +648,31 @@ function StepThreeFoto({
             )}
           </label>
 
-          <label className="block cursor-pointer">
+          <label className={`block ${canUploadCustomMusic ? "cursor-pointer" : "cursor-not-allowed"}`}>
             <input
               className="hidden"
               name="music_option"
               type="radio"
               checked={music.mode === "upload"}
+              disabled={!canUploadCustomMusic}
               onChange={() => onChangeMusicMode("upload")}
             />
-            <div className={`p-4 flex items-center justify-between transition-colors hover:bg-gray-50 dark:hover:bg-surface-dark/50 ${music.mode === "upload" ? "bg-primary-50/70 dark:bg-primary/10" : ""}`}>
+            <div className={`p-4 flex items-center justify-between transition-colors ${canUploadCustomMusic ? "hover:bg-gray-50 dark:hover:bg-surface-dark/50" : "opacity-60"} ${music.mode === "upload" ? "bg-primary-50/70 dark:bg-primary/10" : ""}`}>
               <div className="flex items-center gap-3">
                 <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center relative ${music.mode === "upload" ? "border-primary" : "border-gray-300 dark:border-gray-600"}`}>
                   <div className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${music.mode === "upload" ? "scale-100 bg-primary" : "scale-0 bg-white"}`}></div>
                 </div>
                 <div>
                   <span className="block text-sm font-bold text-slate-900 dark:text-slate-100">Upload Musik Sendiri</span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">Gunakan file MP3 pribadi (Max 5MB)</span>
+                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                    {canUploadCustomMusic ? "Gunakan file MP3 pribadi (Max 5MB)" : "Tersedia mulai paket PREMIUM"}
+                  </span>
                 </div>
               </div>
               <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">upload_file</span>
             </div>
 
-            {music.mode === "upload" && (
+            {music.mode === "upload" && canUploadCustomMusic && (
               <div className="p-4 pt-0 bg-primary-50/30 dark:bg-primary-900/5 border-t border-primary/10">
                 <label className="mt-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-white dark:hover:bg-surface-dark/30 hover:border-primary/50 transition-all cursor-pointer group block">
                   <div className="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
@@ -619,7 +701,13 @@ function StepThreeFoto({
           </button>
         </div>
 
-        <div className="space-y-6 relative pl-3">
+        {!canUseLoveStory && (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Fitur love story baru aktif mulai paket PREMIUM. Data yang kamu tulis tetap bisa disimpan untuk upgrade paket.
+          </div>
+        )}
+
+        <div className={`space-y-6 relative pl-3 ${canUseLoveStory ? "" : "opacity-60 pointer-events-none"}`}>
           <div className="absolute left-7 top-6 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
           {stories.map((story, index) => (
             <div key={story.id} className="group relative">
@@ -721,6 +809,8 @@ function StepFourReview({
   selectedTheme,
   selectedPackage,
 }) {
+  const effectiveStoriesCount = selectedPackage?.capabilities?.loveStory ? stories.length : 0;
+
   return (
     <>
       <div>
@@ -795,7 +885,9 @@ function StepFourReview({
             </div>
             <div className="pt-3">
               <p className="text-xs text-slate-500 mb-2">Cerita Cinta</p>
-              <p className="text-sm font-medium">{stories.length} momen</p>
+              <p className="text-sm font-medium">
+                {selectedPackage?.capabilities?.loveStory ? `${effectiveStoriesCount} momen` : "Tidak aktif di paket ini"}
+              </p>
             </div>
             <div className="pt-3">
               <p className="text-xs text-slate-500 mb-2">Musik</p>
@@ -886,6 +978,7 @@ function StepFourReview({
 }
 
 export default function CreateInvitationFormPage() {
+  const { themes: availableThemes, loading: themesLoading } = useThemeCatalog();
   const [currentStep, setCurrentStep] = useState(1);
   const [isReceptionEnabled, setIsReceptionEnabled] = useState(false);
   const [formAlert, setFormAlert] = useState(null);
@@ -895,6 +988,7 @@ export default function CreateInvitationFormPage() {
   const coverInputRef = useRef(null);
   const galleryInputRef = useRef(null);
   const contentRef = useRef(null);
+  const draftOrderIdRef = useRef(createOrderId());
 
   const [customer, setCustomer] = useState(INITIAL_CUSTOMER);
   const [groom, setGroom] = useState(INITIAL_GROOM);
@@ -913,36 +1007,8 @@ export default function CreateInvitationFormPage() {
   const [uploadedMusicFile, setUploadedMusicFile] = useState(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const musicPreviewRef = useRef(null);
-  const getInitialTheme = () => {
-    const params = new URLSearchParams(window.location.search);
-    const themeSlug = params.get("theme");
-    const presetId = params.get("preset_id");
-    const packageTier = params.get("package");
-
-    if (themeSlug) {
-      const bySlug = getThemeBySlug(themeSlug);
-      if (bySlug) return bySlug;
-    }
-    if (presetId) {
-      const byPreset = getThemeByPresetId(presetId);
-      if (byPreset) return byPreset;
-    }
-    if (packageTier) {
-      const byPackage = themes.find((theme) => theme.packageTier === packageTier);
-      if (byPackage) return byPackage;
-    }
-
-    return themes.find((theme) => theme.packageTier === "BASIC") || themes[0];
-  };
-  const [selectedTheme, setSelectedTheme] = useState(getInitialTheme);
-  const selectedPackage = useMemo(() => {
-    const pricingMap = {
-      BASIC: { price: 50000, oldPrice: 110000, discount: "55% OFF" },
-      PREMIUM: { price: 110000, oldPrice: 250000, discount: "56% OFF" },
-      EKSLUSIF: { price: 180000, oldPrice: 400000, discount: "55% OFF" },
-    };
-    return pricingMap[selectedTheme?.packageTier] || pricingMap.BASIC;
-  }, [selectedTheme?.packageTier]);
+  const [selectedTheme, setSelectedTheme] = useState(null);
+  const selectedPackage = useMemo(() => getPackageConfig(selectedTheme?.packageTier), [selectedTheme?.packageTier]);
   const selectedMusicTrack = useMemo(
     () => MUSIC_TRACKS.find((track) => track.id === selectedMusicTrackId) || MUSIC_TRACKS[0],
     [selectedMusicTrackId],
@@ -975,6 +1041,16 @@ export default function CreateInvitationFormPage() {
   ]);
 
   useEffect(() => {
+    if (!availableThemes.length) return;
+    setSelectedTheme((currentTheme) => {
+      if (currentTheme && availableThemes.some((theme) => theme.slug === currentTheme.slug)) {
+        return currentTheme;
+      }
+      return resolveInitialTheme(availableThemes);
+    });
+  }, [availableThemes]);
+
+  useEffect(() => {
     if (!selectedTheme) {
       return;
     }
@@ -985,6 +1061,26 @@ export default function CreateInvitationFormPage() {
     const nextUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, "", nextUrl);
   }, [selectedTheme]);
+
+  useEffect(() => {
+    const galleryLimit = selectedPackage?.limits?.galleryMax || 4;
+
+    if (galleryImages.length > galleryLimit) {
+      setGalleryImages((prev) => prev.slice(0, galleryLimit));
+      showAlert("info", `Galeri disesuaikan ke batas paket ${selectedPackage.tier}: maksimal ${galleryLimit} foto.`);
+    }
+
+    if (!selectedPackage?.capabilities?.customMusic && musicMode === "upload") {
+      setMusicMode("list");
+      setUploadedMusicFile(null);
+      setIsMusicPlaying(false);
+      if (musicPreviewRef.current) {
+        musicPreviewRef.current.pause();
+        musicPreviewRef.current.currentTime = 0;
+      }
+      showAlert("info", `Upload musik hanya tersedia mulai paket PREMIUM. Mode musik dikembalikan ke list.`);
+    }
+  }, [selectedPackage, galleryImages.length, musicMode]);
 
   useEffect(() => {
     if (musicMode !== "list") return;
@@ -1062,6 +1158,7 @@ export default function CreateInvitationFormPage() {
     const url = await readFileAsDataUrl(file);
     setCoverImage({
       name: file.name,
+      size: file.size,
       sizeLabel: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
       url,
     });
@@ -1071,7 +1168,13 @@ export default function CreateInvitationFormPage() {
   const handleUploadGallery = async (event) => {
     const files = Array.from(event.target.files || []);
     if (!files.length) return;
-    const remaining = Math.max(0, 6 - galleryImages.length);
+    const galleryLimit = selectedPackage?.limits?.galleryMax || 4;
+    const remaining = Math.max(0, galleryLimit - galleryImages.length);
+    if (remaining === 0) {
+      showAlert("info", `Paket ${selectedPackage.tier} hanya mendukung ${galleryLimit} foto galeri.`);
+      event.target.value = "";
+      return;
+    }
     const selected = files
       .filter((file) => file.type.startsWith("image/"))
       .filter((file) => file.size <= maxUploadBytes)
@@ -1084,15 +1187,23 @@ export default function CreateInvitationFormPage() {
       selected.map(async (file) => ({
         id: Date.now() + Math.random(),
         name: file.name,
+        size: file.size,
         sizeLabel: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
         url: await readFileAsDataUrl(file),
       }))
     );
     setGalleryImages((prev) => [...prev, ...prepared]);
+    if (files.length > remaining) {
+      showAlert("info", `Hanya ${remaining} foto yang ditambahkan karena batas paket ${selectedPackage.tier} adalah ${galleryLimit} foto.`);
+    }
     event.target.value = "";
   };
 
   const handleChangeMusicMode = (nextMode) => {
+    if (nextMode === "upload" && !selectedPackage?.capabilities?.customMusic) {
+      showAlert("info", "Upload musik hanya tersedia mulai paket PREMIUM.");
+      return;
+    }
     setMusicMode(nextMode);
     setIsMusicPlaying(false);
     if (musicPreviewRef.current) {
@@ -1102,6 +1213,12 @@ export default function CreateInvitationFormPage() {
   };
 
   const handleUploadCustomMusic = async (event) => {
+    if (!selectedPackage?.capabilities?.customMusic) {
+      showAlert("info", "Upload musik hanya tersedia mulai paket PREMIUM.");
+      event.target.value = "";
+      return;
+    }
+
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -1120,6 +1237,7 @@ export default function CreateInvitationFormPage() {
     const dataUrl = await readFileAsDataUrl(file);
     setUploadedMusicFile({
       name: file.name,
+      size: file.size,
       sizeLabel: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
       type: file.type || "audio/mpeg",
       dataUrl,
@@ -1190,6 +1308,10 @@ export default function CreateInvitationFormPage() {
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
         coverImage, galleryImages, stories,
+        selectedPackage,
+        musicMode,
+        selectedMusicTrack,
+        uploadedMusicFile,
         defaultSchema,
       });
       saveInvitationDraft(schemaData);
@@ -1215,6 +1337,7 @@ export default function CreateInvitationFormPage() {
 
   const getValidationIssue = () => {
     if (currentStep === 1) {
+      if (!selectedTheme) return { message: "Tema belum siap. Tunggu data katalog selesai dimuat.", selector: null, shouldFocus: false };
       if (!customer.name) return { message: "Nama customer wajib diisi.", selector: "#customer_name" };
       if (!customer.phone) return { message: "No HP / WA wajib diisi.", selector: "#customer_phone" };
       if (!isValidPhoneNumber(customer.phone)) return { message: "Format No HP / WA tidak valid.", selector: "#customer_phone" };
@@ -1303,7 +1426,17 @@ export default function CreateInvitationFormPage() {
     setIsSubmitting(true);
     setHasSubmitFailed(false);
     try {
+      const orderId = draftOrderIdRef.current;
+      const effectiveStories = selectedPackage?.capabilities?.loveStory ? stories : [];
+      const { uploadedCover, uploadedGallery, uploadedMusic } = await prepareOrderAssetsForSubmission({
+        orderId,
+        coverImage,
+        galleryImages,
+        musicMode,
+        uploadedMusicFile,
+      });
       const payload = {
+        orderId,
         customer,
         groom,
         bride,
@@ -1311,18 +1444,19 @@ export default function CreateInvitationFormPage() {
         resepsi: isReceptionEnabled ? resepsi : null,
         isReceptionEnabled,
         sessions: isReceptionEnabled ? sessions : [],
-        coverImage,
-        galleryImages,
-        stories,
+        coverImage: uploadedCover,
+        galleryImages: uploadedGallery,
+        stories: effectiveStories,
         music: musicMode === "list"
           ? {
             mode: "list",
             trackId: selectedMusicTrack.id,
             trackLabel: selectedMusicTrack.label,
+            previewUrl: selectedMusicTrack.previewUrl,
           }
           : {
             mode: "upload",
-            file: uploadedMusicFile,
+            file: uploadedMusic,
           },
         selectedTheme: {
           name: selectedTheme?.name || "",
@@ -1337,10 +1471,10 @@ export default function CreateInvitationFormPage() {
 
       const confirmationPayload = {
         ...response,
-        customerName: customer.name,
-        themeName: selectedTheme?.name || "-",
-        packageTier: selectedTheme?.packageTier || "BASIC",
-        totalPrice: selectedPackage.price,
+        customerName: response?.customerName || customer.name,
+        themeName: response?.themeName || selectedTheme?.name || "-",
+        packageTier: response?.packageTier || selectedTheme?.packageTier || "BASIC",
+        totalPrice: response?.totalPrice ?? selectedPackage.price,
       };
 
       try {
@@ -1386,6 +1520,11 @@ export default function CreateInvitationFormPage() {
           </header>
 
           <section ref={contentRef} className="flex-1 overflow-y-auto px-4 sm:px-5 pb-24 pt-6">
+            {themesLoading && !selectedTheme && (
+              <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                Memuat tema dan paket dari API katalog...
+              </div>
+            )}
             {formAlert && (
               <div
                 className={`mb-4 rounded-xl border px-4 py-3 flex items-start justify-between gap-3 ${formAlert.type === "success"
@@ -1442,6 +1581,7 @@ export default function CreateInvitationFormPage() {
                 bride={bride}
                 setBride={setBride}
                 selectedTheme={selectedTheme}
+                availableThemes={availableThemes}
                 onSelectTheme={setSelectedTheme}
               />
             )}
@@ -1476,6 +1616,7 @@ export default function CreateInvitationFormPage() {
                   uploadedFile: uploadedMusicFile,
                   isPlaying: isMusicPlaying,
                 }}
+                packageConfig={selectedPackage}
                 onChangeMusicMode={handleChangeMusicMode}
                 onChangeMusicTrack={setSelectedMusicTrackId}
                 onUploadCustomMusic={handleUploadCustomMusic}

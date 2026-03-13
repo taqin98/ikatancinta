@@ -3,6 +3,7 @@ import AOS from "aos";
 import "aos/dist/aos.css";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { postInvitationWish } from "../../../services/wishesApi";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
 import tokens from "./tokens";
@@ -558,7 +559,7 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
     root.addEventListener("click", onBottomNavClick);
 
     const form = root.querySelector("[data-wishes-form]");
-    const onWishSubmit = (event) => {
+    const onWishSubmit = async (event) => {
       event.preventDefault();
       const target = event.currentTarget;
       const fd = new FormData(target);
@@ -566,6 +567,16 @@ export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) 
       const comment = normalizeText(fd.get("comment"));
       const attendance = normalizeText(fd.get("konfirmasi")) || "Hadir";
       if (!author || !comment) return;
+
+      try {
+        await postInvitationWish("velvet-burgundy", {
+          author,
+          comment,
+          attendance,
+        });
+      } catch {
+        // Keep optimistic local render even if API is unavailable.
+      }
 
       setWishes((prev) => [
         {

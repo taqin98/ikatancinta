@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
+import { fetchOrderById, isRealOrderApiEnabled } from "../services/orderApi";
 import { navigateTo } from "../utils/navigation";
 
 function formatDateTimeID(value) {
@@ -32,10 +33,23 @@ function readOrderDataFromStorage() {
   }
 }
 
+function writeOrderDataToStorage(orderData) {
+  if (!orderData) return;
+  try {
+    window.localStorage.setItem(ORDER_CONFIRMATION_STORAGE_KEY, JSON.stringify(orderData));
+  } catch {
+    // Ignore storage write errors.
+  }
+}
+
 export default function OrderConfirmationPage() {
   const [orderData, setOrderData] = useState(() => readOrderDataFromStorage());
+  const isRealMode = isRealOrderApiEnabled();
+  const orderId = orderData?.orderId || "IKC-2409-882";
 
   useEffect(() => {
+    if (isRealMode) return undefined;
+
     const intervalId = window.setInterval(() => {
       const latest = readOrderDataFromStorage();
       if (latest) {
@@ -44,10 +58,39 @@ export default function OrderConfirmationPage() {
     }, 2000);
 
     return () => window.clearInterval(intervalId);
-  }, []);
+  }, [isRealMode]);
 
   useEffect(() => {
-    if (!orderData || orderData.status === "done") return undefined;
+    if (!isRealMode || !orderData?.orderId) return undefined;
+
+    let isCancelled = false;
+
+    const syncOrderFromApi = async () => {
+      try {
+        const latest = await fetchOrderById(orderData.orderId);
+        if (!latest || isCancelled) return;
+
+        setOrderData((current) => {
+          const next = { ...(current || {}), ...latest };
+          writeOrderDataToStorage(next);
+          return next;
+        });
+      } catch {
+        // Keep the last known local state if API polling fails.
+      }
+    };
+
+    syncOrderFromApi();
+    const intervalId = window.setInterval(syncOrderFromApi, 3000);
+
+    return () => {
+      isCancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [isRealMode, orderData?.orderId]);
+
+  useEffect(() => {
+    if (isRealMode || !orderData || orderData.status === "done") return undefined;
 
     const timeoutId = window.setTimeout(() => {
       const latest = readOrderDataFromStorage();
@@ -57,18 +100,13 @@ export default function OrderConfirmationPage() {
         status: "done",
         completedAt: new Date().toISOString(),
       };
-      try {
-        window.localStorage.setItem(ORDER_CONFIRMATION_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // Ignore storage write errors.
-      }
+      writeOrderDataToStorage(next);
       setOrderData(next);
     }, 6500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [orderData]);
+  }, [isRealMode, orderData]);
 
-  const orderId = orderData?.orderId || "IKC-2409-882";
   const orderReceivedAt = formatDateTimeID(orderData?.createdAt) !== "-" ? `${formatDateTimeID(orderData?.createdAt)} WIB` : "24 Sep 2026, 14:30 WIB";
   const isDone = orderData?.status === "done";
   const orderCompletedAt =

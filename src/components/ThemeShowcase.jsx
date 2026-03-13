@@ -1,7 +1,9 @@
 import { navigateTo, toAppPath } from "../utils/navigation";
-import { themes } from "../data/themes";
+import { useThemeCatalog } from "../hooks/useCatalogData";
 
 export default function ThemeShowcase() {
+  const { themes, loading } = useThemeCatalog();
+
   const handleSeeMore = (event) => {
     event.preventDefault();
     navigateTo("/tema");
@@ -23,6 +25,11 @@ export default function ThemeShowcase() {
         </div>
 
         <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6 max-w-6xl mx-auto">
+          {loading && themes.length === 0 && (
+            <div className="md:col-span-4 rounded-xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              Memuat tema...
+            </div>
+          )}
           {themes.map((theme, index) => (
             <article
               key={theme.name}

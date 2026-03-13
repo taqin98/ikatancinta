@@ -1,81 +1,13 @@
 import { navigateTo } from "../utils/navigation";
+import { usePackageCatalog } from "../hooks/useCatalogData";
 
-const plans = [
-  {
-    name: "BASIC",
-    description: "Untuk kamu yang hanya ingin menyebarkan informasi undangan secara sederhana.",
-    oldPrice: "IDR 110.000",
-    price: "IDR 59.000",
-    discount: "46% OFF",
-    cta: "Pilih BASIC",
-    highlighted: false,
-    features: [
-      "Preset/Desain standar",
-      "Quotes",
-      "Detail Info Acara",
-      "Profil Pasangan",
-      "Catatan khusus untuk tamu",
-      "Galeri foto (maks. 4)",
-      "Background music (list)",
-      "Navigasi Lokasi (Google Maps)",
-      "Tambahkan ke Google Calendar",
-      "Unlimited jadwal acara",
-      "RSVP (Konfirmasi kehadiran)",
-      "Masa Aktif Selamanya",
-      "Revisi Tanpa Batas",
-    ],
-  },
-  {
-    name: "PREMIUM",
-    description:
-      "Paket paling populer. Selain informasi undangan, tamu dapat memberikan ucapan, kado digital, dan konfirmasi kehadiran.",
-    oldPrice: "IDR 250.000",
-    price: "IDR 110.000",
-    discount: "56% OFF",
-    cta: "Pilih PREMIUM",
-    highlighted: true,
-    features: [
-      "Semua fitur paket BASIC",
-      "Amplop digital (nomor rekening)",
-      "Kirim ucapan",
-      "Galeri foto (maks. 8)",
-      "Love stories",
-      "Buku Tamu",
-      "Share Eksklusif - nama tamu (maks. 150)",
-      "Background music (list dan custom)",
-      "Preset/Desain premium",
-      "Custom domain (opsional, biaya domain tidak termasuk)",
-      "Masa Aktif Selamanya",
-      "Revisi Tanpa Batas",
-    ],
-  },
-  {
-    name: "EKSKLUSIF",
-    description:
-      "Undangan dengan fitur lengkap dan jumlah tamu tanpa batas untuk pengalaman yang lebih eksklusif.",
-    oldPrice: "IDR 400.000",
-    price: "IDR 209.000",
-    discount: "48% OFF",
-    cta: "Pilih EKSKLUSIF",
-    highlighted: false,
-    features: [
-      "Semua fitur paket PREMIUM",
-      "Galeri foto (maks. 14)",
-      "Share Eksklusif - nama tamu (unlimited)",
-      "Preset luxury (add-on tersedia)",
-      "Support Prioritas",
-      "Bahasa Indonesia / Inggris",
-      "Free: Undangan Gambar",
-      "Custom Background Gambar Layout Section",
-      "Live Streaming",
-      "Custom domain (opsional, biaya domain tidak termasuk)",
-      "Masa Aktif Selamanya",
-      "Revisi Tanpa Batas",
-    ],
-  },
-];
+function formatMoneyID(value) {
+  return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
+}
 
 export default function Pricing() {
+  const { packages, loading } = usePackageCatalog();
+
   return (
     <section id="harga" className="py-16 sm:py-20 overflow-hidden relative scroll-mt-24">
       <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-200 dark:via-slate-700 to-transparent"></div>
@@ -90,7 +22,12 @@ export default function Pricing() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 items-stretch gap-5 lg:gap-8 max-w-7xl mx-auto animate-enter-up anim-delay-1">
-          {plans.map((plan) => (
+          {loading && packages.length === 0 && (
+            <div className="md:col-span-2 xl:col-span-3 rounded-3xl border border-slate-200 bg-white p-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+              Memuat paket undangan...
+            </div>
+          )}
+          {packages.map((plan) => (
             <div
               key={plan.name}
               className={`w-full rounded-3xl p-5 sm:p-7 border relative transition-transform duration-300 ${
@@ -121,14 +58,14 @@ export default function Pricing() {
               <div className="mb-6">
                 <div className="flex items-center gap-3 mb-1">
                   <span className={`text-sm line-through ${plan.highlighted ? "text-slate-400" : "text-slate-500"}`}>
-                    {plan.oldPrice}
+                    {formatMoneyID(plan.oldPrice)}
                   </span>
                   <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full">
                     {plan.discount}
                   </span>
                 </div>
                 <p className={`text-3xl font-bold font-display ${plan.highlighted ? "text-white" : "text-slate-900 dark:text-white"}`}>
-                  {plan.price}
+                  {formatMoneyID(plan.price)}
                 </p>
               </div>
 
@@ -154,7 +91,7 @@ export default function Pricing() {
 
               <button
                 type="button"
-                onClick={() => navigateTo(`/buat-undangan?package=${plan.name}`)}
+                onClick={() => navigateTo(`/buat-undangan?package=${plan.tier}`)}
                 className={`w-full py-3 rounded-xl font-bold transition-colors ${
                   plan.highlighted
                     ? "bg-primary hover:bg-pink-600 text-white shadow-lg shadow-primary/25"

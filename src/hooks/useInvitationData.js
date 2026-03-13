@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { loadInvitationDraft } from "../services/invitationDataBridge";
+import { fetchInvitationBySlug } from "../services/invitationApi";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 
 /**
@@ -40,11 +41,9 @@ export function useInvitationData(slug) {
                 }
 
                 // 2. API fetch (only if env var set and slug provided)
-                const apiUrl = import.meta.env.VITE_INVITATION_API_URL;
-                if (apiUrl && slug) {
-                    const response = await fetch(`${apiUrl}/invitations/${encodeURIComponent(slug)}`);
-                    if (response.ok) {
-                        const json = await response.json();
+                if (slug) {
+                    const json = await fetchInvitationBySlug(slug);
+                    if (json) {
                         const merged = { ...defaultSchema, ...json };
                         if (guestName) merged.guest = { ...merged.guest, name: guestName };
                         setData(merged);

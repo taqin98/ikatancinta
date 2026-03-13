@@ -16,6 +16,13 @@ function readJsonSafely(response) {
   });
 }
 
+function getOrderApiConfig() {
+  const submitApiUrl = import.meta.env.VITE_ORDER_API_SUBMIT_URL || "";
+  const emailApiUrl = import.meta.env.VITE_ORDER_API_EMAIL_URL || "";
+  const mode = (import.meta.env.VITE_ORDER_API_MODE || "dummy").toLowerCase();
+  return { mode, submitApiUrl, emailApiUrl };
+}
+
 async function postJson(url, body, options = {}) {
   const { headers = {}, credentials = "same-origin" } = options;
   const response = await fetch(url, {
@@ -43,19 +50,68 @@ async function postJson(url, body, options = {}) {
   return data;
 }
 
+async function getJson(url, options = {}) {
+  const { headers = {}, credentials = "same-origin" } = options;
+  const response = await fetch(url, {
+    method: "GET",
+    credentials,
+    headers: {
+      Accept: "application/json",
+      ...headers,
+    },
+  });
+  const data = await readJsonSafely(response);
+
+  if (!response.ok) {
+    const messageFromBody =
+      (data && typeof data === "object" && (data.message || data.error)) ||
+      `HTTP ${response.status}`;
+    const error = new Error(`ORDER_API_REQUEST_FAILED: ${messageFromBody}`);
+    error.code = "ORDER_API_REQUEST_FAILED";
+    error.status = response.status;
+    error.response = data;
+    throw error;
+  }
+
+  return data;
+}
+
 function buildOrderResultShape(raw) {
   return {
     success: raw?.success ?? true,
     orderId: raw?.orderId || raw?.id || raw?.data?.orderId || `IKC-${Date.now()}`,
+    invitationSlug: raw?.invitationSlug || raw?.data?.invitationSlug || raw?.data?.payload?.invitationSlug || null,
     createdAt: raw?.createdAt || raw?.data?.createdAt || new Date().toISOString(),
+    completedAt: raw?.completedAt || raw?.data?.completedAt || null,
     status: raw?.status || raw?.data?.status || "processing",
     message: raw?.message || raw?.data?.message || "Pesanan berhasil diterima dan sedang diproses admin.",
+    customerName: raw?.customerName || raw?.data?.customerName || raw?.data?.customer?.name || null,
+    themeName: raw?.themeName || raw?.data?.themeName || raw?.data?.selectedTheme?.name || null,
+    themeSlug: raw?.themeSlug || raw?.data?.themeSlug || raw?.data?.selectedTheme?.slug || null,
+    packageTier: raw?.packageTier || raw?.data?.packageTier || raw?.data?.selectedPackage?.tier || null,
+    totalPrice: raw?.totalPrice || raw?.data?.totalPrice || raw?.data?.selectedPackage?.price || null,
+    payload: raw?.payload || raw?.data?.payload || null,
     raw,
   };
 }
 
+export function isRealOrderApiEnabled() {
+  const { mode, submitApiUrl } = getOrderApiConfig();
+  return mode === "real" && Boolean(submitApiUrl);
+}
+
+export async function fetchOrderById(orderId) {
+  const { mode, submitApiUrl } = getOrderApiConfig();
+  if (mode !== "real" || !submitApiUrl || !orderId) {
+    return null;
+  }
+
+  const raw = await getJson(`${submitApiUrl}/${encodeURIComponent(orderId)}`);
+  return buildOrderResultShape(raw);
+}
+
 async function triggerCustomerEmail({ payload, orderResult }) {
-  const emailApiUrl = import.meta.env.VITE_ORDER_API_EMAIL_URL;
+  const { emailApiUrl } = getOrderApiConfig();
   if (!emailApiUrl) return;
 
   const emailBody = {
@@ -78,7 +134,7 @@ async function triggerCustomerEmail({ payload, orderResult }) {
 }
 
 async function submitOrderReal(payload) {
-  const submitApiUrl = import.meta.env.VITE_ORDER_API_SUBMIT_URL;
+  const { submitApiUrl } = getOrderApiConfig();
   if (!submitApiUrl) {
     const error = new Error("ORDER_API_REAL_URL_NOT_CONFIGURED");
     error.code = "ORDER_API_REAL_URL_NOT_CONFIGURED";
@@ -99,7 +155,7 @@ async function submitOrderReal(payload) {
 }
 
 export async function submitOrder(payload) {
-  const mode = (import.meta.env.VITE_ORDER_API_MODE || "dummy").toLowerCase();
+  const { mode } = getOrderApiConfig();
 
   if (mode === "real") {
     return submitOrderReal(payload);

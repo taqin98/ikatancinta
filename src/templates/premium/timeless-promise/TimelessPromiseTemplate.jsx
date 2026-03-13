@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { postInvitationWish } from "../../../services/wishesApi";
 import behaviorDefaults from "./schema/behavior.json";
 import contentDefaults from "./schema/content.json";
 import sourceHtml from "./schema/source.html?raw";
@@ -1335,12 +1336,10 @@ export default function TimelessPromiseTemplate({
 
                     if (!payload.comment) return;
 
-                    if (typeof onSubmitWish === "function") {
-                        try {
-                            await onSubmitWish(payload);
-                        } catch {
-                            // keep optimistic local render
-                        }
+                    try {
+                        await postInvitationWish("timeless-promise", payload);
+                    } catch {
+                        // keep optimistic local render
                     }
 
                     const currentWishes = Array.from(wishesList?.querySelectorAll(".cui-item-comment") || []).map((node) => ({

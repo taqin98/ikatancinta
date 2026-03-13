@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { postInvitationWish } from "../../../services/wishesApi";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -558,7 +559,7 @@ export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
 
     const commentStatus = root.querySelector("#cui-comment-status-13735");
     const wishForm = root.querySelector("#commentform-13735");
-    const onWishSubmit = (event) => {
+    const onWishSubmit = async (event) => {
       event.preventDefault();
       const author = wishForm?.querySelector("#author");
       const comment = wishForm?.querySelector("#comment");
@@ -573,6 +574,12 @@ export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
         createdAt: new Date().toISOString(),
       });
       if (!nextEntry) return;
+
+      try {
+        await postInvitationWish("puspa-asmara", nextEntry);
+      } catch {
+        // Keep optimistic local render even if API is unavailable.
+      }
 
       setWishes((prev) => {
         const next = [nextEntry, ...prev];

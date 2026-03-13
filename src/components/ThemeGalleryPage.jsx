@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { themes } from "../data/themes";
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import WhatsAppButton from "./WhatsAppButton";
+import { useThemeCatalog } from "../hooks/useCatalogData";
 import { navigateTo, openInNewTab } from "../utils/navigation";
 
 const categories = ["Semua", "Modern", "Minimalis", "Islami", "Floral", "Rustic"];
@@ -12,6 +12,7 @@ const LOAD_MORE_STEP = 4;
 export default function ThemeGalleryPage() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
+  const { themes, loading } = useThemeCatalog();
   const filteredThemes = useMemo(() => {
     if (activeCategory === "Semua") {
       return themes;
@@ -31,7 +32,7 @@ export default function ThemeGalleryPage() {
   const getPreviewHref = (theme) => {
     if (theme.templateRoute) return theme.templateRoute;
     if (theme.packageTier === "PREMIUM") return `/preview-undangan-premium?preset_id=${theme.presetId}`;
-    if (theme.packageTier === "EKSLUSIF") return `/preview-undangan-eksklusif?preset_id=${theme.presetId}`;
+    if (theme.packageTier === "EKSKLUSIF" || theme.packageTier === "EKSLUSIF") return `/preview-undangan-eksklusif?preset_id=${theme.presetId}`;
     return null; // No preview available for this theme yet
   };
 
@@ -74,6 +75,11 @@ export default function ThemeGalleryPage() {
         <section className="pb-16 sm:pb-20 px-4">
           <div className="container mx-auto">
             <div className="grid grid-cols-1 min-[420px]:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-8">
+              {loading && visibleThemes.length === 0 && (
+                <div className="min-[420px]:col-span-2 lg:col-span-3 xl:col-span-4 rounded-2xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  Memuat katalog tema...
+                </div>
+              )}
               {visibleThemes.map((theme) => (
                 <div key={theme.name} className="group relative">
                   <div

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { postInvitationWish } from "../../../services/wishesApi";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -561,7 +562,7 @@ export default function BotanicalEleganceTemplate({ data: propData = schemaJson 
         };
         countLink?.addEventListener("click", onCountLinkClick);
 
-        const onWishSubmit = (event) => {
+        const onWishSubmit = async (event) => {
             event.preventDefault();
             const author = form?.querySelector("#author");
             const comment = form?.querySelector("#comment");
@@ -576,6 +577,12 @@ export default function BotanicalEleganceTemplate({ data: propData = schemaJson 
                 createdAt: new Date().toISOString(),
             });
             if (!nextEntry) return;
+
+            try {
+                await postInvitationWish("botanical-elegance", nextEntry);
+            } catch {
+                // Keep optimistic local render even if API is unavailable.
+            }
 
             const next = [nextEntry, ...wishes];
             setWishes(next);
