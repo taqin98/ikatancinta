@@ -139,6 +139,7 @@ function uploadOptionalImageAsset(orderId, image, kind) {
 
 async function prepareOrderAssetsForSubmission({
   orderId,
+  frontCoverImage,
   coverImage,
   groomPhoto,
   bridePhoto,
@@ -149,6 +150,7 @@ async function prepareOrderAssetsForSubmission({
   musicMode,
   uploadedMusicFile,
 }) {
+  const uploadedFrontCover = await uploadOptionalImageAsset(orderId, frontCoverImage, "front-cover");
   const uploadedCover = await uploadOptionalImageAsset(orderId, coverImage, "cover");
   const uploadedGroomPhoto = await uploadOptionalImageAsset(orderId, groomPhoto, "groom-photo");
   const uploadedBridePhoto = await uploadOptionalImageAsset(orderId, bridePhoto, "bride-photo");
@@ -183,6 +185,7 @@ async function prepareOrderAssetsForSubmission({
       : null;
 
   return {
+    uploadedFrontCover,
     uploadedCover,
     uploadedGroomPhoto,
     uploadedBridePhoto,
@@ -587,6 +590,7 @@ function ImageUploadCard({
 }
 
 function StepThreeFoto({
+  frontCoverImage,
   coverImage,
   groomPhoto,
   bridePhoto,
@@ -604,6 +608,7 @@ function StepThreeFoto({
   setStories,
   isReceptionEnabled,
   onUploadCover,
+  onUploadFrontCover,
   onUploadGroomPhoto,
   onRemoveGroomPhoto,
   onUploadBridePhoto,
@@ -615,6 +620,7 @@ function StepThreeFoto({
   onUploadClosingBackground,
   onRemoveClosingBackground,
   onRemoveCover,
+  onRemoveFrontCover,
   onUploadGallery,
   onRemoveGallery,
   music,
@@ -641,7 +647,45 @@ function StepThreeFoto({
 
       <section id="cover_upload_section" className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Foto Sampul Undangan</h3>
+          <h3 className="text-lg font-bold">Foto Cover Depan</h3>
+          <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
+        </div>
+
+        {frontCoverImage ? (
+          <div className="group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border border-primary/10">
+            <img src={frontCoverImage.url} alt={frontCoverImage.name} className="absolute inset-0 w-full h-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
+            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+              <div className="min-w-0">
+                <p className="text-white text-sm font-semibold truncate">{frontCoverImage.name}</p>
+                <p className="text-white/80 text-xs">{frontCoverImage.sizeLabel}</p>
+              </div>
+              <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
+                <span className="material-symbols-outlined text-xl">edit</span>
+                <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
+              </label>
+            </div>
+            <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveFrontCover}>
+              <span className="material-symbols-outlined text-lg">close</span>
+            </button>
+          </div>
+        ) : (
+          <label className="w-full aspect-video rounded-lg border-2 border-dashed border-primary/30 bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer hover:border-primary transition-colors">
+            <span className="material-symbols-outlined text-3xl">upload</span>
+            <span className="text-sm font-semibold">Upload Foto Cover Depan</span>
+            <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
+          </label>
+        )}
+
+        <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm">info</span>
+          Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan.
+        </p>
+      </section>
+
+      <section id="inner_cover_upload_section" className="space-y-4 mb-8">
+        <div className="flex items-baseline justify-between px-1">
+          <h3 className="text-lg font-bold">Foto Setelah Buka Undangan</h3>
           <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
         </div>
 
@@ -666,14 +710,14 @@ function StepThreeFoto({
         ) : (
           <label className="w-full aspect-video rounded-lg border-2 border-dashed border-primary/30 bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer hover:border-primary transition-colors">
             <span className="material-symbols-outlined text-3xl">upload</span>
-            <span className="text-sm font-semibold">Upload Foto Sampul</span>
+            <span className="text-sm font-semibold">Upload Foto Setelah Buka</span>
             <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
           </label>
         )}
 
         <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm">info</span>
-          Format JPG/PNG, Max 5MB. Gunakan orientasi landscape.
+          Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB, gunakan orientasi landscape.
         </p>
       </section>
 
@@ -1053,6 +1097,7 @@ function StepThreeFoto({
 }
 
 function StepFourReview({
+  frontCoverImage,
   customer,
   groom,
   bride,
@@ -1139,7 +1184,11 @@ function StepFourReview({
           </summary>
           <div className="px-4 pb-5 border-t border-dashed border-slate-200 dark:border-slate-700/50">
             <div className="pt-4">
-              <p className="text-xs text-slate-500 mb-2">Cover</p>
+              <p className="text-xs text-slate-500 mb-2">Cover Depan</p>
+              <p className="text-sm font-medium">{frontCoverImage?.name || "Belum upload"}</p>
+            </div>
+            <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Foto Setelah Buka Undangan</p>
               <p className="text-sm font-medium">{coverImage?.name || "Belum upload"}</p>
             </div>
             <div className="pt-3">
@@ -1289,6 +1338,7 @@ export default function CreateInvitationFormPage() {
   const [sessions, setSessions] = useState(INITIAL_SESSIONS);
 
   const [coverImage, setCoverImage] = useState(null);
+  const [frontCoverImage, setFrontCoverImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [quotePresetId, setQuotePresetId] = useState("");
   const [quote, setQuote] = useState("");
@@ -1342,6 +1392,7 @@ export default function CreateInvitationFormPage() {
     );
     const hasMedia = Boolean(
       coverImage ||
+      frontCoverImage ||
       closingBackgroundImage ||
       quote ||
       quoteSource ||
@@ -1359,6 +1410,7 @@ export default function CreateInvitationFormPage() {
     isSessionEnabled,
     resepsi,
     coverImage,
+    frontCoverImage,
     closingBackgroundImage,
     galleryImages.length,
     quote,
@@ -1463,7 +1515,7 @@ export default function CreateInvitationFormPage() {
       return ["Isi tanggal, jam, dan alamat acara dengan detail.", "Tempel link Google Maps agar tamu tidak tersesat.", "Resepsi sekarang selalu aktif dan wajib diisi.", "Aktifkan pembagian sesi hanya jika tamu datang per gelombang waktu."];
     }
     if (currentStep === 3) {
-      return ["Pilih cover landscape agar pembuka undangan lebih kuat.", "Upload foto portrait untuk profil mempelai bila desain membutuhkan.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Isi ayat atau quote agar area opening mengikuti template BASIC."];
+      return ["Upload cover depan khusus untuk halaman sampul sebelum undangan dibuka.", "Upload foto setelah buka undangan untuk hero section di bagian dalam.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Isi ayat atau quote agar area opening mengikuti template BASIC."];
     }
     if (currentStep === 4) {
       return ["Periksa kembali nama mempelai dan orang tua.", "Pastikan jadwal acara sudah benar.", "Lihat ulang galeri dan cerita cinta.", "Jika semua benar, lanjut submit pesanan."];
@@ -1497,6 +1549,13 @@ export default function CreateInvitationFormPage() {
     const asset = await readSingleImageFromInput(event, "foto sampul");
     if (asset) {
       setCoverImage(asset);
+    }
+  };
+
+  const handleUploadFrontCover = async (event) => {
+    const asset = await readSingleImageFromInput(event, "foto cover depan");
+    if (asset) {
+      setFrontCoverImage(asset);
     }
   };
 
@@ -1696,7 +1755,7 @@ export default function CreateInvitationFormPage() {
       const defaultSchema = getDefaultSchemaBySlug(selectedTheme?.slug);
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
-        coverImage, galleryImages, stories,
+        frontCoverImage, coverImage, galleryImages, stories,
         quote, quoteSource, closingBackgroundImage,
         selectedPackage,
         musicMode,
@@ -1781,7 +1840,14 @@ export default function CreateInvitationFormPage() {
     if (currentStep === 3) {
       if (!coverImage) {
         return {
-          message: "Mohon upload foto sampul terlebih dahulu.",
+          message: "Mohon upload foto setelah buka undangan terlebih dahulu.",
+          selector: "#inner_cover_upload_section",
+          shouldFocus: false,
+        };
+      }
+      if (!frontCoverImage) {
+        return {
+          message: "Mohon upload foto cover depan terlebih dahulu.",
           selector: "#cover_upload_section",
           shouldFocus: false,
         };
@@ -1820,6 +1886,7 @@ export default function CreateInvitationFormPage() {
       const orderId = draftOrderIdRef.current;
       const effectiveStories = selectedPackage?.capabilities?.loveStory ? stories : [];
       const {
+        uploadedFrontCover,
         uploadedCover,
         uploadedGroomPhoto,
         uploadedBridePhoto,
@@ -1830,6 +1897,7 @@ export default function CreateInvitationFormPage() {
         uploadedMusic,
       } = await prepareOrderAssetsForSubmission({
         orderId,
+        frontCoverImage,
         coverImage,
         groomPhoto: groom.photo,
         bridePhoto: bride.photo,
@@ -1863,6 +1931,7 @@ export default function CreateInvitationFormPage() {
           : null,
         isReceptionEnabled,
         sessions: isSessionEnabled ? sessions : [],
+        frontCoverImage: uploadedFrontCover,
         coverImage: uploadedCover,
         closingBackgroundImage: uploadedClosingBackground,
         quote,
@@ -2024,6 +2093,7 @@ export default function CreateInvitationFormPage() {
             {currentStep === 3 && (
               <StepThreeFoto
                 coverImage={coverImage}
+                frontCoverImage={frontCoverImage}
                 groomPhoto={groom.photo}
                 bridePhoto={bride.photo}
                 akadCoverImage={akad.coverImage}
@@ -2040,6 +2110,7 @@ export default function CreateInvitationFormPage() {
                 setStories={setStories}
                 isReceptionEnabled={isReceptionEnabled}
                 onUploadCover={handleUploadCover}
+                onUploadFrontCover={handleUploadFrontCover}
                 onUploadGroomPhoto={handleUploadGroomPhoto}
                 onRemoveGroomPhoto={() => setGroom((prev) => ({ ...prev, photo: null }))}
                 onUploadBridePhoto={handleUploadBridePhoto}
@@ -2051,6 +2122,7 @@ export default function CreateInvitationFormPage() {
                 onUploadClosingBackground={handleUploadClosingBackground}
                 onRemoveClosingBackground={() => setClosingBackgroundImage(null)}
                 onRemoveCover={() => setCoverImage(null)}
+                onRemoveFrontCover={() => setFrontCoverImage(null)}
                 onUploadGallery={handleUploadGallery}
                 onRemoveGallery={(id) => setGalleryImages((prev) => prev.filter((img) => img.id !== id))}
                 music={{
@@ -2070,6 +2142,7 @@ export default function CreateInvitationFormPage() {
             {currentStep === 4 && (
               <StepFourReview
                 customer={customer}
+                frontCoverImage={frontCoverImage}
                 groom={groom}
                 bride={bride}
                 akad={akad}

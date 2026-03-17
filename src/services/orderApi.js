@@ -168,6 +168,7 @@ async function triggerCustomerEmail({ payload, orderResult }) {
     selectedTheme: payload.selectedTheme,
     selectedPackage: payload.selectedPackage,
     summary: {
+      hasFrontCover: Boolean(payload.frontCoverImage),
       hasCover: Boolean(payload.coverImage),
       galleryCount: Array.isArray(payload.galleryImages) ? payload.galleryImages.length : 0,
       storiesCount: Array.isArray(payload.stories) ? payload.stories.length : 0,

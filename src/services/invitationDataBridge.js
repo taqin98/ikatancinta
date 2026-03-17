@@ -46,6 +46,7 @@ export function clearInvitationDraft() {
  * @param {object} params.akad
  * @param {object|null} params.resepsi
  * @param {boolean} params.isReceptionEnabled
+ * @param {object|null} params.frontCoverImage — { url, name }
  * @param {object|null} params.coverImage  — { url, name }
  * @param {object[]} params.galleryImages  — [{ url }]
  * @param {object[]} params.stories        — [{ title, description, date }]
@@ -65,6 +66,7 @@ export function mapFormToInvitationSchema({
     akad,
     resepsi,
     isReceptionEnabled,
+    frontCoverImage,
     coverImage,
     galleryImages,
     stories,
@@ -111,7 +113,8 @@ export function mapFormToInvitationSchema({
     const mappedAkad = {
         date: formatDateID(akad?.date) || defaultSchema.event.akad.date,
         time: formatTimeRange(akad?.startTime, akad?.endTime) || defaultSchema.event.akad.time,
-        address: [akad?.venue, akad?.address].filter(Boolean).join(", ") || defaultSchema.event.akad.address,
+        venueName: akad?.venue || defaultSchema.event.akad.venueName || "",
+        address: akad?.address || defaultSchema.event.akad.address,
         mapsUrl: akad?.mapsLink || defaultSchema.event.akad.mapsUrl,
     };
 
@@ -119,7 +122,8 @@ export function mapFormToInvitationSchema({
         ? {
             date: formatDateID(resepsi?.date) || defaultSchema.event.resepsi.date,
             time: formatTimeRange(resepsi?.startTime, resepsi?.endTime) || defaultSchema.event.resepsi.time,
-            address: [resepsi?.venue, resepsi?.address].filter(Boolean).join(", ") || defaultSchema.event.resepsi.address,
+            venueName: resepsi?.venue || defaultSchema.event.resepsi.venueName || "",
+            address: resepsi?.address || defaultSchema.event.resepsi.address,
             mapsUrl: resepsi?.mapsLink || defaultSchema.event.resepsi.mapsUrl,
         }
         : defaultSchema.event.resepsi;
@@ -161,6 +165,7 @@ export function mapFormToInvitationSchema({
                 instagram: bride?.instagram || defaultSchema.couple.bride.instagram,
                 photo: bride?.photo?.url || coverImage?.url || defaultSchema.couple.bride.photo || "",
             },
+            frontCoverPhoto: frontCoverImage?.url || coverImage?.url || defaultSchema.couple.frontCoverPhoto || defaultSchema.couple.heroPhoto || "",
             heroPhoto: coverImage?.url || defaultSchema.couple.heroPhoto || "",
         },
         lovestory: packageCapabilities.loveStory === false ? [] : mappedLovestory,

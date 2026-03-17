@@ -23,6 +23,7 @@ export const defaultSchema = {
             photo: "",
             parentInfo: contentDefaults?.couple?.bride?.parentInfo || "Putri Pertama Dari : Bapak Putra & Ibu Putri",
         },
+        frontCoverPhoto: "",
         heroPhoto: "",
     },
     event: {
@@ -30,12 +31,14 @@ export const defaultSchema = {
         akad: {
             date: contentDefaults?.event?.akad?.date || "Minggu, 30 Maret 2025",
             time: contentDefaults?.event?.akad?.time || "09.00 WIB",
+            venueName: "",
             address: contentDefaults?.event?.akad?.address || "Simpang Lima Gumul, Kediri",
             mapsUrl: contentDefaults?.event?.akad?.mapsUrl || "https://maps.google.com",
         },
         resepsi: {
             date: contentDefaults?.event?.resepsi?.date || "Minggu, 30 Maret 2025",
             time: contentDefaults?.event?.resepsi?.time || "09.00 WIB",
+            venueName: "",
             address: contentDefaults?.event?.resepsi?.address || "Simpang Lima Gumul, Kediri",
             mapsUrl: contentDefaults?.event?.resepsi?.mapsUrl || "https://maps.google.com",
         },

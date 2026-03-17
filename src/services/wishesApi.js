@@ -36,6 +36,7 @@ async function postJson(url, body) {
 
 function normalizeWishPayload(payload) {
   return {
+    orderId: payload?.orderId ? String(payload.orderId).trim() : "",
     name: String(payload?.author || payload?.name || "").trim(),
     attendance: String(payload?.attendance || "Hadir").trim(),
     message: String(payload?.comment || payload?.message || "").trim(),
@@ -55,6 +56,7 @@ export async function postInvitationWish(slug, payload) {
     success: true,
     message: "Wish accepted locally",
     data: {
+      orderId: normalizedPayload.orderId || null,
       author: normalizedPayload.name || "Anonim",
       comment: normalizedPayload.message,
       attendance: normalizedPayload.attendance,
@@ -62,4 +64,3 @@ export async function postInvitationWish(slug, payload) {
     },
   };
 }
-
