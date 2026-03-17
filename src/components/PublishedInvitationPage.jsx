@@ -17,6 +17,7 @@ import {
 } from "../templates/exclusive";
 import { fetchInvitationBySlug } from "../services/invitationApi";
 import { getInvitationSlugFromPath, toAppPath } from "../utils/navigation";
+import { applyGuestQueryOverrides, readGuestQueryParams } from "../utils/guestParams";
 
 const invitationTemplates = {
   "blue-nature": BlueNatureTemplate,
@@ -91,6 +92,7 @@ function resolveThemeSlug(invitationData, invitationSlug) {
 
 export default function PublishedInvitationPage() {
   const invitationSlug = getInvitationSlugFromPath();
+  const guestQuery = readGuestQueryParams(window.location.search);
   const [invitationData, setInvitationData] = useState(null);
   const [themeSlug, setThemeSlug] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -145,13 +147,14 @@ export default function PublishedInvitationPage() {
   }, [invitationSlug]);
 
   const Template = themeSlug ? invitationTemplates[themeSlug] || null : null;
+  const resolvedInvitationData = applyGuestQueryOverrides(invitationData, guestQuery);
 
   if (loading) {
     return (
       <main className="min-h-screen bg-[#f7f1e8] px-4 py-10 text-[#5f4d2f]">
         <div className="mx-auto max-w-xl rounded-3xl border border-[#e7dccd] bg-white p-8 text-center shadow-soft">
           <h1 className="mb-2 font-serif text-3xl font-bold">Memuat undangan</h1>
-          <p className="text-sm text-[#8f7a57]">Menyiapkan halaman undangan customer dari slug publish.</p>
+          <p className="text-sm text-[#8f7a57]">Menyiapkan halaman undangan customer...</p>
         </div>
       </main>
     );
@@ -177,5 +180,5 @@ export default function PublishedInvitationPage() {
     );
   }
 
-  return <Template data={invitationData} invitationSlug={invitationSlug} />;
+  return <Template data={resolvedInvitationData} invitationSlug={invitationSlug} />;
 }

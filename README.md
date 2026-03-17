@@ -181,6 +181,8 @@ Query param penting:
 - `theme`: slug tema awal untuk form order.
 - `preset_id`: preset tema awal untuk form order/preview.
 - `package`: memilih tema awal berdasarkan tier paket (`BASIC`, `PREMIUM`, `EKSLUSIF`).
+- Guest params untuk nama tamu dinamis:
+  lihat [docs/guest-query-params.md](/Applications/XAMPP/xamppfiles/htdocs/ikatancinta/docs/guest-query-params.md)
 - `mock_fail=1`: paksa submit dummy gagal.
 - `mock_fail_once=1`: submit dummy gagal sekali lalu sukses pada percobaan berikutnya.
 

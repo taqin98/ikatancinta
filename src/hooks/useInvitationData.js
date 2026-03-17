@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { loadInvitationDraft } from "../services/invitationDataBridge";
 import { fetchInvitationBySlug } from "../services/invitationApi";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
+import { applyGuestQueryOverrides, readGuestQueryParams } from "../utils/guestParams";
 
 /**
  * Resolves invitation data with this priority:
@@ -16,7 +17,7 @@ import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 export function useInvitationData(slug, options = {}) {
     const params = new URLSearchParams(window.location.search);
     const isPreview = params.get("preview") === "1";
-    const guestName = decodeURIComponent(params.get("to") || params.get("nama") || "");
+    const guestQuery = readGuestQueryParams(window.location.search);
     const fallbackSlug = options?.fallbackSlug || slug;
     const skipFetch = Boolean(options?.skipFetch);
 
@@ -35,9 +36,7 @@ export function useInvitationData(slug, options = {}) {
                 if (isPreview) {
                     const draft = loadInvitationDraft();
                     if (draft) {
-                        const merged = { ...draft };
-                        if (guestName) merged.guest = { ...merged.guest, name: guestName };
-                        setData(merged);
+                        setData(applyGuestQueryOverrides({ ...draft }, guestQuery));
                         setLoading(false);
                         return;
                     }
@@ -53,23 +52,17 @@ export function useInvitationData(slug, options = {}) {
                 if (slug) {
                     const json = await fetchInvitationBySlug(slug);
                     if (json) {
-                        const merged = { ...defaultSchema, ...json };
-                        if (guestName) merged.guest = { ...merged.guest, name: guestName };
-                        setData(merged);
+                        setData(applyGuestQueryOverrides({ ...defaultSchema, ...json }, guestQuery));
                         setLoading(false);
                         return;
                     }
                 }
 
                 // 3. Fallback to defaultSchema
-                const fallback = JSON.parse(JSON.stringify(defaultSchema));
-                if (guestName) fallback.guest.name = guestName;
-                setData(fallback);
+                setData(applyGuestQueryOverrides(JSON.parse(JSON.stringify(defaultSchema)), guestQuery));
             } catch (err) {
                 console.warn("useInvitationData: failed to resolve data", err);
-                const fallback = JSON.parse(JSON.stringify(defaultSchema));
-                if (guestName) fallback.guest.name = guestName;
-                setData(fallback);
+                setData(applyGuestQueryOverrides(JSON.parse(JSON.stringify(defaultSchema)), guestQuery));
                 setError(err.message);
             } finally {
                 setLoading(false);
@@ -77,7 +70,7 @@ export function useInvitationData(slug, options = {}) {
         }
 
         resolve();
-    }, [fallbackSlug, guestName, isPreview, skipFetch, slug]);
+    }, [fallbackSlug, guestQuery.greetingLabel, guestQuery.name, isPreview, skipFetch, slug]);
 
     return { data, loading, error };
 }

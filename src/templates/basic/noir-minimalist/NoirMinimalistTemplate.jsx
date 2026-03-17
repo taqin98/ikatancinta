@@ -991,6 +991,40 @@ function buildGalleryFallbackLayout(root) {
     });
 }
 
+function applyAudioUiState(root, { opened, audioPlaying }) {
+    if (!root) return;
+
+    const audioWidget = root.querySelector(".elementor-element-66fba9cb");
+    const audioContainer = root.querySelector("#audio-container");
+    const muteSound = root.querySelector("#mute-sound");
+    const unmuteSound = root.querySelector("#unmute-sound");
+
+    if (!audioContainer || !muteSound || !unmuteSound) return;
+
+    if (audioWidget) {
+        audioWidget.classList.toggle("is-visible", Boolean(opened));
+    }
+
+    audioContainer.setAttribute("data-state", audioPlaying ? "playing" : "paused");
+    audioContainer.setAttribute("data-state-label", audioPlaying ? "Pause" : "Play");
+    audioContainer.setAttribute("aria-label", audioPlaying ? "Pause musik latar" : "Play musik latar");
+    audioContainer.setAttribute("title", audioPlaying ? "Pause musik" : "Play musik");
+
+    if (!opened) {
+        muteSound.style.display = "none";
+        unmuteSound.style.display = "none";
+        return;
+    }
+
+    if (audioPlaying) {
+        muteSound.style.display = "flex";
+        unmuteSound.style.display = "none";
+    } else {
+        muteSound.style.display = "none";
+        unmuteSound.style.display = "flex";
+    }
+}
+
 function SimpleLightbox({ open, slides, index, onClose, onIndexChange }) {
     useEffect(() => {
         if (!open) return undefined;
@@ -1324,20 +1358,101 @@ export default function NoirMinimalistTemplate({
             margin: 0 !important;
             width: auto !important;
             max-width: none !important;
+            opacity: 0;
+            transform: translateY(14px) scale(0.92);
+            pointer-events: none;
+            transition: opacity 240ms ease, transform 240ms ease;
+          }
+          .noir-minimalist-template .elementor-element-66fba9cb.is-visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            pointer-events: auto;
           }
           .noir-minimalist-template #audio-container {
-            display: flex;
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            min-width: 112px;
+            height: 48px;
+            padding: 5px 12px 5px 7px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background:
+              linear-gradient(135deg, rgba(17, 24, 39, 0.96), rgba(62, 79, 89, 0.92));
+            box-shadow:
+              0 14px 28px rgba(0, 0, 0, 0.24),
+              inset 0 1px 0 rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            cursor: pointer;
+            user-select: none;
+          }
+          .noir-minimalist-template #audio-container::after {
+            content: attr(data-state-label);
+            display: block;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.76);
+            white-space: nowrap;
+          }
+          .noir-minimalist-template #audio-container:focus-visible {
+            outline: 2px solid rgba(244, 210, 154, 0.95);
+            outline-offset: 3px;
+          }
+          .noir-minimalist-template #audio-container .elementor-icon-wrapper {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: 999px;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
-            border-radius: 999px;
-            background: #4a5d67;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
-            cursor: pointer;
+            background:
+              radial-gradient(circle at 30% 30%, #f5f1ea 0%, #d8c7b2 52%, #8e7761 100%);
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.45),
+              0 8px 18px rgba(0, 0, 0, 0.24);
           }
+          .noir-minimalist-template .elementor-element-66fba9cb.elementor-view-stacked #audio-container .elementor-icon,
           .noir-minimalist-template #audio-container .elementor-icon {
-            color: #ffffff !important;
+            color: #2f241b !important;
+            font-size: 14px;
+            line-height: 1;
+          }
+          .noir-minimalist-template #audio-container[data-state="paused"] .elementor-icon-wrapper {
+            background:
+              radial-gradient(circle at 30% 30%, #f3f0eb 0%, #d6cbbe 54%, #8f8172 100%);
+          }
+          .noir-minimalist-template #audio-container[data-state="playing"] .elementor-icon-wrapper {
+            background:
+              radial-gradient(circle at 30% 30%, #f6dfb8 0%, #c69758 55%, #7c5a37 100%);
+            box-shadow:
+              inset 0 1px 0 rgba(255, 255, 255, 0.45),
+              0 0 0 4px rgba(246, 223, 184, 0.14),
+              0 10px 20px rgba(0, 0, 0, 0.24);
+          }
+          .noir-minimalist-template #audio-container[data-state="playing"] .elementor-icon {
+            color: #1f140d !important;
+            text-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
+          }
+          @media (max-width: 767px) {
+            .noir-minimalist-template .elementor-element-66fba9cb {
+              right: 12px !important;
+              bottom: 78px !important;
+            }
+            .noir-minimalist-template #audio-container {
+              min-width: 46px;
+              width: 46px;
+              height: 46px;
+              padding: 5px;
+              justify-content: center;
+            }
+            .noir-minimalist-template #audio-container::after {
+              content: "";
+              display: none;
+            }
           }
           .noir-minimalist-template #cui-wrap-commnent-5749 {
             display: block;
@@ -1459,21 +1574,22 @@ export default function NoirMinimalistTemplate({
         const unmuteSound = root.querySelector("#unmute-sound");
         const audioContainer = root.querySelector("#audio-container");
 
-        const syncAudioIcons = () => {
-            if (!muteSound || !unmuteSound) return;
-            if (!isOpened) {
-                muteSound.style.display = "none";
-                unmuteSound.style.display = "none";
-                return;
-            }
+        if (audioContainer) {
+            audioContainer.setAttribute("role", "button");
+            audioContainer.setAttribute("tabindex", "0");
+        }
 
-            if (isAudioPlaying) {
-                muteSound.style.display = "block";
-                unmuteSound.style.display = "none";
-            } else {
-                muteSound.style.display = "none";
-                unmuteSound.style.display = "block";
-            }
+        const muteIcon = muteSound?.querySelector("i");
+        const unmuteIcon = unmuteSound?.querySelector("i");
+        if (muteIcon) {
+            muteIcon.className = "fas fa-pause";
+        }
+        if (unmuteIcon) {
+            unmuteIcon.className = "fas fa-play";
+        }
+
+        const syncAudioIcons = () => {
+            applyAudioUiState(root, { opened: isOpened, audioPlaying: isAudioPlaying });
         };
 
         const playAudio = async () => {
@@ -1512,6 +1628,15 @@ export default function NoirMinimalistTemplate({
         if (audioContainer) {
             audioContainer.addEventListener("click", toggleAudio);
             addCleanup(() => audioContainer.removeEventListener("click", toggleAudio));
+
+            const handleAudioKeyDown = (event) => {
+                if (event.key !== "Enter" && event.key !== " ") return;
+                event.preventDefault();
+                toggleAudio(event);
+            };
+
+            audioContainer.addEventListener("keydown", handleAudioKeyDown);
+            addCleanup(() => audioContainer.removeEventListener("keydown", handleAudioKeyDown));
         }
 
         const activateMotionText = () => {
@@ -1541,11 +1666,13 @@ export default function NoirMinimalistTemplate({
             }
 
             if (coverColumn) {
-                coverColumn.style.cssText = "transform: translateY(-100%); transition: transform 1.5s ease-in-out;";
+                coverColumn.style.transform = "translateY(-100%)";
+                coverColumn.style.transition = "transform 1.5s ease-in-out";
             }
 
             if (sec) {
-                sec.style.cssText = "opacity: 0; transition: opacity 1.5s ease-in-out;";
+                sec.style.opacity = "0";
+                sec.style.transition = "opacity 1.5s ease-in-out";
                 const timer = window.setTimeout(() => {
                     sec.style.visibility = "hidden";
                 }, behavior.cover.closeTransitionMs);
@@ -1941,24 +2068,7 @@ export default function NoirMinimalistTemplate({
         const root = rootRef.current;
         if (!root) return;
 
-        const muteSound = root.querySelector("#mute-sound");
-        const unmuteSound = root.querySelector("#unmute-sound");
-
-        if (!muteSound || !unmuteSound) return;
-
-        if (!opened) {
-            muteSound.style.display = "none";
-            unmuteSound.style.display = "none";
-            return;
-        }
-
-        if (audioPlaying) {
-            muteSound.style.display = "block";
-            unmuteSound.style.display = "none";
-        } else {
-            muteSound.style.display = "none";
-            unmuteSound.style.display = "block";
-        }
+        applyAudioUiState(root, { opened, audioPlaying });
     }, [opened, audioPlaying]);
 
     return (

@@ -30,6 +30,17 @@ function readJsonSafely(response) {
   });
 }
 
+function unwrapCollectionPayload(payload) {
+  if (Array.isArray(payload)) return payload;
+  if (!payload || typeof payload !== "object") return [];
+
+  const candidate = payload.data ?? payload.items ?? payload.results ?? payload.themes ?? payload.packages;
+  if (Array.isArray(candidate)) return candidate;
+  if (candidate && typeof candidate === "object") return [candidate];
+
+  return [];
+}
+
 async function getJson(url) {
   const response = await fetch(url, {
     method: "GET",
@@ -118,8 +129,17 @@ function buildThemeQuery(filters = {}) {
 
 export async function fetchPackages() {
   if (shouldUseRealCatalogApi()) {
-    const baseUrl = getCatalogApiBaseUrl();
-    return normalizePackagePlans(await getJson(`${baseUrl}/packages`));
+    try {
+      const baseUrl = getCatalogApiBaseUrl();
+      const payload = unwrapCollectionPayload(await getJson(`${baseUrl}/packages`));
+      if (payload.length > 0) {
+        return normalizePackagePlans(payload);
+      }
+
+      console.warn("Catalog API returned empty package list, using local fallback.");
+    } catch (error) {
+      console.warn("Catalog API package request failed, using local fallback.", error);
+    }
   }
 
   await wait();
@@ -128,9 +148,18 @@ export async function fetchPackages() {
 
 export async function fetchThemes(filters = {}) {
   if (shouldUseRealCatalogApi()) {
-    const baseUrl = getCatalogApiBaseUrl();
-    const query = buildThemeQuery(filters);
-    return getJson(query ? `${baseUrl}/themes?${query}` : `${baseUrl}/themes`);
+    try {
+      const baseUrl = getCatalogApiBaseUrl();
+      const query = buildThemeQuery(filters);
+      const payload = unwrapCollectionPayload(await getJson(query ? `${baseUrl}/themes?${query}` : `${baseUrl}/themes`));
+      if (payload.length > 0) {
+        return payload;
+      }
+
+      console.warn("Catalog API returned empty theme list, using local fallback.", filters);
+    } catch (error) {
+      console.warn("Catalog API theme request failed, using local fallback.", error);
+    }
   }
 
   await wait();
@@ -165,8 +194,19 @@ export async function fetchThemeInvitations(slug) {
   if (!slug) return [];
 
   if (shouldUseRealCatalogApi()) {
-    const baseUrl = getCatalogApiBaseUrl();
-    return getJson(`${baseUrl}/themes/${encodeURIComponent(slug)}/invitations`);
+    try {
+      const baseUrl = getCatalogApiBaseUrl();
+      const payload = unwrapCollectionPayload(
+        await getJson(`${baseUrl}/themes/${encodeURIComponent(slug)}/invitations`),
+      );
+      if (payload.length > 0) {
+        return payload;
+      }
+
+      console.warn("Catalog API returned empty invitation list, using local fallback.", slug);
+    } catch (error) {
+      console.warn("Catalog API invitation request failed, using local fallback.", error);
+    }
   }
 
   await wait();

@@ -72,11 +72,6 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const elements = Array.from(document.querySelectorAll(".animate-enter-up"));
-    if (elements.length === 0) {
-      return undefined;
-    }
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -93,13 +88,42 @@ function App() {
       }
     );
 
-    elements.forEach((element) => {
-      if (!element.classList.contains("is-visible")) {
-        observer.observe(element);
-      }
+    const registerAnimatedElements = (root = document) => {
+      const elements = Array.from(root.querySelectorAll(".animate-enter-up"));
+      elements.forEach((element) => {
+        if (!element.classList.contains("is-visible")) {
+          observer.observe(element);
+        }
+      });
+    };
+
+    registerAnimatedElements();
+
+    const mutationObserver = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (!(node instanceof HTMLElement)) {
+            return;
+          }
+
+          if (node.classList.contains("animate-enter-up") && !node.classList.contains("is-visible")) {
+            observer.observe(node);
+          }
+
+          registerAnimatedElements(node);
+        });
+      });
     });
 
-    return () => observer.disconnect();
+    mutationObserver.observe(document.body, {
+      childList: true,
+      subtree: true,
+    });
+
+    return () => {
+      mutationObserver.disconnect();
+      observer.disconnect();
+    };
   }, [pathname, routeVersion]);
 
   if (pathname === "/tema") {
