@@ -35,8 +35,14 @@ async function postJson(url, body) {
 }
 
 function normalizeWishPayload(payload) {
+  const invitationSlug = String(payload?.invitationSlug || payload?.invitation_slug || "").trim();
+  const orderId = String(payload?.orderId || payload?.order_id || "").trim();
+
   return {
-    orderId: payload?.orderId ? String(payload.orderId).trim() : "",
+    invitationSlug,
+    invitation_slug: invitationSlug,
+    orderId,
+    order_id: orderId,
     name: String(payload?.author || payload?.name || "").trim(),
     attendance: String(payload?.attendance || "Hadir").trim(),
     message: String(payload?.comment || payload?.message || "").trim(),
@@ -52,14 +58,15 @@ export async function postInvitationWish(slug, payload) {
     return postJson(`${apiUrl}/invitations/${encodeURIComponent(slug)}/wishes`, normalizedPayload);
   }
 
-  return {
-    success: true,
-    message: "Wish accepted locally",
-    data: {
-      orderId: normalizedPayload.orderId || null,
-      author: normalizedPayload.name || "Anonim",
-      comment: normalizedPayload.message,
-      attendance: normalizedPayload.attendance,
+    return {
+      success: true,
+      message: "Wish accepted locally",
+      data: {
+        invitationSlug: normalizedPayload.invitationSlug || slug || null,
+        orderId: normalizedPayload.orderId || null,
+        author: normalizedPayload.name || "Anonim",
+        comment: normalizedPayload.message,
+        attendance: normalizedPayload.attendance,
       createdAt: new Date().toISOString(),
     },
   };

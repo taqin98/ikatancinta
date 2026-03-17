@@ -431,7 +431,9 @@ function formatEventDateParts(dateInput) {
         const dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
         const month = date.toLocaleDateString("id-ID", { month: "long" });
         const year = date.getFullYear();
+        const dayNumber = String(date.getDate()).padStart(2, "0");
         return {
+            dayNumber,
             dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
             month: month.charAt(0).toUpperCase() + month.slice(1),
             year: String(year),
@@ -442,13 +444,14 @@ function formatEventDateParts(dateInput) {
     const match = text.match(/([A-Za-zÀ-ÿ]+),?\s*(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s+(\d{4})/);
     if (match) {
         return {
+            dayNumber: String(match[2]).padStart(2, "0"),
             dayName: match[1],
             month: match[3],
             year: match[4],
         };
     }
 
-    return { dayName: "Minggu", month: "Maret", year: "2025" };
+    return { dayNumber: "30", dayName: "Minggu", month: "Maret", year: "2025" };
 }
 
 function toParagraphsHtml(value) {
@@ -609,6 +612,15 @@ function applyInvitationData(root, invitationData, options = {}) {
     const closingBackgroundPhoto = isDistinctAsset(copy?.closingBackgroundPhoto, heroPhoto, frontCoverPhoto)
         ? copy.closingBackgroundPhoto
         : "";
+    const saveTheDateBackgroundPhoto = isDistinctAsset(copy?.saveTheDateBackgroundPhoto, heroPhoto, frontCoverPhoto)
+        ? copy.saveTheDateBackgroundPhoto
+        : "";
+    const wishesBackgroundPhoto = isDistinctAsset(copy?.wishesBackgroundPhoto, heroPhoto, frontCoverPhoto, saveTheDateBackgroundPhoto)
+        ? copy.wishesBackgroundPhoto
+        : "";
+    const saveTheDatePhoto = saveTheDateBackgroundPhoto || heroPhoto || frontCoverPhoto || "";
+    const wishesPhoto = wishesBackgroundPhoto || heroPhoto || frontCoverPhoto || "";
+    const closingPhoto = closingBackgroundPhoto || heroPhoto || frontCoverPhoto || "";
     const story = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length
         ? invitationData.lovestory
         : contentDefaults.lovestory;
@@ -664,11 +676,13 @@ function applyInvitationData(root, invitationData, options = {}) {
 
     applyClassicBackground(root.querySelector(".elementor-element-67920115"), frontCoverPhoto, "center center");
     applySlideshowBackground(root.querySelector(".elementor-element-35e9d5a7"), [heroPhoto], "center center");
+    applyWidgetImage(root.querySelector(".elementor-element-685f99d0"), saveTheDatePhoto);
+    applyClassicBackground(root.querySelector(".elementor-element-7febfdfb"), wishesPhoto, "center center");
     applyWidgetImage(root.querySelector(".elementor-element-31ebc793"), bridePhoto);
     applyWidgetImage(root.querySelector(".elementor-element-40cd203b"), groomPhoto);
     applyCarouselImages(root, ".elementor-element-305adcef", [akadCoverPhoto]);
     applyCarouselImages(root, ".elementor-element-1a8272fc", [resepsiCoverPhoto]);
-    applyWidgetImage(root.querySelector(".elementor-element-1a57482a"), closingBackgroundPhoto);
+    applyWidgetImage(root.querySelector(".elementor-element-1a57482a"), closingPhoto);
 
     replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
     replaceExactText(textSelector, "Dear,", guest?.greetingLabel || "Dear,");
@@ -733,9 +747,21 @@ function applyInvitationData(root, invitationData, options = {}) {
     const akadParts = formatEventDateParts(event?.akad?.date || event?.dateISO);
     const resepsiParts = formatEventDateParts(event?.resepsi?.date || event?.dateISO);
 
+    const akadDayNumberNode = root.querySelector(".elementor-element-6ea6d5e1 .elementor-counter-number");
+    if (akadDayNumberNode) {
+        akadDayNumberNode.setAttribute("data-to-value", akadParts.dayNumber);
+        akadDayNumberNode.textContent = akadParts.dayNumber;
+    }
+
     const akadDateNode = root.querySelector(".elementor-element-6217d8c4 .elementor-widget-container");
     if (akadDateNode) {
         akadDateNode.innerHTML = `<p><strong>${escapeHtml(akadParts.dayName)}</strong></p><p>${escapeHtml(akadParts.month)}</p><p>${escapeHtml(akadParts.year)}</p>`;
+    }
+
+    const resepsiDayNumberNode = root.querySelector(".elementor-element-5d68c9f9 .elementor-counter-number");
+    if (resepsiDayNumberNode) {
+        resepsiDayNumberNode.setAttribute("data-to-value", resepsiParts.dayNumber);
+        resepsiDayNumberNode.textContent = resepsiParts.dayNumber;
     }
 
     const resepsiDateNode = root.querySelector(".elementor-element-513882a9 .elementor-widget-container");
@@ -1352,6 +1378,37 @@ export default function NavyBlossomTemplate({
 
         const runtimeStyle = document.createElement("style");
         runtimeStyle.textContent = `
+          .navy-blossom-template .elementor-element-2b12c6e2,
+          .navy-blossom-template .elementor-element-1c388121,
+          .navy-blossom-template .elementor-element-5cd149e9,
+          .navy-blossom-template .elementor-element-773ba8ff,
+          .navy-blossom-template .elementor-element-1ccf6a53,
+          .navy-blossom-template .elementor-element-17a21c21,
+          .navy-blossom-template .elementor-element-3076e97c {
+            width: 100% !important;
+            max-width: 100% !important;
+            align-self: center !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+            text-align: center !important;
+          }
+          .navy-blossom-template .elementor-element-2b12c6e2 > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-1c388121 > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-5cd149e9 > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-773ba8ff > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-1ccf6a53 > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-17a21c21 > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-3076e97c > .elementor-widget-container,
+          .navy-blossom-template .elementor-element-2b12c6e2 .elementor-heading-title,
+          .navy-blossom-template .elementor-element-1c388121 .elementor-heading-title,
+          .navy-blossom-template .elementor-element-5cd149e9 .elementor-heading-title,
+          .navy-blossom-template .elementor-element-773ba8ff .elementor-heading-title,
+          .navy-blossom-template .elementor-element-1ccf6a53 .elementor-heading-title,
+          .navy-blossom-template .elementor-element-17a21c21 .elementor-heading-title,
+          .navy-blossom-template .elementor-element-3076e97c .elementor-heading-title {
+            width: 100% !important;
+            text-align: center !important;
+          }
           @media (min-width: 681px) and (max-width: 767px) {
             .navy-blossom-template .elementor-element-46e3d068 {
               --content-width: 470px !important;
@@ -1396,6 +1453,44 @@ export default function NavyBlossomTemplate({
           }
           .navy-blossom-template #cui-box {
             display: block !important;
+          }
+          .navy-blossom-template #commentform-14805 .form-submit {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+          }
+          .navy-blossom-template #commentform-14805.is-submitting .navy-wish-submit-spinner {
+            display: inline-flex;
+          }
+          .navy-blossom-template #commentform-14805 .navy-wish-submit-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            border: 2px solid rgba(13, 7, 52, 0.18);
+            border-top-color: #0d0734;
+            animation: navy-wish-spinner 0.7s linear infinite;
+            flex: 0 0 auto;
+          }
+          .navy-blossom-template #commentform-14805.is-submitting input[type="submit"],
+          .navy-blossom-template #commentform-14805.is-submitting input[type="button"],
+          .navy-blossom-template #commentform-14805.is-submitting input[type="text"],
+          .navy-blossom-template #commentform-14805.is-submitting textarea,
+          .navy-blossom-template #commentform-14805.is-submitting select {
+            opacity: 0.68;
+            cursor: not-allowed !important;
+          }
+          .navy-blossom-template #commentform-14805.is-submitting textarea,
+          .navy-blossom-template #commentform-14805.is-submitting select,
+          .navy-blossom-template #commentform-14805.is-submitting input[type="text"] {
+            background-color: rgba(255, 255, 255, 0.82);
+          }
+          @keyframes navy-wish-spinner {
+            to {
+              transform: rotate(360deg);
+            }
           }
         `;
         root.appendChild(runtimeStyle);
@@ -1797,6 +1892,31 @@ export default function NavyBlossomTemplate({
 
             if (wishForm) {
                 const authorInput = wishForm.querySelector("#author");
+                const submitButton = wishForm.querySelector("input[type='submit']");
+                const submitRow = wishForm.querySelector(".form-submit");
+                const formControls = Array.from(wishForm.querySelectorAll("input, textarea, select, button"));
+
+                if (submitRow && !submitRow.querySelector(".navy-wish-submit-spinner")) {
+                    const spinner = document.createElement("span");
+                    spinner.className = "navy-wish-submit-spinner";
+                    spinner.setAttribute("aria-hidden", "true");
+                    submitRow.appendChild(spinner);
+                }
+
+                const setWishFormSubmitting = (isSubmitting) => {
+                    wishForm.classList.toggle("is-submitting", isSubmitting);
+                    wishForm.setAttribute("aria-busy", isSubmitting ? "true" : "false");
+                    formControls.forEach((control) => {
+                        if (!(control instanceof HTMLInputElement || control instanceof HTMLTextAreaElement || control instanceof HTMLSelectElement || control instanceof HTMLButtonElement)) {
+                            return;
+                        }
+                        control.disabled = isSubmitting;
+                    });
+                    if (submitButton) {
+                        submitButton.value = "Kirim";
+                    }
+                };
+
                 if (authorInput) {
                     authorInput.removeAttribute("readonly");
                     authorInput.removeAttribute("nofocus");
@@ -1812,9 +1932,15 @@ export default function NavyBlossomTemplate({
 
                 const handleWishSubmit = async (event) => {
                     event.preventDefault();
+                    if (wishForm.classList.contains("is-submitting")) return;
 
                     const formData = new FormData(wishForm);
+                    const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "navy-blossom";
                     const payload = {
+                        invitationSlug: activeInvitationSlug,
+                        invitation_slug: activeInvitationSlug,
+                        orderId: mergedData?.invitation?.orderId || mergedData?.orderId || null,
+                        order_id: mergedData?.invitation?.orderId || mergedData?.orderId || null,
                         author: normalizeText(formData.get("author") || mergedData?.guest?.name || "Tamu"),
                         comment: normalizeText(formData.get("comment") || ""),
                         attendance: normalizeText(formData.get("konfirmasi") || "-"),
@@ -1823,14 +1949,28 @@ export default function NavyBlossomTemplate({
 
                     if (!payload.comment) return;
 
+                    setWishFormSubmitting(true);
+                    let savedWish = null;
                     try {
-                        await postInvitationWish("navy-blossom", payload);
+                        const response = await postInvitationWish(activeInvitationSlug, payload);
+                        savedWish = response?.data && typeof response.data === "object"
+                            ? {
+                                invitationSlug: response.data.invitationSlug || payload.invitationSlug || null,
+                                orderId: response.data.orderId || payload.orderId || null,
+                                author: normalizeText(response.data.author || response.data.name || payload.author || "Tamu"),
+                                comment: normalizeText(response.data.comment || response.data.message || payload.comment || ""),
+                                attendance: normalizeText(response.data.attendance || payload.attendance || "-"),
+                                createdAt: response.data.createdAt || payload.createdAt || "Baru saja",
+                            }
+                            : null;
                     } catch {
                         // keep optimistic local render
+                    } finally {
+                        setWishFormSubmitting(false);
                     }
 
                     const currentWishes = collectWishesFromDom(root);
-                    const nextWishes = [payload, ...currentWishes];
+                    const nextWishes = [savedWish || payload, ...currentWishes];
                     renderWishList(wishesList, nextWishes);
                     updateAttendanceCounts(root, nextWishes);
 

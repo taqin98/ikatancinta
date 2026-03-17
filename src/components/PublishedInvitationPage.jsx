@@ -128,6 +128,21 @@ function isInvitationPubliclyAccessible(invitationData) {
   return true;
 }
 
+function readInvitationOrderStatus(invitationData) {
+  const statusCandidates = [
+    invitationData?.status,
+    invitationData?.publishStatus,
+    invitationData?.invitation?.status,
+    invitationData?.invitation?.publishStatus,
+    invitationData?.orderStatus,
+    invitationData?.order?.status,
+  ]
+    .map(normalizePublicationStatus)
+    .filter(Boolean);
+
+  return statusCandidates.find((status) => ORDER_STATUSES.includes(status)) || "";
+}
+
 function resolveThemeSlug(invitationData, invitationSlug) {
   const directCandidates = [
     invitationData?.theme?.slug,
@@ -186,6 +201,7 @@ export default function PublishedInvitationPage() {
         const nextInvitationData = await fetchInvitationBySlug(invitationSlug);
         if (!active) return;
 
+        const invitationStatus = readInvitationOrderStatus(nextInvitationData);
         const orderId =
           nextInvitationData?.invitation?.orderId ||
           nextInvitationData?.orderId ||
@@ -193,7 +209,7 @@ export default function PublishedInvitationPage() {
           null;
 
         let nextOrderData = null;
-        if (isRealOrderApiEnabled() && orderId) {
+        if (!invitationStatus && isRealOrderApiEnabled() && orderId) {
           nextOrderData = await fetchOrderById(orderId);
           if (!active) return;
         }

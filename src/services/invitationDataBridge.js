@@ -52,6 +52,8 @@ export function clearInvitationDraft() {
  * @param {object[]} params.stories        — [{ title, description, date }]
  * @param {string} params.quote
  * @param {string} params.quoteSource
+ * @param {object|null} params.saveTheDateBackgroundImage
+ * @param {object|null} params.wishesBackgroundImage
  * @param {object|null} params.closingBackgroundImage
  * @param {object} params.selectedPackage
  * @param {string} params.musicMode
@@ -72,6 +74,8 @@ export function mapFormToInvitationSchema({
     stories,
     quote,
     quoteSource,
+    saveTheDateBackgroundImage,
+    wishesBackgroundImage,
     closingBackgroundImage,
     selectedPackage,
     musicMode,
@@ -174,6 +178,10 @@ export function mapFormToInvitationSchema({
             ...defaultSchema.copy,
             quote: quote || defaultSchema.copy?.quote || "",
             quoteSource: quoteSource || defaultSchema.copy?.quoteSource || "",
+            saveTheDateBackgroundPhoto:
+                saveTheDateBackgroundImage?.url || coverImage?.url || defaultSchema.copy?.saveTheDateBackgroundPhoto || "",
+            wishesBackgroundPhoto:
+                wishesBackgroundImage?.url || coverImage?.url || defaultSchema.copy?.wishesBackgroundPhoto || "",
             closingBackgroundPhoto: closingBackgroundImage?.url || coverImage?.url || defaultSchema.copy?.closingBackgroundPhoto || "",
         },
         features: {

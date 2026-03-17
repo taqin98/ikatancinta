@@ -58,6 +58,8 @@ export const defaultSchema = {
             "Kami bersyukur dipertemukan Allah di waktu terbaik. Kini kami menanti hari istimewa kami.",
         quote: contentDefaults?.copy?.quote || "",
         quoteSource: contentDefaults?.copy?.quoteSource || "",
+        saveTheDateBackgroundPhoto: "",
+        wishesBackgroundPhoto: "",
         closingBackgroundPhoto: "",
         closingText: contentDefaults?.copy?.closingText || "",
         closingLabel: contentDefaults?.copy?.closingLabel || "KAMI YANG BERBAHAGIA",

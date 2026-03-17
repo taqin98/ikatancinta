@@ -145,6 +145,8 @@ async function prepareOrderAssetsForSubmission({
   bridePhoto,
   akadCoverImage,
   resepsiCoverImage,
+  saveTheDateBackgroundImage,
+  wishesBackgroundImage,
   closingBackgroundImage,
   galleryImages,
   musicMode,
@@ -156,6 +158,8 @@ async function prepareOrderAssetsForSubmission({
   const uploadedBridePhoto = await uploadOptionalImageAsset(orderId, bridePhoto, "bride-photo");
   const uploadedAkadCover = await uploadOptionalImageAsset(orderId, akadCoverImage, "akad-cover");
   const uploadedResepsiCover = await uploadOptionalImageAsset(orderId, resepsiCoverImage, "resepsi-cover");
+  const uploadedSaveTheDateBackground = await uploadOptionalImageAsset(orderId, saveTheDateBackgroundImage, "save-the-date-background");
+  const uploadedWishesBackground = await uploadOptionalImageAsset(orderId, wishesBackgroundImage, "wishes-background");
   const uploadedClosingBackground = await uploadOptionalImageAsset(orderId, closingBackgroundImage, "closing-background");
 
   const uploadedGallery = [];
@@ -191,6 +195,8 @@ async function prepareOrderAssetsForSubmission({
     uploadedBridePhoto,
     uploadedAkadCover,
     uploadedResepsiCover,
+    uploadedSaveTheDateBackground,
+    uploadedWishesBackground,
     uploadedClosingBackground,
     uploadedGallery,
     uploadedMusic,
@@ -596,6 +602,8 @@ function StepThreeFoto({
   bridePhoto,
   akadCoverImage,
   resepsiCoverImage,
+  saveTheDateBackgroundImage,
+  wishesBackgroundImage,
   closingBackgroundImage,
   galleryImages,
   quote,
@@ -617,6 +625,10 @@ function StepThreeFoto({
   onRemoveAkadCover,
   onUploadResepsiCover,
   onRemoveResepsiCover,
+  onUploadSaveTheDateBackground,
+  onRemoveSaveTheDateBackground,
+  onUploadWishesBackground,
+  onRemoveWishesBackground,
   onUploadClosingBackground,
   onRemoveClosingBackground,
   onRemoveCover,
@@ -629,10 +641,12 @@ function StepThreeFoto({
   onUploadCustomMusic,
   onToggleMusicPreview,
   packageConfig,
+  selectedThemeSlug,
 }) {
   const galleryLimit = packageConfig?.limits?.galleryMax || 4;
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
+  const isNavyBlossom = selectedThemeSlug === "navy-blossom";
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
     items: QUOTE_PRESETS.filter((preset) => preset.category === category.id),
@@ -847,6 +861,33 @@ function StepThreeFoto({
           aspectClass="aspect-video"
         />
       </section>
+
+      {isNavyBlossom && (
+        <section className="mb-8 space-y-4">
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Background Khusus Navy Blossom</h3>
+            <span className="text-xs font-medium text-slate-500">Save The Date & Wishes</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <ImageUploadCard
+              title="Background Save The Date"
+              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan."
+              image={saveTheDateBackgroundImage}
+              onUpload={onUploadSaveTheDateBackground}
+              onRemove={onRemoveSaveTheDateBackground}
+              aspectClass="aspect-video"
+            />
+            <ImageUploadCard
+              title="Background Wishes / Ucapan"
+              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan."
+              image={wishesBackgroundImage}
+              onUpload={onUploadWishesBackground}
+              onRemove={onRemoveWishesBackground}
+              aspectClass="aspect-video"
+            />
+          </div>
+        </section>
+      )}
 
       <section className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
@@ -1108,6 +1149,8 @@ function StepFourReview({
   coverImage,
   quote,
   quoteSource,
+  saveTheDateBackgroundImage,
+  wishesBackgroundImage,
   closingBackgroundImage,
   galleryImages,
   stories,
@@ -1117,6 +1160,7 @@ function StepFourReview({
   selectedPackage,
 }) {
   const effectiveStoriesCount = selectedPackage?.capabilities?.loveStory ? stories.length : 0;
+  const isNavyBlossom = selectedTheme?.slug === "navy-blossom";
 
   return (
     <>
@@ -1211,6 +1255,18 @@ function StepFourReview({
               <p className="text-xs text-slate-500 mb-2">Background Penutup</p>
               <p className="text-sm font-medium">{closingBackgroundImage?.name || "Menggunakan cover utama"}</p>
             </div>
+            {isNavyBlossom && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Background Save The Date</p>
+                <p className="text-sm font-medium">{saveTheDateBackgroundImage?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
+            {isNavyBlossom && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Background Wishes / Ucapan</p>
+                <p className="text-sm font-medium">{wishesBackgroundImage?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
             <div className="pt-3">
               <p className="text-xs text-slate-500 mb-2">Galeri</p>
               <p className="text-sm font-medium">{galleryImages.length} foto</p>
@@ -1343,6 +1399,8 @@ export default function CreateInvitationFormPage() {
   const [quotePresetId, setQuotePresetId] = useState("");
   const [quote, setQuote] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+  const [saveTheDateBackgroundImage, setSaveTheDateBackgroundImage] = useState(null);
+  const [wishesBackgroundImage, setWishesBackgroundImage] = useState(null);
   const [closingBackgroundImage, setClosingBackgroundImage] = useState(null);
   const [stories, setStories] = useState(INITIAL_STORIES);
   const [musicMode, setMusicMode] = useState("list");
@@ -1393,6 +1451,8 @@ export default function CreateInvitationFormPage() {
     const hasMedia = Boolean(
       coverImage ||
       frontCoverImage ||
+      saveTheDateBackgroundImage ||
+      wishesBackgroundImage ||
       closingBackgroundImage ||
       quote ||
       quoteSource ||
@@ -1411,6 +1471,8 @@ export default function CreateInvitationFormPage() {
     resepsi,
     coverImage,
     frontCoverImage,
+    saveTheDateBackgroundImage,
+    wishesBackgroundImage,
     closingBackgroundImage,
     galleryImages.length,
     quote,
@@ -1442,6 +1504,12 @@ export default function CreateInvitationFormPage() {
     const nextUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, "", nextUrl);
   }, [selectedTheme]);
+
+  useEffect(() => {
+    if (selectedTheme?.slug === "navy-blossom") return;
+    setSaveTheDateBackgroundImage(null);
+    setWishesBackgroundImage(null);
+  }, [selectedTheme?.slug]);
 
   useEffect(() => {
     const galleryLimit = selectedPackage?.limits?.galleryMax || 4;
@@ -1591,6 +1659,20 @@ export default function CreateInvitationFormPage() {
     const asset = await readSingleImageFromInput(event, "background penutup");
     if (asset) {
       setClosingBackgroundImage(asset);
+    }
+  };
+
+  const handleUploadSaveTheDateBackground = async (event) => {
+    const asset = await readSingleImageFromInput(event, "background save the date");
+    if (asset) {
+      setSaveTheDateBackgroundImage(asset);
+    }
+  };
+
+  const handleUploadWishesBackground = async (event) => {
+    const asset = await readSingleImageFromInput(event, "background wishes");
+    if (asset) {
+      setWishesBackgroundImage(asset);
     }
   };
 
@@ -1756,7 +1838,7 @@ export default function CreateInvitationFormPage() {
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
         frontCoverImage, coverImage, galleryImages, stories,
-        quote, quoteSource, closingBackgroundImage,
+        quote, quoteSource, saveTheDateBackgroundImage, wishesBackgroundImage, closingBackgroundImage,
         selectedPackage,
         musicMode,
         selectedMusicTrack,
@@ -1892,6 +1974,8 @@ export default function CreateInvitationFormPage() {
         uploadedBridePhoto,
         uploadedAkadCover,
         uploadedResepsiCover,
+        uploadedSaveTheDateBackground,
+        uploadedWishesBackground,
         uploadedClosingBackground,
         uploadedGallery,
         uploadedMusic,
@@ -1903,6 +1987,8 @@ export default function CreateInvitationFormPage() {
         bridePhoto: bride.photo,
         akadCoverImage: akad.coverImage,
         resepsiCoverImage: isReceptionEnabled ? resepsi.coverImage : null,
+        saveTheDateBackgroundImage,
+        wishesBackgroundImage,
         closingBackgroundImage,
         galleryImages,
         musicMode,
@@ -1933,6 +2019,8 @@ export default function CreateInvitationFormPage() {
         sessions: isSessionEnabled ? sessions : [],
         frontCoverImage: uploadedFrontCover,
         coverImage: uploadedCover,
+        saveTheDateBackgroundImage: uploadedSaveTheDateBackground,
+        wishesBackgroundImage: uploadedWishesBackground,
         closingBackgroundImage: uploadedClosingBackground,
         quote,
         quoteSource,
@@ -2098,6 +2186,8 @@ export default function CreateInvitationFormPage() {
                 bridePhoto={bride.photo}
                 akadCoverImage={akad.coverImage}
                 resepsiCoverImage={resepsi.coverImage}
+                saveTheDateBackgroundImage={saveTheDateBackgroundImage}
+                wishesBackgroundImage={wishesBackgroundImage}
                 closingBackgroundImage={closingBackgroundImage}
                 galleryImages={galleryImages}
                 quote={quote}
@@ -2119,6 +2209,10 @@ export default function CreateInvitationFormPage() {
                 onRemoveAkadCover={() => setAkad((prev) => ({ ...prev, coverImage: null }))}
                 onUploadResepsiCover={handleUploadResepsiCover}
                 onRemoveResepsiCover={() => setResepsi((prev) => ({ ...prev, coverImage: null }))}
+                onUploadSaveTheDateBackground={handleUploadSaveTheDateBackground}
+                onRemoveSaveTheDateBackground={() => setSaveTheDateBackgroundImage(null)}
+                onUploadWishesBackground={handleUploadWishesBackground}
+                onRemoveWishesBackground={() => setWishesBackgroundImage(null)}
                 onUploadClosingBackground={handleUploadClosingBackground}
                 onRemoveClosingBackground={() => setClosingBackgroundImage(null)}
                 onRemoveCover={() => setCoverImage(null)}
@@ -2133,6 +2227,7 @@ export default function CreateInvitationFormPage() {
                   isPlaying: isMusicPlaying,
                 }}
                 packageConfig={selectedPackage}
+                selectedThemeSlug={selectedTheme?.slug || ""}
                 onChangeMusicMode={handleChangeMusicMode}
                 onChangeMusicTrack={setSelectedMusicTrackId}
                 onUploadCustomMusic={handleUploadCustomMusic}
@@ -2152,6 +2247,8 @@ export default function CreateInvitationFormPage() {
                 coverImage={coverImage}
                 quote={quote}
                 quoteSource={quoteSource}
+                saveTheDateBackgroundImage={saveTheDateBackgroundImage}
+                wishesBackgroundImage={wishesBackgroundImage}
                 closingBackgroundImage={closingBackgroundImage}
                 galleryImages={galleryImages}
                 stories={stories}

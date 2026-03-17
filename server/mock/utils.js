@@ -1,6 +1,8 @@
 import { getPackageConfig, normalizePackageTier } from "../../src/data/packageCatalog.js";
 import { findThemeBySlug } from "./data/themes.seed.js";
 
+const PUBLIC_INVITATION_STATUSES = new Set(["published", "done"]);
+
 export function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -21,8 +23,24 @@ export function buildInvitationSchemaFromTheme(slug) {
   const groomName = coupleParts[0] || "Habib";
   const brideName = coupleParts[1] || "Adiba";
   const heroPhoto = theme?.thumbnail || theme?.image || "";
+  const status = "published";
+  const isPublished = PUBLIC_INVITATION_STATUSES.has(status);
+  const publishedAt = new Date().toISOString();
 
   return {
+    status,
+    orderStatus: status,
+    isPublished,
+    publishedAt,
+    completedAt: null,
+    invitation: {
+      slug,
+      orderId: null,
+      status,
+      isPublished,
+      publishedAt,
+      completedAt: null,
+    },
     guest: {
       name: "Nama Tamu",
       greetingLabel: "Kepada Bapak/Ibu/Saudara/i",
