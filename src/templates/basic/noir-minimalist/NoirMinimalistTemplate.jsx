@@ -338,7 +338,7 @@ function mergeInvitationData(baseSchema, incomingData) {
             ...(incomingData.behavior || {}),
         },
         lovestory: Array.isArray(incomingData.lovestory) ? incomingData.lovestory : baseSchema.lovestory,
-        gallery: Array.isArray(incomingData.gallery) ? incomingData.gallery : baseSchema.gallery,
+        gallery: Array.isArray(incomingData.gallery) ? incomingData.gallery : [],
     };
 }
 
@@ -387,15 +387,64 @@ function toParagraphsHtml(value) {
     return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
 }
 
+function applyClassicBackground(node, imageUrl, position = "center center") {
+    const resolved = resolveAssetUrl(imageUrl);
+    if (!node || !resolved) return;
+
+    node.style.backgroundImage = `url("${resolved}")`;
+    node.style.backgroundSize = "cover";
+    node.style.backgroundPosition = position;
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = "classic";
+    delete settings.background_slideshow_gallery;
+    node.setAttribute("data-settings", JSON.stringify(settings));
+}
+
+function applyPlainBackground(node, backgroundColor = "#FFFFFF") {
+    if (!node) return;
+
+    node.style.backgroundImage = "none";
+    node.style.backgroundColor = backgroundColor;
+    node.style.backgroundSize = "auto";
+    node.style.backgroundPosition = "center center";
+    node.style.backgroundRepeat = "no-repeat";
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = "classic";
+    delete settings.background_slideshow_gallery;
+    node.setAttribute("data-settings", JSON.stringify(settings));
+}
+
+function applySlideshowBackground(node, imageUrls, position = "center center") {
+    const resolvedUrls = (Array.isArray(imageUrls) ? imageUrls : [imageUrls])
+        .map((url) => resolveAssetUrl(url))
+        .filter(Boolean);
+
+    if (!node || !resolvedUrls.length) return;
+
+    node.style.backgroundImage = `url("${resolvedUrls[0]}")`;
+    node.style.backgroundSize = "cover";
+    node.style.backgroundPosition = position;
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = resolvedUrls.length > 1 ? "slideshow" : "classic";
+    settings.background_slideshow_gallery = resolvedUrls.map((url, index) => ({ id: index + 1, url }));
+    node.setAttribute("data-settings", JSON.stringify(settings));
+}
+
 function applyInvitationData(root, invitationData) {
     const guest = invitationData?.guest || defaultSchema.guest;
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
     const event = invitationData?.event || defaultSchema.event;
     const copy = invitationData?.copy || defaultSchema.copy;
-    const story = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length
-        ? invitationData.lovestory
-        : contentDefaults.lovestory;
+    const features = invitationData?.features || defaultSchema.features;
+    const heroPhoto = invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
+    const bridePhoto = bride?.photo || heroPhoto;
+    const groomPhoto = groom?.photo || heroPhoto;
+    const closingBackgroundPhoto = copy?.closingBackgroundPhoto || heroPhoto;
+    const story = Array.isArray(invitationData?.lovestory) ? invitationData.lovestory : [];
 
     const replaceExactText = (selector, fromText, toText) => {
         const fromNormalized = normalizeText(fromText);
@@ -407,6 +456,46 @@ function applyInvitationData(root, invitationData) {
     };
 
     const textSelector = ".elementor-widget-container p, .elementor-heading-title";
+    const livestreamSection = root.querySelector(".elementor-element-3454b083");
+    const loveStorySection = root.querySelector(".elementor-element-45557bd0");
+    const weddingGiftSection = root.querySelector(".elementor-element-66660311");
+
+    if (livestreamSection) {
+        if (!features?.livestreamEnabled || !event?.livestream?.url) {
+            livestreamSection.style.display = "none";
+        } else {
+            livestreamSection.style.removeProperty("display");
+        }
+    }
+
+    if (loveStorySection) {
+        if (story.length === 0) {
+            loveStorySection.style.display = "none";
+        } else {
+            loveStorySection.style.removeProperty("display");
+        }
+    }
+
+    if (weddingGiftSection) {
+        if (!features?.digitalEnvelopeEnabled) {
+            weddingGiftSection.style.display = "none";
+        } else {
+            weddingGiftSection.style.removeProperty("display");
+        }
+    }
+
+    applyClassicBackground(root.querySelector(".elementor-element-ccde1df"), heroPhoto, "center center");
+    applyClassicBackground(root.querySelector(".elementor-element-5e20c489"), heroPhoto, "top center");
+    applyPlainBackground(root.querySelector(".elementor-element-60c0aa66"));
+    applyClassicBackground(root.querySelector(".elementor-element-5e9a05f9"), bridePhoto, "center top");
+    applyClassicBackground(root.querySelector(".elementor-element-d09adc4"), groomPhoto, "center top");
+    applySlideshowBackground(root.querySelector(".elementor-element-6473a34e"), [event?.akad?.coverPhoto || heroPhoto], "center center");
+    applySlideshowBackground(
+        root.querySelector(".elementor-element-3753b014"),
+        [event?.resepsi?.coverPhoto || event?.akad?.coverPhoto || heroPhoto],
+        "center center",
+    );
+    applyClassicBackground(root.querySelector(".elementor-element-2d9b9ee9"), closingBackgroundPhoto, "center center");
 
     replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
     replaceExactText(textSelector, "DEAR", guest?.greetingLabel || "DEAR");
@@ -549,20 +638,20 @@ function applyInvitationData(root, invitationData) {
     storyDateSelectors.forEach((selector, index) => {
         const node = root.querySelector(selector);
         if (node) {
-            node.textContent = story[index]?.title || contentDefaults.lovestory[index]?.title || node.textContent;
+            node.textContent = story[index]?.title || node.textContent;
         }
     });
 
     storyTextSelectors.forEach((selector, index) => {
         const node = root.querySelector(selector);
         if (node) {
-            node.textContent = story[index]?.text || contentDefaults.lovestory[index]?.text || node.textContent;
+            node.textContent = story[index]?.text || node.textContent;
         }
     });
 
-    const galleryItems = Array.isArray(invitationData?.gallery) && invitationData.gallery.length
-        ? invitationData.gallery
-        : contentDefaults.gallery;
+    const galleryItems = Array.isArray(invitationData?.gallery)
+        ? invitationData.gallery.filter(Boolean)
+        : [];
 
     const galleryAnchors = root.querySelectorAll(".elementor-element-de5b844 .e-gallery-item");
     galleryAnchors.forEach((anchor, index) => {
@@ -584,7 +673,7 @@ function applyInvitationData(root, invitationData) {
         }
     });
 
-    const bankList = invitationData?.features?.digitalEnvelopeInfo?.bankList || contentDefaults?.gift?.bankList || [];
+    const bankList = features?.digitalEnvelopeInfo?.bankList || contentDefaults?.gift?.bankList || [];
 
     const accountNodes = [
         root.querySelector(".elementor-element-7b1e080b .elementor-heading-title"),
@@ -729,19 +818,28 @@ function ensureElementorFallbackBackgrounds(root) {
 
 function buildGalleryFallbackLayout(root) {
     const containers = root.querySelectorAll(".elementor-gallery__container");
-    const columns = window.innerWidth <= 520 ? 2 : 3;
 
     containers.forEach((container) => {
+        const visibleItems = Array.from(container.querySelectorAll(".e-gallery-item")).filter(
+            (item) => window.getComputedStyle(item).display !== "none"
+        );
+        const columns = Math.min(3, Math.max(1, visibleItems.length || 1));
+
         container.style.display = "grid";
         container.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
+        container.style.width = "100%";
+        container.style.maxWidth = "100%";
         container.style.gap = "10px";
         container.style.paddingBottom = "0";
         container.style.position = "relative";
+        container.style.justifyItems = "stretch";
+        container.style.alignItems = "stretch";
     });
 
     root.querySelectorAll(".elementor-gallery__container .e-gallery-item").forEach((item) => {
         item.style.position = "relative";
         item.style.width = "100%";
+        item.style.maxWidth = "100%";
         item.style.height = "auto";
         item.style.top = "auto";
         item.style.left = "auto";
@@ -868,11 +966,15 @@ function SimpleLightbox({ open, slides, index, onClose, onIndexChange }) {
 
 export default function NoirMinimalistTemplate({
     data: externalData,
+    invitationSlug = "noir-minimalist",
     mode = "live",
     onSubmitWish,
     onFetchWishes,
 }) {
-    const { data: fetchedData } = useInvitationData("noir-minimalist");
+    const { data: fetchedData } = useInvitationData(invitationSlug, {
+        fallbackSlug: "noir-minimalist",
+        skipFetch: Boolean(externalData),
+    });
 
     const [opened, setOpened] = useState(false);
     const [audioPlaying, setAudioPlaying] = useState(false);
@@ -1037,8 +1139,8 @@ export default function NoirMinimalistTemplate({
         });
 
         ensureElementorFallbackBackgrounds(root);
-        buildGalleryFallbackLayout(root);
         applyInvitationData(root, mergedData);
+        buildGalleryFallbackLayout(root);
 
         root.querySelectorAll(".elementor-counter-number[data-to-value]").forEach((node) => {
             node.textContent = node.getAttribute("data-to-value") || node.textContent;
@@ -1046,6 +1148,23 @@ export default function NoirMinimalistTemplate({
 
         const runtimeStyle = document.createElement("style");
         runtimeStyle.textContent = `
+          .noir-minimalist-template .elementor-element-60c0aa66,
+          .noir-minimalist-template .elementor-element-60c0aa66 > .elementor-motion-effects-container > .elementor-motion-effects-layer {
+            background-image: none !important;
+            background-color: #ffffff !important;
+            background-size: auto !important;
+            background-position: center center !important;
+          }
+          .noir-minimalist-template .elementor-element-60c0aa66::before,
+          .noir-minimalist-template .elementor-element-60c0aa66 > .elementor-background-video-container::before,
+          .noir-minimalist-template .elementor-element-60c0aa66 > .e-con-inner > .elementor-background-video-container::before,
+          .noir-minimalist-template .elementor-element-60c0aa66 > .elementor-background-slideshow::before,
+          .noir-minimalist-template .elementor-element-60c0aa66 > .e-con-inner > .elementor-background-slideshow::before,
+          .noir-minimalist-template .elementor-element-60c0aa66 > .elementor-motion-effects-container > .elementor-motion-effects-layer::before {
+            background-image: none !important;
+            background-color: transparent !important;
+          }
+          
           .noir-minimalist-template .elementor-element-66fba9cb {
             position: fixed !important;
             right: 14px !important;
@@ -1418,7 +1537,9 @@ export default function NoirMinimalistTemplate({
                     event.preventDefault();
                     const group = anchor.getAttribute("data-elementor-lightbox-slideshow") || "default";
                     const selector = `a[data-elementor-open-lightbox='yes'][data-elementor-lightbox-slideshow='${group}']`;
-                    const groupAnchors = Array.from(root.querySelectorAll(selector));
+                    const groupAnchors = Array.from(root.querySelectorAll(selector)).filter(
+                        (item) => window.getComputedStyle(item).display !== "none"
+                    );
                     const slides = groupAnchors.map((item) => ({ src: item.getAttribute("href") || "" }));
                     const index = Math.max(groupAnchors.indexOf(anchor), 0);
 

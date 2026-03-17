@@ -10,12 +10,15 @@ import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
  *   3. defaultSchema (demo / fallback)
  *
  * @param {string} [slug] — optional slug for API fetch
+ * @param {{ fallbackSlug?: string, skipFetch?: boolean }} [options]
  * @returns {{ data: object, loading: boolean, error: string|null }}
  */
-export function useInvitationData(slug) {
+export function useInvitationData(slug, options = {}) {
     const params = new URLSearchParams(window.location.search);
     const isPreview = params.get("preview") === "1";
     const guestName = decodeURIComponent(params.get("to") || params.get("nama") || "");
+    const fallbackSlug = options?.fallbackSlug || slug;
+    const skipFetch = Boolean(options?.skipFetch);
 
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -25,7 +28,7 @@ export function useInvitationData(slug) {
         async function resolve() {
             setLoading(true);
             setError(null);
-            const defaultSchema = getDefaultSchemaBySlug(slug);
+            const defaultSchema = getDefaultSchemaBySlug(fallbackSlug || slug);
 
             try {
                 // 1. Preview mode: load from sessionStorage
@@ -38,6 +41,12 @@ export function useInvitationData(slug) {
                         setLoading(false);
                         return;
                     }
+                }
+
+                if (skipFetch) {
+                    setData(null);
+                    setLoading(false);
+                    return;
                 }
 
                 // 2. API fetch (only if env var set and slug provided)
@@ -68,8 +77,7 @@ export function useInvitationData(slug) {
         }
 
         resolve();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [slug, isPreview]);
+    }, [fallbackSlug, guestName, isPreview, skipFetch, slug]);
 
     return { data, loading, error };
 }

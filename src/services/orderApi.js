@@ -23,6 +23,45 @@ function getOrderApiConfig() {
   return { mode, submitApiUrl, emailApiUrl };
 }
 
+function slugifySegment(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function pickSlugNameSegment(person = {}) {
+  const source = person?.nickname || person?.fullname || "";
+  const normalized = slugifySegment(source);
+  if (!normalized) return "";
+  return normalized.split("-")[0] || normalized;
+}
+
+function buildInvitationSlug(payload = {}) {
+  const akadDate = String(payload?.akad?.date || "").trim();
+  const dateMatch = akadDate.match(/^(\d{4})-(\d{2})/);
+  const datePrefix = dateMatch ? `${dateMatch[1]}${dateMatch[2]}` : "";
+  const brideSegment = pickSlugNameSegment(payload?.bride);
+  const groomSegment = pickSlugNameSegment(payload?.groom);
+  const parts = [datePrefix, brideSegment, groomSegment].filter(Boolean);
+  return parts.length > 0 ? parts.join("-") : null;
+}
+
+function withInvitationSlug(payload = {}) {
+  const invitationSlug = payload?.invitationSlug || payload?.invitation_slug || buildInvitationSlug(payload);
+  if (!invitationSlug) return payload;
+
+  return {
+    ...payload,
+    invitationSlug,
+    invitation_slug: invitationSlug,
+  };
+}
+
 async function postJson(url, body, options = {}) {
   const { headers = {}, credentials = "same-origin" } = options;
   const response = await fetch(url, {
@@ -80,7 +119,14 @@ function buildOrderResultShape(raw) {
   return {
     success: raw?.success ?? true,
     orderId: raw?.orderId || raw?.id || raw?.data?.orderId || `IKC-${Date.now()}`,
-    invitationSlug: raw?.invitationSlug || raw?.data?.invitationSlug || raw?.data?.payload?.invitationSlug || null,
+    invitationSlug:
+      raw?.invitationSlug ||
+      raw?.invitation_slug ||
+      raw?.data?.invitationSlug ||
+      raw?.data?.invitation_slug ||
+      raw?.data?.payload?.invitationSlug ||
+      raw?.data?.payload?.invitation_slug ||
+      null,
     createdAt: raw?.createdAt || raw?.data?.createdAt || new Date().toISOString(),
     completedAt: raw?.completedAt || raw?.data?.completedAt || null,
     status: raw?.status || raw?.data?.status || "processing",
@@ -156,10 +202,11 @@ async function submitOrderReal(payload) {
 
 export async function submitOrder(payload) {
   const { mode } = getOrderApiConfig();
+  const normalizedPayload = withInvitationSlug(payload);
 
   if (mode === "real") {
-    return submitOrderReal(payload);
+    return submitOrderReal(normalizedPayload);
   }
 
-  return submitOrderDummy(payload);
+  return submitOrderDummy(normalizedPayload);
 }

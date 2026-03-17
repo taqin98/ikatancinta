@@ -70,7 +70,7 @@ export default function Pricing() {
               </div>
 
               <ul className="space-y-3 mb-6 sm:mb-8">
-                {plan.features.map((feature) => (
+                {(Array.isArray(plan.features) ? plan.features : []).map((feature) => (
                   <li
                     key={feature}
                     className={`flex items-start gap-3 text-sm ${

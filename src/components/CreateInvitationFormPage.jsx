@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { navigateTo, toAppPath } from "../utils/navigation";
+import { buildOrderConfirmationPath, navigateTo, toAppPath } from "../utils/navigation";
 import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
+import { QUOTE_CATEGORIES, QUOTE_PRESETS } from "../data/Quotes";
 import { useThemeCatalog } from "../hooks/useCatalogData";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { submitOrder } from "../services/orderApi";
@@ -11,10 +12,10 @@ import { createOrderId } from "../utils/orderId";
 
 const APP_BASE_URL = import.meta.env.BASE_URL || "/";
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
-const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "" };
-const INITIAL_BRIDE = { fullname: "", nickname: "", parents: "", instagram: "" };
-const INITIAL_AKAD = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "" };
-const INITIAL_RESEPSI = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "" };
+const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
+const INITIAL_BRIDE = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
+const INITIAL_AKAD = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
+const INITIAL_RESEPSI = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
 const INITIAL_SESSIONS = [
   { id: 1, start: "10:00", end: "11:00" },
   { id: 2, start: "11:30", end: "12:30" },
@@ -65,6 +66,13 @@ function formatMoneyID(value) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 }
 
+function formatSessionsSummary(sessions) {
+  return (sessions || [])
+    .filter((session) => session.start && session.end)
+    .map((session, index) => `Sesi ${index + 1}: ${session.start} - ${session.end} WIB`)
+    .join(" • ");
+}
+
 function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(value);
 }
@@ -106,21 +114,52 @@ function inferMimeTypeFromDataUrl(dataUrl, fallback = "application/octet-stream"
   return match?.[1] || fallback;
 }
 
-async function prepareOrderAssetsForSubmission({ orderId, coverImage, galleryImages, musicMode, uploadedMusicFile }) {
-  const uploadedCover = coverImage
-    ? await uploadOrderAsset({
-      orderId,
-      kind: "cover",
-      name: coverImage.name,
-      size: coverImage.size,
-      mimeType: inferMimeTypeFromDataUrl(coverImage.url, "image/jpeg"),
-      dataUrl: coverImage.url,
-    })
-    : null;
+function createLocalImageAsset(file, dataUrl) {
+  return {
+    id: Date.now() + Math.random(),
+    name: file.name,
+    size: file.size,
+    sizeLabel: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+    url: dataUrl,
+  };
+}
 
-  const uploadedGallery = await Promise.all(
-    (galleryImages || []).map((image) =>
-      uploadOrderAsset({
+function uploadOptionalImageAsset(orderId, image, kind) {
+  if (!image) return Promise.resolve(null);
+
+  return uploadOrderAsset({
+    orderId,
+    kind,
+    name: image.name,
+    size: image.size,
+    mimeType: inferMimeTypeFromDataUrl(image.url, "image/jpeg"),
+    dataUrl: image.url,
+  });
+}
+
+async function prepareOrderAssetsForSubmission({
+  orderId,
+  coverImage,
+  groomPhoto,
+  bridePhoto,
+  akadCoverImage,
+  resepsiCoverImage,
+  closingBackgroundImage,
+  galleryImages,
+  musicMode,
+  uploadedMusicFile,
+}) {
+  const uploadedCover = await uploadOptionalImageAsset(orderId, coverImage, "cover");
+  const uploadedGroomPhoto = await uploadOptionalImageAsset(orderId, groomPhoto, "groom-photo");
+  const uploadedBridePhoto = await uploadOptionalImageAsset(orderId, bridePhoto, "bride-photo");
+  const uploadedAkadCover = await uploadOptionalImageAsset(orderId, akadCoverImage, "akad-cover");
+  const uploadedResepsiCover = await uploadOptionalImageAsset(orderId, resepsiCoverImage, "resepsi-cover");
+  const uploadedClosingBackground = await uploadOptionalImageAsset(orderId, closingBackgroundImage, "closing-background");
+
+  const uploadedGallery = [];
+  for (const image of galleryImages || []) {
+    uploadedGallery.push(
+      await uploadOrderAsset({
         orderId,
         kind: "gallery",
         name: image.name,
@@ -128,8 +167,8 @@ async function prepareOrderAssetsForSubmission({ orderId, coverImage, galleryIma
         mimeType: inferMimeTypeFromDataUrl(image.url, "image/jpeg"),
         dataUrl: image.url,
       }),
-    ),
-  );
+    );
+  }
 
   const uploadedMusic =
     musicMode === "upload" && uploadedMusicFile
@@ -143,7 +182,16 @@ async function prepareOrderAssetsForSubmission({ orderId, coverImage, galleryIma
       })
       : null;
 
-  return { uploadedCover, uploadedGallery, uploadedMusic };
+  return {
+    uploadedCover,
+    uploadedGroomPhoto,
+    uploadedBridePhoto,
+    uploadedAkadCover,
+    uploadedResepsiCover,
+    uploadedClosingBackground,
+    uploadedGallery,
+    uploadedMusic,
+  };
 }
 
 function resolveInitialTheme(themesList) {
@@ -399,7 +447,7 @@ function StepOneMempelai({
   );
 }
 
-function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isReceptionEnabled, setIsReceptionEnabled, sessions, addSession, removeSession, updateSession }) {
+function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isSessionEnabled, setIsSessionEnabled, sessions, addSession, removeSession, updateSession }) {
   const handleAkad = (key) => (e) => setAkad((prev) => ({ ...prev, [key]: e.target.value }));
   const handleResepsi = (key) => (e) => setResepsi((prev) => ({ ...prev, [key]: e.target.value }));
 
@@ -407,7 +455,7 @@ function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isReceptionEnabled, 
     <>
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Detail Acara</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Isi jadwal akad, lokasi, dan resepsi jika ada.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Isi jadwal akad dan resepsi. Resepsi selalu aktif, dan sesi tamu bisa diaktifkan bila diperlukan.</p>
       </div>
 
       <section className="mb-8 space-y-5 rounded-lg border border-slate-100 dark:border-slate-800 p-5 bg-white dark:bg-slate-800/40">
@@ -422,32 +470,32 @@ function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isReceptionEnabled, 
         <input className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" placeholder="Link Google Maps" type="url" value={akad.mapsLink} onChange={handleAkad("mapsLink")} />
       </section>
 
-      <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between mb-8">
-        <div>
-          <p className="text-base font-bold">Tambah Resepsi?</p>
-          <p className="text-xs text-slate-500 dark:text-slate-400">Aktifkan jika ada acara resepsi</p>
+      <section className="mb-8 space-y-5 rounded-lg border border-slate-100 dark:border-slate-800 p-5 bg-white dark:bg-slate-800/40">
+        <h3 className="text-xl font-bold">Resepsi</h3>
+        <input id="resepsi_date" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="date" value={resepsi.date} onChange={handleResepsi("date")} />
+        <div className="grid grid-cols-2 gap-4">
+          <input id="resepsi_start_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.startTime} onChange={handleResepsi("startTime")} />
+          <input id="resepsi_end_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.endTime} onChange={handleResepsi("endTime")} />
         </div>
-        <button type="button" onClick={() => setIsReceptionEnabled((prev) => !prev)} className={`relative h-8 w-14 rounded-full transition-colors ${isReceptionEnabled ? "bg-primary" : "bg-slate-200 dark:bg-white/20"}`}>
-          <span className={`absolute left-[2px] top-[2px] h-7 w-7 rounded-full bg-white border border-slate-300 transition-transform duration-300 ${isReceptionEnabled ? "translate-x-6" : "translate-x-0"}`}></span>
-        </button>
-      </div>
+        <input id="resepsi_venue" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" placeholder="Tempat / Nama Lokasi" type="text" value={resepsi.venue} onChange={handleResepsi("venue")} />
+        <textarea className="w-full bg-surface-light dark:bg-white/5 rounded-lg p-4 resize-none" rows={3} placeholder="Alamat Lengkap" value={resepsi.address} onChange={handleResepsi("address")} />
 
-      {isReceptionEnabled && (
-        <section className="mb-8 space-y-5 rounded-lg border border-slate-100 dark:border-slate-800 p-5 bg-white dark:bg-slate-800/40">
-          <h3 className="text-xl font-bold">Resepsi</h3>
-          <input id="resepsi_date" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="date" value={resepsi.date} onChange={handleResepsi("date")} />
-          <div className="grid grid-cols-2 gap-4">
-            <input id="resepsi_start_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.startTime} onChange={handleResepsi("startTime")} />
-            <input id="resepsi_end_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.endTime} onChange={handleResepsi("endTime")} />
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-base font-bold">Tambah Pembagian Sesi?</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Aktifkan jika tamu resepsi dibagi ke beberapa jam kehadiran.</p>
           </div>
-          <input id="resepsi_venue" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" placeholder="Tempat / Nama Lokasi" type="text" value={resepsi.venue} onChange={handleResepsi("venue")} />
-          <textarea className="w-full bg-surface-light dark:bg-white/5 rounded-lg p-4 resize-none" rows={3} placeholder="Alamat Lengkap" value={resepsi.address} onChange={handleResepsi("address")} />
+          <button type="button" onClick={() => setIsSessionEnabled((prev) => !prev)} className={`relative h-8 w-14 rounded-full transition-colors ${isSessionEnabled ? "bg-primary" : "bg-slate-200 dark:bg-white/20"}`}>
+            <span className={`absolute left-[2px] top-[2px] h-7 w-7 rounded-full bg-white border border-slate-300 transition-transform duration-300 ${isSessionEnabled ? "translate-x-6" : "translate-x-0"}`}></span>
+          </button>
+        </div>
 
+        {isSessionEnabled && (
           <div className="pt-2">
             <div className="flex items-center justify-between mb-4 gap-3">
               <div>
                 <p className="text-sm font-semibold">Pembagian Sesi</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">Atur jadwal resepsi menjadi beberapa sesi</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Data sesi ini nantinya tampil sebagai teks di bawah informasi resepsi.</p>
               </div>
               <button type="button" onClick={addSession} className="text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-1">
                 <span className="material-symbols-outlined text-[16px]">add</span>
@@ -474,18 +522,98 @@ function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isReceptionEnabled, 
               ))}
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </section>
     </>
+  );
+}
+
+function ImageUploadCard({
+  title,
+  description,
+  image,
+  onUpload,
+  onRemove,
+  badge = "Opsional",
+  aspectClass = "aspect-[4/5]",
+}) {
+  return (
+    <article className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-4 shadow-sm">
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div>
+          <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h4>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{description}</p>
+        </div>
+        <span className="whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-semibold text-slate-500 dark:bg-slate-800 dark:text-slate-300">
+          {badge}
+        </span>
+      </div>
+
+      {image ? (
+        <div className={`group relative overflow-hidden rounded-2xl border border-primary/10 bg-surface-light ${aspectClass}`}>
+          <img src={image.url} alt={image.name} className="absolute inset-0 h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4">
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-white">{image.name}</p>
+              <p className="text-xs text-white/75">{image.sizeLabel}</p>
+            </div>
+            <label className="shrink-0 cursor-pointer rounded-full bg-white/20 p-2 text-white backdrop-blur hover:bg-white/30">
+              <span className="material-symbols-outlined text-xl">edit</span>
+              <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
+            </label>
+          </div>
+          <button
+            type="button"
+            onClick={onRemove}
+            className="absolute right-3 top-3 rounded-full bg-white/90 p-1.5 text-red-500 shadow-sm hover:text-red-600 dark:bg-black/60"
+            aria-label={`Hapus ${title}`}
+          >
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+      ) : (
+        <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary-50/40 text-center text-primary transition-colors hover:border-primary hover:bg-primary-50 dark:bg-primary-900/10 ${aspectClass}`}>
+          <span className="material-symbols-outlined text-3xl">upload</span>
+          <div>
+            <p className="text-sm font-semibold">Upload Foto</p>
+            <p className="mt-1 text-[11px] text-primary/80">JPG/PNG, maksimal 5MB</p>
+          </div>
+          <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
+        </label>
+      )}
+    </article>
   );
 }
 
 function StepThreeFoto({
   coverImage,
+  groomPhoto,
+  bridePhoto,
+  akadCoverImage,
+  resepsiCoverImage,
+  closingBackgroundImage,
   galleryImages,
+  quote,
+  quoteSource,
+  quotePresetId,
+  setQuote,
+  setQuoteSource,
+  onSelectQuotePreset,
   stories,
   setStories,
+  isReceptionEnabled,
   onUploadCover,
+  onUploadGroomPhoto,
+  onRemoveGroomPhoto,
+  onUploadBridePhoto,
+  onRemoveBridePhoto,
+  onUploadAkadCover,
+  onRemoveAkadCover,
+  onUploadResepsiCover,
+  onRemoveResepsiCover,
+  onUploadClosingBackground,
+  onRemoveClosingBackground,
   onRemoveCover,
   onUploadGallery,
   onRemoveGallery,
@@ -499,12 +627,16 @@ function StepThreeFoto({
   const galleryLimit = packageConfig?.limits?.galleryMax || 4;
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
+  const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
+    ...category,
+    items: QUOTE_PRESETS.filter((preset) => preset.category === category.id),
+  })).filter((category) => category.items.length > 0);
 
   return (
     <>
       <div className="mb-8">
-        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Foto &amp; Cerita</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Upload foto terbaik dan tambahkan perjalanan cerita cinta kalian.</p>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Visual Undangan</h2>
+        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Sesuaikan foto, quote, dan media pendukung agar tema BASIC mengikuti desain undangan.</p>
       </div>
 
       <section id="cover_upload_section" className="space-y-4 mb-8">
@@ -543,6 +675,133 @@ function StepThreeFoto({
           <span className="material-symbols-outlined text-sm">info</span>
           Format JPG/PNG, Max 5MB. Gunakan orientasi landscape.
         </p>
+      </section>
+
+      <section className="mb-8 space-y-4">
+        <div className="flex items-baseline justify-between px-1">
+          <h3 className="text-lg font-bold">Ayat / Quote</h3>
+          <span className="text-xs font-medium text-slate-500">Dinamis di tema BASIC</span>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Pilih Preset Quote</label>
+              <select
+                value={quotePresetId}
+                onChange={(event) => onSelectQuotePreset(event.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-950"
+              >
+                <option value="">Pilih preset quote</option>
+                {quotePresetGroups.map((category) => (
+                  <optgroup key={category.id} label={category.label.id}>
+                    {category.items.map((preset) => (
+                      <option key={preset.id} value={preset.id}>
+                        {preset.label.id}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+                <option value="manual">Tulis manual</option>
+              </select>
+              <p className="mt-1 ml-1 text-[11px] text-slate-500 dark:text-slate-400">Preset diambil dari katalog quote dan akan mengisi teks beserta sumbernya secara otomatis.</p>
+            </div>
+            <div>
+              <label className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Isi Ayat / Quote</label>
+              <textarea
+                rows={4}
+                value={quote}
+                onChange={(event) => {
+                  setQuote(event.target.value);
+                  onSelectQuotePreset("manual", { preserveManualValues: true });
+                }}
+                placeholder="Contoh: Dan di antara tanda-tanda kekuasaan-Nya..."
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-950"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Sumber Ayat / Quote</label>
+              <input
+                type="text"
+                value={quoteSource}
+                onChange={(event) => {
+                  setQuoteSource(event.target.value);
+                  onSelectQuotePreset("manual", { preserveManualValues: true });
+                }}
+                placeholder="Contoh: QS Ar-Rum: 21"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-950"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-8 space-y-4">
+        <div className="flex items-baseline justify-between px-1">
+          <h3 className="text-lg font-bold">Foto Mempelai</h3>
+          <span className="text-xs font-medium text-slate-500">Profil pasangan</span>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ImageUploadCard
+            title="Foto Mempelai Wanita"
+            description="Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama."
+            image={bridePhoto}
+            onUpload={onUploadBridePhoto}
+            onRemove={onRemoveBridePhoto}
+          />
+          <ImageUploadCard
+            title="Foto Mempelai Pria"
+            description="Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama."
+            image={groomPhoto}
+            onUpload={onUploadGroomPhoto}
+            onRemove={onRemoveGroomPhoto}
+          />
+        </div>
+      </section>
+
+      <section className="mb-8 space-y-4">
+        <div className="flex items-baseline justify-between px-1">
+          <h3 className="text-lg font-bold">Foto Acara</h3>
+          <span className="text-xs font-medium text-slate-500">Akad & resepsi</span>
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ImageUploadCard
+            title="Cover Akad"
+            description="Dipakai pada section wedding event akad."
+            image={akadCoverImage}
+            onUpload={onUploadAkadCover}
+            onRemove={onRemoveAkadCover}
+            aspectClass="aspect-video"
+          />
+          {isReceptionEnabled ? (
+            <ImageUploadCard
+              title="Cover Resepsi"
+              description="Dipakai pada section wedding event resepsi."
+              image={resepsiCoverImage}
+              onUpload={onUploadResepsiCover}
+              onRemove={onRemoveResepsiCover}
+              aspectClass="aspect-video"
+            />
+          ) : (
+            <article className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/20 dark:text-slate-400">
+              Cover resepsi tidak diperlukan karena acara resepsi belum diaktifkan.
+            </article>
+          )}
+        </div>
+      </section>
+
+      <section className="mb-8 space-y-4">
+        <div className="flex items-baseline justify-between px-1">
+          <h3 className="text-lg font-bold">Background Penutup</h3>
+          <span className="text-xs font-medium text-slate-500">Section ucapan terima kasih</span>
+        </div>
+        <ImageUploadCard
+          title="Foto Background Pasangan"
+          description="Dipakai sebagai background section penutup atau ucapan terima kasih."
+          image={closingBackgroundImage}
+          onUpload={onUploadClosingBackground}
+          onRemove={onRemoveClosingBackground}
+          aspectClass="aspect-video"
+        />
       </section>
 
       <section className="space-y-4 mb-8">
@@ -694,20 +953,18 @@ function StepThreeFoto({
 
       <section className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Cerita Cinta Kita</h3>
-          <button type="button" className="text-xs font-semibold text-primary hover:text-primary-600 flex items-center gap-1">
-            <span className="material-symbols-outlined text-sm">auto_awesome</span>
-            Contoh
-          </button>
+          <h3 className="text-lg font-bold">Love Story</h3>
+          <span className="text-xs font-semibold text-slate-500">Sesuai paket</span>
         </div>
 
         {!canUseLoveStory && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            Fitur love story baru aktif mulai paket PREMIUM. Data yang kamu tulis tetap bisa disimpan untuk upgrade paket.
+            Tema BASIC tidak menampilkan section Love Story. Fokus konten BASIC ada di cover, profil pasangan, detail acara, galeri, dan RSVP.
           </div>
         )}
 
-        <div className={`space-y-6 relative pl-3 ${canUseLoveStory ? "" : "opacity-60 pointer-events-none"}`}>
+        {canUseLoveStory && (
+          <div className="relative space-y-6 pl-3">
           <div className="absolute left-7 top-6 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
           {stories.map((story, index) => (
             <div key={story.id} className="group relative">
@@ -788,7 +1045,8 @@ function StepThreeFoto({
               Tambah Cerita Baru
             </button>
           </div>
-        </div>
+          </div>
+        )}
       </section>
     </>
   );
@@ -800,8 +1058,12 @@ function StepFourReview({
   bride,
   akad,
   resepsi,
-  isReceptionEnabled,
+  isSessionEnabled,
+  sessions,
   coverImage,
+  quote,
+  quoteSource,
+  closingBackgroundImage,
   galleryImages,
   stories,
   music,
@@ -856,13 +1118,14 @@ function StepFourReview({
               <div><p className="text-xs text-slate-500">Waktu</p><p className="text-sm font-medium">{akad.startTime || "-"} - {akad.endTime || "-"} WIB</p></div>
               <div><p className="text-xs text-slate-500">Lokasi</p><p className="text-sm font-medium">{akad.venue || "-"}</p></div>
             </div>
-            {isReceptionEnabled && (
-              <div className="grid gap-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700/50">
-                <div><p className="text-xs text-slate-500">Tanggal Resepsi</p><p className="text-sm font-medium">{formatDateID(resepsi.date)}</p></div>
-                <div><p className="text-xs text-slate-500">Waktu</p><p className="text-sm font-medium">{resepsi.startTime || "-"} - {resepsi.endTime || "-"} WIB</p></div>
-                <div><p className="text-xs text-slate-500">Lokasi</p><p className="text-sm font-medium">{resepsi.venue || "-"}</p></div>
-              </div>
-            )}
+            <div className="grid gap-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700/50">
+              <div><p className="text-xs text-slate-500">Tanggal Resepsi</p><p className="text-sm font-medium">{formatDateID(resepsi.date)}</p></div>
+              <div><p className="text-xs text-slate-500">Waktu</p><p className="text-sm font-medium">{resepsi.startTime || "-"} - {resepsi.endTime || "-"} WIB</p></div>
+              <div><p className="text-xs text-slate-500">Lokasi</p><p className="text-sm font-medium">{resepsi.venue || "-"}</p></div>
+              {isSessionEnabled && (
+                <div><p className="text-xs text-slate-500">Teks Sesi di Bawah Resepsi</p><p className="text-sm font-medium">{formatSessionsSummary(sessions) || "-"}</p></div>
+              )}
+            </div>
           </div>
         </details>
 
@@ -880,8 +1143,33 @@ function StepFourReview({
               <p className="text-sm font-medium">{coverImage?.name || "Belum upload"}</p>
             </div>
             <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Foto Mempelai Wanita</p>
+              <p className="text-sm font-medium">{bride.photo?.name || "Menggunakan cover utama"}</p>
+            </div>
+            <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Foto Mempelai Pria</p>
+              <p className="text-sm font-medium">{groom.photo?.name || "Menggunakan cover utama"}</p>
+            </div>
+            <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Cover Akad</p>
+              <p className="text-sm font-medium">{akad.coverImage?.name || "Menggunakan cover utama"}</p>
+            </div>
+            <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Cover Resepsi</p>
+              <p className="text-sm font-medium">{resepsi.coverImage?.name || "Menggunakan cover utama"}</p>
+            </div>
+            <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Background Penutup</p>
+              <p className="text-sm font-medium">{closingBackgroundImage?.name || "Menggunakan cover utama"}</p>
+            </div>
+            <div className="pt-3">
               <p className="text-xs text-slate-500 mb-2">Galeri</p>
               <p className="text-sm font-medium">{galleryImages.length} foto</p>
+            </div>
+            <div className="pt-3">
+              <p className="text-xs text-slate-500 mb-2">Ayat / Quote</p>
+              <p className="text-sm font-medium">{quote || "Belum diisi"}</p>
+              <p className="text-xs text-slate-500 mt-1">{quoteSource || "-"}</p>
             </div>
             <div className="pt-3">
               <p className="text-xs text-slate-500 mb-2">Cerita Cinta</p>
@@ -980,7 +1268,8 @@ function StepFourReview({
 export default function CreateInvitationFormPage() {
   const { themes: availableThemes, loading: themesLoading } = useThemeCatalog();
   const [currentStep, setCurrentStep] = useState(1);
-  const [isReceptionEnabled, setIsReceptionEnabled] = useState(false);
+  const isReceptionEnabled = true;
+  const [isSessionEnabled, setIsSessionEnabled] = useState(false);
   const [formAlert, setFormAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitFailed, setHasSubmitFailed] = useState(false);
@@ -1001,6 +1290,10 @@ export default function CreateInvitationFormPage() {
 
   const [coverImage, setCoverImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
+  const [quotePresetId, setQuotePresetId] = useState("");
+  const [quote, setQuote] = useState("");
+  const [quoteSource, setQuoteSource] = useState("");
+  const [closingBackgroundImage, setClosingBackgroundImage] = useState(null);
   const [stories, setStories] = useState(INITIAL_STORIES);
   const [musicMode, setMusicMode] = useState("list");
   const [selectedMusicTrackId, setSelectedMusicTrackId] = useState(MUSIC_TRACKS[0].id);
@@ -1016,12 +1309,45 @@ export default function CreateInvitationFormPage() {
   const maxUploadBytes = 5 * 1024 * 1024;
   const isFormDirty = useMemo(() => {
     const hasCustomer = Boolean(customer.name || customer.phone || customer.email || customer.address);
-    const hasCouple = Boolean(groom.fullname || groom.nickname || groom.parents || groom.instagram || bride.fullname || bride.nickname || bride.parents || bride.instagram);
-    const hasAcara = Boolean(akad.date || akad.startTime || akad.endTime || akad.venue || akad.address || akad.mapsLink);
-    const hasResepsi = Boolean(
-      isReceptionEnabled || resepsi.date || resepsi.startTime || resepsi.endTime || resepsi.venue || resepsi.address || resepsi.mapsLink
+    const hasCouple = Boolean(
+      groom.fullname ||
+      groom.nickname ||
+      groom.parents ||
+      groom.instagram ||
+      groom.photo ||
+      bride.fullname ||
+      bride.nickname ||
+      bride.parents ||
+      bride.instagram ||
+      bride.photo
     );
-    const hasMedia = Boolean(coverImage || galleryImages.length > 0 || stories.some((story) => story.title || story.description || story.date));
+    const hasAcara = Boolean(
+      akad.date ||
+      akad.startTime ||
+      akad.endTime ||
+      akad.venue ||
+      akad.address ||
+      akad.mapsLink ||
+      akad.coverImage
+    );
+    const hasResepsi = Boolean(
+      resepsi.date ||
+      resepsi.startTime ||
+      resepsi.endTime ||
+      resepsi.venue ||
+      resepsi.address ||
+      resepsi.mapsLink ||
+      resepsi.coverImage ||
+      isSessionEnabled
+    );
+    const hasMedia = Boolean(
+      coverImage ||
+      closingBackgroundImage ||
+      quote ||
+      quoteSource ||
+      galleryImages.length > 0 ||
+      stories.some((story) => story.title || story.description || story.date)
+    );
     const hasMusic = Boolean(musicMode === "upload" || uploadedMusicFile || selectedMusicTrackId !== MUSIC_TRACKS[0].id);
     return currentStep > 1 || hasCustomer || hasCouple || hasAcara || hasResepsi || hasMedia || hasMusic;
   }, [
@@ -1030,10 +1356,13 @@ export default function CreateInvitationFormPage() {
     groom,
     bride,
     akad,
-    isReceptionEnabled,
+    isSessionEnabled,
     resepsi,
     coverImage,
+    closingBackgroundImage,
     galleryImages.length,
+    quote,
+    quoteSource,
     stories,
     musicMode,
     uploadedMusicFile,
@@ -1131,10 +1460,10 @@ export default function CreateInvitationFormPage() {
 
   const tips = useMemo(() => {
     if (currentStep === 2) {
-      return ["Isi tanggal, jam, dan alamat acara dengan detail.", "Tempel link Google Maps agar tamu tidak tersesat.", "Aktifkan resepsi jika acaranya terpisah.", "Gunakan sesi bila ada pembagian jam tamu."];
+      return ["Isi tanggal, jam, dan alamat acara dengan detail.", "Tempel link Google Maps agar tamu tidak tersesat.", "Resepsi sekarang selalu aktif dan wajib diisi.", "Aktifkan pembagian sesi hanya jika tamu datang per gelombang waktu."];
     }
     if (currentStep === 3) {
-      return ["Pilih cover landscape agar hasil lebih menarik.", "Upload foto prewedding yang resolusinya bagus.", "Tulis cerita cinta singkat dan mudah dibaca.", "Tambahkan 2-4 momen utama agar tidak terlalu panjang."];
+      return ["Pilih cover landscape agar pembuka undangan lebih kuat.", "Upload foto portrait untuk profil mempelai bila desain membutuhkan.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Isi ayat atau quote agar area opening mengikuti template BASIC."];
     }
     if (currentStep === 4) {
       return ["Periksa kembali nama mempelai dan orang tua.", "Pastikan jadwal acara sudah benar.", "Lihat ulang galeri dan cerita cinta.", "Jika semua benar, lanjut submit pesanan."];
@@ -1146,23 +1475,83 @@ export default function CreateInvitationFormPage() {
   const removeSession = (id) => setSessions((prev) => prev.filter((session) => session.id !== id));
   const updateSession = (id, key, value) => setSessions((prev) => prev.map((session) => (session.id === id ? { ...session, [key]: value } : session)));
 
-  const handleUploadCover = async (event) => {
+  const readSingleImageFromInput = async (event, label) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith("image/")) return;
-    if (file.size > maxUploadBytes) {
-      showAlert("error", "Ukuran foto sampul maksimal 5MB.");
+    if (!file.type.startsWith("image/")) {
+      showAlert("error", `${label} harus berupa file gambar.`);
       event.target.value = "";
-      return;
+      return null;
+    }
+    if (file.size > maxUploadBytes) {
+      showAlert("error", `Ukuran ${label.toLowerCase()} maksimal 5MB.`);
+      event.target.value = "";
+      return null;
     }
     const url = await readFileAsDataUrl(file);
-    setCoverImage({
-      name: file.name,
-      size: file.size,
-      sizeLabel: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-      url,
-    });
     event.target.value = "";
+    return createLocalImageAsset(file, url);
+  };
+
+  const handleUploadCover = async (event) => {
+    const asset = await readSingleImageFromInput(event, "foto sampul");
+    if (asset) {
+      setCoverImage(asset);
+    }
+  };
+
+  const handleUploadBridePhoto = async (event) => {
+    const asset = await readSingleImageFromInput(event, "foto mempelai wanita");
+    if (asset) {
+      setBride((prev) => ({ ...prev, photo: asset }));
+    }
+  };
+
+  const handleUploadGroomPhoto = async (event) => {
+    const asset = await readSingleImageFromInput(event, "foto mempelai pria");
+    if (asset) {
+      setGroom((prev) => ({ ...prev, photo: asset }));
+    }
+  };
+
+  const handleUploadAkadCover = async (event) => {
+    const asset = await readSingleImageFromInput(event, "cover akad");
+    if (asset) {
+      setAkad((prev) => ({ ...prev, coverImage: asset }));
+    }
+  };
+
+  const handleUploadResepsiCover = async (event) => {
+    const asset = await readSingleImageFromInput(event, "cover resepsi");
+    if (asset) {
+      setResepsi((prev) => ({ ...prev, coverImage: asset }));
+    }
+  };
+
+  const handleUploadClosingBackground = async (event) => {
+    const asset = await readSingleImageFromInput(event, "background penutup");
+    if (asset) {
+      setClosingBackgroundImage(asset);
+    }
+  };
+
+  const handleSelectQuotePreset = (presetId, options = {}) => {
+    const { preserveManualValues = false } = options;
+    setQuotePresetId(presetId);
+
+    if (presetId === "manual" || !presetId) {
+      if (!preserveManualValues && !presetId) {
+        setQuote("");
+        setQuoteSource("");
+      }
+      return;
+    }
+
+    const preset = QUOTE_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+
+    setQuote(preset.text?.id || "");
+    setQuoteSource(preset.source?.id || "");
   };
 
   const handleUploadGallery = async (event) => {
@@ -1308,6 +1697,7 @@ export default function CreateInvitationFormPage() {
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
         coverImage, galleryImages, stories,
+        quote, quoteSource, closingBackgroundImage,
         selectedPackage,
         musicMode,
         selectedMusicTrack,
@@ -1356,7 +1746,6 @@ export default function CreateInvitationFormPage() {
       }
       if (!akad.venue) return { message: "Lokasi akad wajib diisi.", selector: "#akad_venue" };
 
-      if (!isReceptionEnabled) return null;
       if (!resepsi.date) return { message: "Tanggal resepsi wajib diisi.", selector: "#resepsi_date" };
       if (!resepsi.startTime) return { message: "Jam mulai resepsi wajib diisi.", selector: "#resepsi_start_time" };
       if (!resepsi.endTime) return { message: "Jam selesai resepsi wajib diisi.", selector: "#resepsi_end_time" };
@@ -1365,25 +1754,27 @@ export default function CreateInvitationFormPage() {
       }
       if (!resepsi.venue) return { message: "Lokasi resepsi wajib diisi.", selector: "#resepsi_venue" };
 
-      const invalidSession = sessions.find((session) => !session.start || !session.end);
-      if (invalidSession && !invalidSession.start) {
-        return {
-          message: "Jam mulai pada sesi resepsi belum diisi.",
-          selector: `[data-session-field="start-${invalidSession.id}"]`,
-        };
-      }
-      if (invalidSession && !invalidSession.end) {
-        return {
-          message: "Jam selesai pada sesi resepsi belum diisi.",
-          selector: `[data-session-field="end-${invalidSession.id}"]`,
-        };
-      }
-      const invalidRangeSession = sessions.find((session) => !isEndTimeAfterStart(session.start, session.end));
-      if (invalidRangeSession) {
-        return {
-          message: "Jam selesai pada sesi resepsi harus lebih besar dari jam mulai.",
-          selector: `[data-session-field="end-${invalidRangeSession.id}"]`,
-        };
+      if (isSessionEnabled) {
+        const invalidSession = sessions.find((session) => !session.start || !session.end);
+        if (invalidSession && !invalidSession.start) {
+          return {
+            message: "Jam mulai pada sesi resepsi belum diisi.",
+            selector: `[data-session-field="start-${invalidSession.id}"]`,
+          };
+        }
+        if (invalidSession && !invalidSession.end) {
+          return {
+            message: "Jam selesai pada sesi resepsi belum diisi.",
+            selector: `[data-session-field="end-${invalidSession.id}"]`,
+          };
+        }
+        const invalidRangeSession = sessions.find((session) => !isEndTimeAfterStart(session.start, session.end));
+        if (invalidRangeSession) {
+          return {
+            message: "Jam selesai pada sesi resepsi harus lebih besar dari jam mulai.",
+            selector: `[data-session-field="end-${invalidRangeSession.id}"]`,
+          };
+        }
       }
       return null;
     }
@@ -1428,9 +1819,23 @@ export default function CreateInvitationFormPage() {
     try {
       const orderId = draftOrderIdRef.current;
       const effectiveStories = selectedPackage?.capabilities?.loveStory ? stories : [];
-      const { uploadedCover, uploadedGallery, uploadedMusic } = await prepareOrderAssetsForSubmission({
+      const {
+        uploadedCover,
+        uploadedGroomPhoto,
+        uploadedBridePhoto,
+        uploadedAkadCover,
+        uploadedResepsiCover,
+        uploadedClosingBackground,
+        uploadedGallery,
+        uploadedMusic,
+      } = await prepareOrderAssetsForSubmission({
         orderId,
         coverImage,
+        groomPhoto: groom.photo,
+        bridePhoto: bride.photo,
+        akadCoverImage: akad.coverImage,
+        resepsiCoverImage: isReceptionEnabled ? resepsi.coverImage : null,
+        closingBackgroundImage,
         galleryImages,
         musicMode,
         uploadedMusicFile,
@@ -1438,13 +1843,30 @@ export default function CreateInvitationFormPage() {
       const payload = {
         orderId,
         customer,
-        groom,
-        bride,
-        akad,
-        resepsi: isReceptionEnabled ? resepsi : null,
+        groom: {
+          ...groom,
+          photo: uploadedGroomPhoto,
+        },
+        bride: {
+          ...bride,
+          photo: uploadedBridePhoto,
+        },
+        akad: {
+          ...akad,
+          coverImage: uploadedAkadCover,
+        },
+        resepsi: isReceptionEnabled
+          ? {
+            ...resepsi,
+            coverImage: uploadedResepsiCover,
+          }
+          : null,
         isReceptionEnabled,
-        sessions: isReceptionEnabled ? sessions : [],
+        sessions: isSessionEnabled ? sessions : [],
         coverImage: uploadedCover,
+        closingBackgroundImage: uploadedClosingBackground,
+        quote,
+        quoteSource,
         galleryImages: uploadedGallery,
         stories: effectiveStories,
         music: musicMode === "list"
@@ -1483,7 +1905,7 @@ export default function CreateInvitationFormPage() {
         // Ignore storage write errors.
       }
 
-      navigateTo("/konfirmasi-order");
+      navigateTo(buildOrderConfirmationPath(confirmationPayload.orderId || orderId));
     } catch {
       showAlert("error", "Submit gagal. Periksa koneksi lalu coba lagi.");
       setHasSubmitFailed(true);
@@ -1496,7 +1918,7 @@ export default function CreateInvitationFormPage() {
   return (
     <main className="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100 min-h-screen selection:bg-primary selection:text-white px-3 sm:px-4 lg:px-6 py-3 sm:py-6">
       <div className="mx-auto w-full max-w-7xl grid grid-cols-1 xl:grid-cols-[minmax(0,1fr),340px] gap-5 lg:gap-6 items-start">
-        <div className="flex min-h-[calc(100vh-1.5rem)] sm:min-h-[calc(100vh-3rem)] w-full max-w-3xl xl:max-w-none mx-auto flex-col bg-white dark:bg-background-dark shadow-xl rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
+        <div className="flex min-h-[calc(100vh-1.5rem)] sm:min-h-[calc(100vh-3rem)] min-h-0 w-full max-w-3xl xl:max-w-none mx-auto flex-col bg-white dark:bg-background-dark shadow-xl rounded-lg overflow-hidden border border-slate-100 dark:border-slate-800">
           <header className="sticky top-0 z-30 bg-white dark:bg-background-dark/95 backdrop-blur-sm border-b border-slate-100 dark:border-slate-800">
             <div className="flex items-center justify-between p-4">
               <button onClick={handleBack} className="flex size-10 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" aria-label="Kembali">
@@ -1519,7 +1941,7 @@ export default function CreateInvitationFormPage() {
             </div>
           </header>
 
-          <section ref={contentRef} className="flex-1 overflow-y-auto px-4 sm:px-5 pb-24 pt-6">
+          <section ref={contentRef} className="min-h-0 flex-1 overflow-y-auto px-4 sm:px-5 pb-32 sm:pb-36 pt-6">
             {themesLoading && !selectedTheme && (
               <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
                 Memuat tema dan paket dari API katalog...
@@ -1591,8 +2013,8 @@ export default function CreateInvitationFormPage() {
                 setAkad={setAkad}
                 resepsi={resepsi}
                 setResepsi={setResepsi}
-                isReceptionEnabled={isReceptionEnabled}
-                setIsReceptionEnabled={setIsReceptionEnabled}
+                isSessionEnabled={isSessionEnabled}
+                setIsSessionEnabled={setIsSessionEnabled}
                 sessions={sessions}
                 addSession={addSession}
                 removeSession={removeSession}
@@ -1602,10 +2024,32 @@ export default function CreateInvitationFormPage() {
             {currentStep === 3 && (
               <StepThreeFoto
                 coverImage={coverImage}
+                groomPhoto={groom.photo}
+                bridePhoto={bride.photo}
+                akadCoverImage={akad.coverImage}
+                resepsiCoverImage={resepsi.coverImage}
+                closingBackgroundImage={closingBackgroundImage}
                 galleryImages={galleryImages}
+                quote={quote}
+                quoteSource={quoteSource}
+                quotePresetId={quotePresetId}
+                setQuote={setQuote}
+                setQuoteSource={setQuoteSource}
+                onSelectQuotePreset={handleSelectQuotePreset}
                 stories={stories}
                 setStories={setStories}
+                isReceptionEnabled={isReceptionEnabled}
                 onUploadCover={handleUploadCover}
+                onUploadGroomPhoto={handleUploadGroomPhoto}
+                onRemoveGroomPhoto={() => setGroom((prev) => ({ ...prev, photo: null }))}
+                onUploadBridePhoto={handleUploadBridePhoto}
+                onRemoveBridePhoto={() => setBride((prev) => ({ ...prev, photo: null }))}
+                onUploadAkadCover={handleUploadAkadCover}
+                onRemoveAkadCover={() => setAkad((prev) => ({ ...prev, coverImage: null }))}
+                onUploadResepsiCover={handleUploadResepsiCover}
+                onRemoveResepsiCover={() => setResepsi((prev) => ({ ...prev, coverImage: null }))}
+                onUploadClosingBackground={handleUploadClosingBackground}
+                onRemoveClosingBackground={() => setClosingBackgroundImage(null)}
                 onRemoveCover={() => setCoverImage(null)}
                 onUploadGallery={handleUploadGallery}
                 onRemoveGallery={(id) => setGalleryImages((prev) => prev.filter((img) => img.id !== id))}
@@ -1630,8 +2074,12 @@ export default function CreateInvitationFormPage() {
                 bride={bride}
                 akad={akad}
                 resepsi={resepsi}
-                isReceptionEnabled={isReceptionEnabled}
+                isSessionEnabled={isSessionEnabled}
+                sessions={sessions}
                 coverImage={coverImage}
+                quote={quote}
+                quoteSource={quoteSource}
+                closingBackgroundImage={closingBackgroundImage}
                 galleryImages={galleryImages}
                 stories={stories}
                 music={{
@@ -1646,7 +2094,7 @@ export default function CreateInvitationFormPage() {
             )}
           </section>
 
-          <footer className="sticky bottom-0 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur border-t border-slate-100 dark:border-slate-800 p-4 pb-5 sm:pb-6 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <footer className="shrink-0 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur border-t border-slate-100 dark:border-slate-800 p-4 pb-5 sm:pb-6 z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
             {/* Preview undangan: visible on Step 3 & 4 when theme has a template route */}
             {(currentStep === 3 || currentStep === 4) && selectedTheme?.templateRoute && (
               <button

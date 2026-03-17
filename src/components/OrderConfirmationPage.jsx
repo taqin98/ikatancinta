@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { fetchOrderById, isRealOrderApiEnabled } from "../services/orderApi";
-import { navigateTo } from "../utils/navigation";
+import { getOrderIdFromConfirmationPath, navigateTo } from "../utils/navigation";
+
+const TERMINAL_ORDER_STATUSES = new Set(["done", "completed", "cancelled", "failed"]);
 
 function formatDateTimeID(value) {
   if (!value) return "-";
@@ -21,12 +23,19 @@ function formatMoneyID(value) {
   return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(value);
 }
 
-function readOrderDataFromStorage() {
+function readOrderDataFromStorage(forceProcessing = false) {
   try {
     const raw = window.localStorage.getItem(ORDER_CONFIRMATION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed !== "object") return null;
+    if (forceProcessing && isTerminalOrderStatus(parsed.status)) {
+      return {
+        ...parsed,
+        status: "processing",
+        completedAt: null,
+      };
+    }
     return parsed;
   } catch {
     return null;
@@ -42,10 +51,30 @@ function writeOrderDataToStorage(orderData) {
   }
 }
 
+function isTerminalOrderStatus(status) {
+  if (!status) return false;
+  return TERMINAL_ORDER_STATUSES.has(String(status).toLowerCase());
+}
+
+function createInitialOrderData(isRealMode, routeOrderId) {
+  const storedOrder = readOrderDataFromStorage(isRealMode);
+  if (!routeOrderId) return storedOrder;
+  if (storedOrder?.orderId === routeOrderId) return storedOrder;
+
+  return {
+    orderId: routeOrderId,
+    status: "processing",
+    completedAt: null,
+  };
+}
+
 export default function OrderConfirmationPage() {
-  const [orderData, setOrderData] = useState(() => readOrderDataFromStorage());
   const isRealMode = isRealOrderApiEnabled();
-  const orderId = orderData?.orderId || "IKC-2409-882";
+  const routeOrderId = getOrderIdFromConfirmationPath();
+  const [orderData, setOrderData] = useState(() => createInitialOrderData(isRealMode, routeOrderId));
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const orderId = orderData?.orderId || routeOrderId || "IKC-2409-882";
+  const isTerminal = isTerminalOrderStatus(orderData?.status);
 
   useEffect(() => {
     if (isRealMode) return undefined;
@@ -61,54 +90,77 @@ export default function OrderConfirmationPage() {
   }, [isRealMode]);
 
   useEffect(() => {
+    if (!routeOrderId || routeOrderId === orderData?.orderId) return;
+    setOrderData({
+      orderId: routeOrderId,
+      status: "processing",
+      completedAt: null,
+    });
+  }, [routeOrderId, orderData?.orderId]);
+
+  useEffect(() => {
     if (!isRealMode || !orderData?.orderId) return undefined;
 
     let isCancelled = false;
 
     const syncOrderFromApi = async () => {
+      setIsRefreshing(true);
       try {
         const latest = await fetchOrderById(orderData.orderId);
         if (!latest || isCancelled) return;
 
         setOrderData((current) => {
           const next = { ...(current || {}), ...latest };
+          if (
+            current?.status === next.status &&
+            current?.completedAt === next.completedAt &&
+            current?.createdAt === next.createdAt &&
+            current?.customerName === next.customerName &&
+            current?.packageTier === next.packageTier &&
+            current?.themeName === next.themeName &&
+            current?.totalPrice === next.totalPrice
+          ) {
+            return current;
+          }
           writeOrderDataToStorage(next);
           return next;
         });
       } catch {
-        // Keep the last known local state if API polling fails.
+        // Keep the last known local state if API fetch fails.
+      } finally {
+        if (!isCancelled) setIsRefreshing(false);
       }
     };
 
     syncOrderFromApi();
-    const intervalId = window.setInterval(syncOrderFromApi, 3000);
 
     return () => {
       isCancelled = true;
-      window.clearInterval(intervalId);
     };
   }, [isRealMode, orderData?.orderId]);
 
-  useEffect(() => {
-    if (isRealMode || !orderData || orderData.status === "done") return undefined;
+  const handleRefreshStatus = async () => {
+    if (!isRealMode || !orderData?.orderId || isRefreshing) return;
 
-    const timeoutId = window.setTimeout(() => {
-      const latest = readOrderDataFromStorage();
-      if (!latest || latest.status === "done") return;
-      const next = {
-        ...latest,
-        status: "done",
-        completedAt: new Date().toISOString(),
-      };
-      writeOrderDataToStorage(next);
-      setOrderData(next);
-    }, 6500);
+    setIsRefreshing(true);
+    try {
+      const latest = await fetchOrderById(orderData.orderId);
+      if (!latest) return;
 
-    return () => window.clearTimeout(timeoutId);
-  }, [isRealMode, orderData]);
+      setOrderData((current) => {
+        const next = { ...(current || {}), ...latest };
+        writeOrderDataToStorage(next);
+        return next;
+      });
+    } catch {
+      // Keep the last known local state if manual refresh fails.
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const orderReceivedAt = formatDateTimeID(orderData?.createdAt) !== "-" ? `${formatDateTimeID(orderData?.createdAt)} WIB` : "24 Sep 2026, 14:30 WIB";
-  const isDone = orderData?.status === "done";
+  const isDone = orderData?.status === "done" || orderData?.status === "completed";
   const orderCompletedAt =
     formatDateTimeID(orderData?.completedAt) !== "-" ? `${formatDateTimeID(orderData?.completedAt)} WIB` : "Estimasi 1x24 Jam";
 
@@ -123,7 +175,8 @@ export default function OrderConfirmationPage() {
           <button
             type="button"
             onClick={() => navigateTo("/buat-undangan")}
-            className="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors"
+            disabled={isRefreshing}
+            className="text-slate-900 dark:text-slate-100 flex size-10 shrink-0 items-center justify-center rounded-full hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label="Kembali"
           >
             <span className="material-symbols-outlined text-[24px]">arrow_back</span>
@@ -246,11 +299,36 @@ export default function OrderConfirmationPage() {
         </section>
 
         <div className="sticky bottom-0 p-4 sm:p-6 pt-2 bg-surface-light/95 dark:bg-background-dark/95 backdrop-blur z-20 w-full border-t border-slate-100 dark:border-slate-800">
+          {isRealMode && !isTerminal && (
+            <button
+              type="button"
+              onClick={handleRefreshStatus}
+              disabled={isRefreshing}
+              className="mb-3 w-full flex items-center justify-center gap-2 rounded-full border border-primary/30 bg-white dark:bg-surface-dark text-primary font-semibold h-11 sm:h-12 hover:bg-primary/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isRefreshing ? (
+                <span
+                  className="inline-block h-4 w-4 rounded-full border-2 border-current border-t-transparent animate-spin"
+                  aria-hidden="true"
+                ></span>
+              ) : (
+                <span className="material-symbols-outlined text-[20px]">refresh</span>
+              )}
+              <span>{isRefreshing ? "Memuat Status..." : "Refresh Status"}</span>
+            </button>
+          )}
           <a
             href={adminWhatsappLink}
+            onClick={(event) => {
+              if (isRefreshing) event.preventDefault();
+            }}
             target="_blank"
             rel="noreferrer"
-            className="w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] active:bg-[#075E54] text-white font-bold h-12 sm:h-14 rounded-full shadow-lg shadow-[#25D366]/20 transition-all transform active:scale-95 mb-3 text-sm sm:text-base"
+            aria-disabled={isRefreshing}
+            tabIndex={isRefreshing ? -1 : undefined}
+            className={`w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] active:bg-[#075E54] text-white font-bold h-12 sm:h-14 rounded-full shadow-lg shadow-[#25D366]/20 transition-all transform active:scale-95 mb-3 text-sm sm:text-base ${
+              isRefreshing ? "pointer-events-none opacity-60" : ""
+            }`}
           >
             <span className="material-symbols-outlined text-[24px]">chat</span>
             <span>Hubungi Admin via WhatsApp</span>
@@ -258,7 +336,8 @@ export default function OrderConfirmationPage() {
           <button
             type="button"
             onClick={() => navigateTo("/")}
-            className="w-full flex items-center justify-center gap-2 bg-transparent text-slate-500 dark:text-slate-400 font-medium h-12 rounded-full hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+            disabled={isRefreshing}
+            className="w-full flex items-center justify-center gap-2 bg-transparent text-slate-500 dark:text-slate-400 font-medium h-12 rounded-full hover:bg-slate-50 dark:hover:bg-white/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>Kembali ke Beranda</span>
           </button>

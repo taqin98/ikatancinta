@@ -207,21 +207,9 @@ export function sanitizeOrderPayload(payload) {
 }
 
 export function deriveOrderProgress(order) {
-  const createdAt = order?.createdAt || new Date().toISOString();
-  const createdAtMs = Date.parse(createdAt);
-  if (Number.isNaN(createdAtMs)) {
-    return {
-      status: order?.status || "processing",
-      completedAt: null,
-    };
-  }
-
-  const completedAtMs = createdAtMs + 6500;
-  const isDone = Date.now() >= completedAtMs;
-
   return {
-    status: isDone ? "done" : order?.status || "processing",
-    completedAt: isDone ? new Date(completedAtMs).toISOString() : null,
+    status: order?.status || "processing",
+    completedAt: order?.completedAt || null,
   };
 }
 

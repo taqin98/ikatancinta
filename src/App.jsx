@@ -8,6 +8,7 @@ import HowItWorks from "./components/HowItWorks";
 import Marquee from "./components/Marquee";
 import Navbar from "./components/Navbar";
 import OrderConfirmationPage from "./components/OrderConfirmationPage";
+import PublishedInvitationPage from "./components/PublishedInvitationPage";
 import Pricing from "./components/Pricing";
 import {
   IvoryGraceTemplate,
@@ -109,7 +110,7 @@ function App() {
     return <CreateInvitationFormPage />;
   }
 
-  if (pathname === "/konfirmasi-order") {
+  if (pathname.startsWith("/konfirmasi-order/")) {
     return <OrderConfirmationPage />;
   }
 
@@ -156,6 +157,10 @@ function App() {
 
   if (pathname === "/undangan/eternal-summit") {
     return <EternalSummitTemplate />;
+  }
+
+  if (pathname.startsWith("/undangan/")) {
+    return <PublishedInvitationPage />;
   }
 
   if (pathname === "/preview-undangan-premium") {

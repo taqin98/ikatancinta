@@ -171,9 +171,12 @@ function toYouTubeEmbedUrl(url) {
   return `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}`;
 }
 
-export default function PuspaAsmaraTemplate({ data: propData = schemaJson }) {
-  const { data: fetchedData } = useInvitationData("puspa-asmara");
-  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData, fetchedData), [propData, fetchedData]);
+export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "puspa-asmara" }) {
+  const { data: fetchedData } = useInvitationData(invitationSlug, {
+    fallbackSlug: "puspa-asmara",
+    skipFetch: Boolean(propData),
+  });
+  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
   const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
   const fallbackWishes = useMemo(() => {
     const fromSchema = (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : []).map(normalizeWishItem).filter(Boolean);

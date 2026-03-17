@@ -56,7 +56,7 @@ export const defaultSchema = {
         closingText: contentDefaults?.copy?.closingText || "",
     },
     lovestory: Array.isArray(contentDefaults?.lovestory) ? contentDefaults.lovestory : [],
-    gallery: Array.isArray(contentDefaults?.gallery) ? contentDefaults.gallery : [],
+    gallery: [],
     features: {
         countdownEnabled: true,
         saveTheDateEnabled: true,

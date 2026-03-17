@@ -353,12 +353,47 @@ function toParagraphsHtml(value) {
     return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
 }
 
+function applyClassicBackground(node, imageUrl, position = "center center") {
+    const resolved = resolveAssetUrl(imageUrl);
+    if (!node || !resolved) return;
+
+    node.style.backgroundImage = `url("${resolved}")`;
+    node.style.backgroundSize = "cover";
+    node.style.backgroundPosition = position;
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = "classic";
+    delete settings.background_slideshow_gallery;
+    node.setAttribute("data-settings", JSON.stringify(settings));
+}
+
+function applySlideshowBackground(node, imageUrls, position = "center center") {
+    const resolvedUrls = (Array.isArray(imageUrls) ? imageUrls : [imageUrls])
+        .map((url) => resolveAssetUrl(url))
+        .filter(Boolean);
+
+    if (!node || !resolvedUrls.length) return;
+
+    node.style.backgroundImage = `url("${resolvedUrls[0]}")`;
+    node.style.backgroundSize = "cover";
+    node.style.backgroundPosition = position;
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = resolvedUrls.length > 1 ? "slideshow" : "classic";
+    settings.background_slideshow_gallery = resolvedUrls.map((url, index) => ({ id: index + 1, url }));
+    node.setAttribute("data-settings", JSON.stringify(settings));
+}
+
 function applyInvitationData(root, invitationData) {
     const guest = invitationData?.guest || defaultSchema.guest;
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
     const event = invitationData?.event || defaultSchema.event;
     const copy = invitationData?.copy || defaultSchema.copy;
+    const heroPhoto = invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
+    const bridePhoto = bride?.photo || heroPhoto;
+    const groomPhoto = groom?.photo || heroPhoto;
+    const closingBackgroundPhoto = copy?.closingBackgroundPhoto || heroPhoto;
     const story = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length
         ? invitationData.lovestory
         : contentDefaults.lovestory;
@@ -373,6 +408,17 @@ function applyInvitationData(root, invitationData) {
     };
 
     const textSelector = ".elementor-widget-container p, .elementor-heading-title";
+
+    applyClassicBackground(root.querySelector(".elementor-element-4ac17b4"), heroPhoto, "center center");
+    applyClassicBackground(root.querySelector(".elementor-element-2b291b18"), bridePhoto, "center top");
+    applyClassicBackground(root.querySelector(".elementor-element-79204902"), groomPhoto, "center top");
+    applySlideshowBackground(root.querySelector(".elementor-element-7ae8bc62"), [event?.akad?.coverPhoto || heroPhoto], "center center");
+    applySlideshowBackground(
+        root.querySelector(".elementor-element-184a38a0"),
+        [event?.resepsi?.coverPhoto || event?.akad?.coverPhoto || heroPhoto],
+        "center center",
+    );
+    applyClassicBackground(root.querySelector(".elementor-element-4982d8ca"), closingBackgroundPhoto, "center center");
 
     replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
     replaceExactText(textSelector, "DEAR", guest?.greetingLabel || "DEAR");
@@ -865,11 +911,15 @@ function SimpleLightbox({ open, slides, index, onClose, onIndexChange }) {
 
 export default function IvoryGraceTemplate({
     data: externalData,
+    invitationSlug = "ivory-grace",
     mode = "live",
     onSubmitWish,
     onFetchWishes,
 }) {
-    const { data: fetchedData } = useInvitationData("ivory-grace");
+    const { data: fetchedData } = useInvitationData(invitationSlug, {
+        fallbackSlug: "ivory-grace",
+        skipFetch: Boolean(externalData),
+    });
 
     const [opened, setOpened] = useState(false);
     const [audioPlaying, setAudioPlaying] = useState(false);

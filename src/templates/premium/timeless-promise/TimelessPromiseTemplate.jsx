@@ -504,11 +504,15 @@ function SimpleLightbox({ open, slides, index, onClose, onIndexChange }) {
 
 export default function TimelessPromiseTemplate({
     data: externalData,
+    invitationSlug = "timeless-promise",
     mode = "live",
     onSubmitWish,
     onFetchWishes,
 }) {
-    const { data: fetchedData } = useInvitationData("timeless-promise");
+    const { data: fetchedData } = useInvitationData(invitationSlug, {
+        fallbackSlug: "timeless-promise",
+        skipFetch: Boolean(externalData),
+    });
 
     const [opened, setOpened] = useState(false);
     const [audioPlaying, setAudioPlaying] = useState(false);

@@ -119,9 +119,12 @@ function formatWishTimestamp(date) {
   return `${read("day")} ${read("month")} ${read("year")}, ${read("hour")}:${read("minute")}`;
 }
 
-export default function VelvetBurgundyTemplate({ data: propData = schemaJson }) {
-  const { data: fetchedData } = useInvitationData("velvet-burgundy");
-  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData, fetchedData), [propData, fetchedData]);
+export default function VelvetBurgundyTemplate({ data: propData, invitationSlug = "velvet-burgundy" }) {
+  const { data: fetchedData } = useInvitationData(invitationSlug, {
+    fallbackSlug: "velvet-burgundy",
+    skipFetch: Boolean(propData),
+  });
+  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
   const fallbackWishes = useMemo(
     () => (defaultSchema.wishes || []).map(normalizeWishItem).filter(Boolean),
     []

@@ -52,6 +52,9 @@ Starter dashboard admin terpisah yang sudah disiapkan:
 - dashboard admin sekarang juga punya preview media dan quick action `Set as Cover` / `Add to Gallery` yang memanfaatkan `PUT /api/orders/:orderId` di atas kontrak backend yang sudah ada
 - dashboard admin sekarang juga mendukung pencarian order berbasis customer / `orderId` / `invitationSlug`
 - dashboard admin sekarang juga mendukung quick action `Remove from Order` untuk melepas cover atau galeri dari order tanpa menghapus file storage
+- dashboard admin sekarang juga mendukung bulk action order list untuk `processing`, `published`, `done`, dan `cancelled`, dengan guard konfirmasi untuk status terminal
+- dashboard admin sekarang juga memiliki route detail asset `/uploads/[assetId]` dan indikator apakah asset sedang dipakai sebagai `cover`, `gallery`, atau `music`
+- dashboard admin sekarang juga memiliki filter usage asset: `unused`, `cover`, `gallery`, `music`
 - panduan split repo dashboard admin ada di `admin-dashboard-next-refine/REPO_SPLIT_GUIDE.md`
 
 UI test API yang sudah disiapkan di backend Express:

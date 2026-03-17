@@ -53,6 +53,41 @@ export function getCurrentPathname() {
   return stripBasePath(window.location.pathname);
 }
 
+export function buildOrderConfirmationPath(orderId) {
+  const normalizedOrderId = String(orderId || "").trim();
+  return `/konfirmasi-order/${encodeURIComponent(normalizedOrderId || "UNKNOWN")}`;
+}
+
+export function getOrderIdFromConfirmationPath(pathname = getCurrentPathname()) {
+  const normalizedPath = String(pathname || "").trim();
+  if (!normalizedPath.startsWith("/konfirmasi-order/")) return null;
+
+  const rawSegment = normalizedPath.slice("/konfirmasi-order/".length).split("/")[0];
+  if (!rawSegment) return null;
+
+  try {
+    const decodedSegment = decodeURIComponent(rawSegment);
+    const matchedOrderId = decodedSegment.match(/^IKC-[A-Z0-9-]+$/i);
+    return matchedOrderId ? matchedOrderId[0].toUpperCase() : decodedSegment || null;
+  } catch {
+    return rawSegment;
+  }
+}
+
+export function getInvitationSlugFromPath(pathname = getCurrentPathname()) {
+  const normalizedPath = String(pathname || "").trim();
+  if (!normalizedPath.startsWith("/undangan/")) return null;
+
+  const rawSegment = normalizedPath.slice("/undangan/".length).split("/")[0];
+  if (!rawSegment) return null;
+
+  try {
+    return decodeURIComponent(rawSegment).trim() || null;
+  } catch {
+    return rawSegment;
+  }
+}
+
 export function navigateTo(href) {
   const resolvedHref = toAppPath(href);
   if (isExternalHref(resolvedHref)) {

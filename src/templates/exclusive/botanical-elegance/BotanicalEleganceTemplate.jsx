@@ -112,9 +112,12 @@ function writeStoredWishes(entries) {
     }
 }
 
-export default function BotanicalEleganceTemplate({ data: propData = schemaJson }) {
-    const { data: fetchedData } = useInvitationData("botanical-elegance");
-    const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData, fetchedData), [propData, fetchedData]);
+export default function BotanicalEleganceTemplate({ data: propData, invitationSlug = "botanical-elegance" }) {
+    const { data: fetchedData } = useInvitationData(invitationSlug, {
+        fallbackSlug: "botanical-elegance",
+        skipFetch: Boolean(propData),
+    });
+    const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
     const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
     const fallbackWishes = useMemo(
         () => (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : []).map(normalizeWishItem).filter(Boolean),

@@ -387,15 +387,6 @@ function mergeInvitationData(baseSchema, incomingData) {
     };
 }
 
-function formatHeroDate(dateInput) {
-    const date = new Date(dateInput);
-    if (Number.isNaN(date.getTime())) return "30 . 03 . 2025";
-    const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day} . ${month} . ${year}`;
-}
-
 function formatEventDateParts(dateInput) {
     const date = new Date(dateInput);
     if (!Number.isNaN(date.getTime())) {
@@ -432,12 +423,61 @@ function toParagraphsHtml(value) {
     return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
 }
 
+function applySlideshowBackground(node, imageUrls, position = "center center") {
+    const resolvedUrls = (Array.isArray(imageUrls) ? imageUrls : [imageUrls])
+        .map((url) => resolveAssetUrl(url))
+        .filter(Boolean);
+
+    if (!node || !resolvedUrls.length) return;
+
+    node.style.backgroundImage = `url("${resolvedUrls[0]}")`;
+    node.style.backgroundSize = "cover";
+    node.style.backgroundPosition = position;
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = resolvedUrls.length > 1 ? "slideshow" : "classic";
+    settings.background_slideshow_gallery = resolvedUrls.map((url, index) => ({ id: index + 1, url }));
+    node.setAttribute("data-settings", JSON.stringify(settings));
+}
+
+function applyWidgetImage(node, imageUrl) {
+    const resolved = resolveAssetUrl(imageUrl);
+    if (!node || !resolved) return;
+
+    const image = node.matches("img") ? node : node.querySelector("img");
+    if (!image) return;
+
+    image.setAttribute("src", resolved);
+    image.setAttribute("data-lazy-src", resolved);
+    image.removeAttribute("srcset");
+}
+
+function applyCarouselImages(root, selector, imageUrls) {
+    const resolvedUrls = (Array.isArray(imageUrls) ? imageUrls : [imageUrls])
+        .map((url) => resolveAssetUrl(url))
+        .filter(Boolean);
+
+    if (!resolvedUrls.length) return;
+
+    root.querySelectorAll(`${selector} .elementor-carousel-image`).forEach((node, index) => {
+        const nextUrl = resolvedUrls[index % resolvedUrls.length];
+        node.style.backgroundImage = `url("${nextUrl}")`;
+        node.style.backgroundSize = "cover";
+        node.style.backgroundPosition = "center center";
+        node.setAttribute("aria-label", `Photo ${index + 1}`);
+    });
+}
+
 function applyInvitationData(root, invitationData) {
     const guest = invitationData?.guest || defaultSchema.guest;
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
     const event = invitationData?.event || defaultSchema.event;
     const copy = invitationData?.copy || defaultSchema.copy;
+    const heroPhoto = invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
+    const bridePhoto = bride?.photo || heroPhoto;
+    const groomPhoto = groom?.photo || heroPhoto;
+    const closingBackgroundPhoto = copy?.closingBackgroundPhoto || heroPhoto;
     const story = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length
         ? invitationData.lovestory
         : contentDefaults.lovestory;
@@ -452,6 +492,14 @@ function applyInvitationData(root, invitationData) {
     };
 
     const textSelector = ".elementor-widget-container p, .elementor-heading-title";
+
+    applySlideshowBackground(root.querySelector(".elementor-element-35e9d5a7"), [heroPhoto], "center center");
+    applyWidgetImage(root.querySelector(".elementor-element-6b1d27f6"), heroPhoto);
+    applyWidgetImage(root.querySelector(".elementor-element-31ebc793"), bridePhoto);
+    applyWidgetImage(root.querySelector(".elementor-element-40cd203b"), groomPhoto);
+    applyCarouselImages(root, ".elementor-element-305adcef", [event?.akad?.coverPhoto || heroPhoto]);
+    applyCarouselImages(root, ".elementor-element-1a8272fc", [event?.resepsi?.coverPhoto || event?.akad?.coverPhoto || heroPhoto]);
+    applyWidgetImage(root.querySelector(".elementor-element-1a57482a"), closingBackgroundPhoto);
 
     replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
     replaceExactText(textSelector, "Dear,", guest?.greetingLabel || "Dear,");
@@ -952,11 +1000,15 @@ function SimpleLightbox({ open, slides, index, onClose, onIndexChange }) {
 
 export default function NavyBlossomTemplate({
     data: externalData,
+    invitationSlug = "navy-blossom",
     mode = "live",
     onSubmitWish,
     onFetchWishes,
 }) {
-    const { data: fetchedData } = useInvitationData("navy-blossom");
+    const { data: fetchedData } = useInvitationData(invitationSlug, {
+        fallbackSlug: "navy-blossom",
+        skipFetch: Boolean(externalData),
+    });
 
     const [opened, setOpened] = useState(false);
     const [audioPlaying, setAudioPlaying] = useState(false);

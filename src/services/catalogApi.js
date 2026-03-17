@@ -58,6 +58,45 @@ function shouldUseRealCatalogApi() {
   return mode === "real" && Boolean(getCatalogApiBaseUrl());
 }
 
+const packagePlanByTier = Object.fromEntries(
+  packagePlans.map((plan) => [normalizePackageTier(plan.tier), plan]),
+);
+
+function normalizePackagePlan(rawPlan = {}, index = 0) {
+  const fallbackPlan = packagePlans[index] || packagePlans[0];
+  const tier = normalizePackageTier(rawPlan?.tier || rawPlan?.packageTier || rawPlan?.name || fallbackPlan?.tier);
+  const defaultPlan = packagePlanByTier[tier] || fallbackPlan || packagePlans[0];
+
+  return {
+    ...defaultPlan,
+    ...rawPlan,
+    tier,
+    name: rawPlan?.name || defaultPlan?.name || tier,
+    description: rawPlan?.description || defaultPlan?.description || "",
+    discount: rawPlan?.discount || rawPlan?.discountLabel || defaultPlan?.discount || "",
+    cta: rawPlan?.cta || defaultPlan?.cta || `Pilih ${rawPlan?.name || defaultPlan?.name || tier}`,
+    highlighted: rawPlan?.highlighted ?? defaultPlan?.highlighted ?? false,
+    features: Array.isArray(rawPlan?.features)
+      ? rawPlan.features
+      : Array.isArray(rawPlan?.featureList)
+        ? rawPlan.featureList
+        : defaultPlan?.features || [],
+    limits: {
+      ...(defaultPlan?.limits || {}),
+      ...(rawPlan?.limits || {}),
+    },
+    capabilities: {
+      ...(defaultPlan?.capabilities || {}),
+      ...(rawPlan?.capabilities || {}),
+    },
+  };
+}
+
+function normalizePackagePlans(rawPackages) {
+  if (!Array.isArray(rawPackages)) return cloneJson(packagePlans);
+  return rawPackages.map((plan, index) => normalizePackagePlan(plan, index));
+}
+
 function applyThemeFilters(items, filters = {}) {
   return items.filter((theme) => {
     if (filters.packageTier && theme.packageTier !== normalizePackageTier(filters.packageTier)) return false;
@@ -80,11 +119,11 @@ function buildThemeQuery(filters = {}) {
 export async function fetchPackages() {
   if (shouldUseRealCatalogApi()) {
     const baseUrl = getCatalogApiBaseUrl();
-    return getJson(`${baseUrl}/packages`);
+    return normalizePackagePlans(await getJson(`${baseUrl}/packages`));
   }
 
   await wait();
-  return cloneJson(packagePlans);
+  return cloneJson(normalizePackagePlans(packagePlans));
 }
 
 export async function fetchThemes(filters = {}) {

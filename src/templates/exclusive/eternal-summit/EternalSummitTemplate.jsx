@@ -167,9 +167,12 @@ function creditToHtml(text) {
   return `<p>${withEmoji}</p>`;
 }
 
-export default function EternalSummitTemplate({ data: propData = schemaJson }) {
-  const { data: fetchedData } = useInvitationData("eternal-summit");
-  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData, fetchedData), [propData, fetchedData]);
+export default function EternalSummitTemplate({ data: propData, invitationSlug = "eternal-summit" }) {
+  const { data: fetchedData } = useInvitationData(invitationSlug, {
+    fallbackSlug: "eternal-summit",
+    skipFetch: Boolean(propData),
+  });
+  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
   const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
 
   const fallbackWishes = useMemo(() => {

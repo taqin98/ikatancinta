@@ -49,6 +49,9 @@ export function clearInvitationDraft() {
  * @param {object|null} params.coverImage  — { url, name }
  * @param {object[]} params.galleryImages  — [{ url }]
  * @param {object[]} params.stories        — [{ title, description, date }]
+ * @param {string} params.quote
+ * @param {string} params.quoteSource
+ * @param {object|null} params.closingBackgroundImage
  * @param {object} params.selectedPackage
  * @param {string} params.musicMode
  * @param {object} params.selectedMusicTrack
@@ -65,6 +68,9 @@ export function mapFormToInvitationSchema({
     coverImage,
     galleryImages,
     stories,
+    quote,
+    quoteSource,
+    closingBackgroundImage,
     selectedPackage,
     musicMode,
     selectedMusicTrack,
@@ -146,25 +152,25 @@ export function mapFormToInvitationSchema({
                 nickName: groom?.nickname || (groom?.fullname?.split(" ")[0]) || defaultSchema.couple.groom.nickName,
                 parentInfo: groom?.parents || defaultSchema.couple.groom.parentInfo,
                 instagram: groom?.instagram || defaultSchema.couple.groom.instagram,
-                photo: "",
+                photo: groom?.photo?.url || coverImage?.url || defaultSchema.couple.groom.photo || "",
             },
             bride: {
                 nameFull: bride?.fullname || defaultSchema.couple.bride.nameFull,
                 nickName: bride?.nickname || (bride?.fullname?.split(" ")[0]) || defaultSchema.couple.bride.nickName,
                 parentInfo: bride?.parents || defaultSchema.couple.bride.parentInfo,
                 instagram: bride?.instagram || defaultSchema.couple.bride.instagram,
-                photo: "",
+                photo: bride?.photo?.url || coverImage?.url || defaultSchema.couple.bride.photo || "",
             },
-            heroPhoto: coverImage?.url || "",
-        },
-        event: {
-            ...defaultSchema.event,
-            dateISO: buildDateISO(akad?.date, akad?.startTime),
-            akad: mappedAkad,
-            resepsi: mappedResepsi,
+            heroPhoto: coverImage?.url || defaultSchema.couple.heroPhoto || "",
         },
         lovestory: packageCapabilities.loveStory === false ? [] : mappedLovestory,
         gallery: mappedGallery.slice(0, galleryLimit),
+        copy: {
+            ...defaultSchema.copy,
+            quote: quote || defaultSchema.copy?.quote || "",
+            quoteSource: quoteSource || defaultSchema.copy?.quoteSource || "",
+            closingBackgroundPhoto: closingBackgroundImage?.url || coverImage?.url || defaultSchema.copy?.closingBackgroundPhoto || "",
+        },
         features: {
             ...defaultSchema.features,
             digitalEnvelopeEnabled: packageCapabilities.digitalEnvelope ?? defaultSchema.features?.digitalEnvelopeEnabled,
@@ -174,6 +180,23 @@ export function mapFormToInvitationSchema({
         audio: {
             ...defaultSchema.audio,
             src: resolvedAudioSrc,
+        },
+        event: {
+            ...defaultSchema.event,
+            dateISO: buildDateISO(akad?.date, akad?.startTime),
+            akad: {
+                ...mappedAkad,
+                coverPhoto: akad?.coverImage?.url || coverImage?.url || defaultSchema.event?.akad?.coverPhoto || "",
+            },
+            resepsi: {
+                ...mappedResepsi,
+                coverPhoto:
+                    (isReceptionEnabled ? resepsi?.coverImage?.url : "") ||
+                    akad?.coverImage?.url ||
+                    coverImage?.url ||
+                    defaultSchema.event?.resepsi?.coverPhoto ||
+                    "",
+            },
         },
     };
 }

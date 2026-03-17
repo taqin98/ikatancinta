@@ -219,8 +219,11 @@ function EventCard({ title, detail, patternImage, delay = 0 }) {
     );
 }
 
-export default function BlueNatureTemplate({ data: propData = null }) {
-    const { data: fetchedData, loading } = useInvitationData("blue-nature");
+export default function BlueNatureTemplate({ data: propData = null, invitationSlug = "blue-nature" }) {
+    const { data: fetchedData, loading } = useInvitationData(invitationSlug, {
+        fallbackSlug: "blue-nature",
+        skipFetch: Boolean(propData),
+    });
     const mergedData = useMemo(
         () => mergeInvitationData(defaultSchema, { ...(fetchedData || {}), ...(propData || {}) }),
         [fetchedData, propData]

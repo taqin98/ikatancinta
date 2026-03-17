@@ -822,14 +822,17 @@ function setDynamicVh() {
     document.documentElement.style.setProperty("--vh", `${vh}px`);
 }
 
-export default function MistyRomanceTemplate() {
+export default function MistyRomanceTemplate({ data: propData = null, invitationSlug = "misty-romance" }) {
     const rootRef = useRef(null);
     const audioRef = useRef(null);
     const lottieInstancesRef = useRef([]);
     const wasPlayingOnHideRef = useRef(false);
     const wishesInitializedRef = useRef(false);
 
-    const { data: fetchedData, loading } = useInvitationData("misty-romance");
+    const { data: fetchedData, loading } = useInvitationData(invitationSlug, {
+        fallbackSlug: "misty-romance",
+        skipFetch: Boolean(propData),
+    });
 
     const [opened, setOpened] = useState(false);
     const [wishes, setWishes] = useState([]);
@@ -842,8 +845,8 @@ export default function MistyRomanceTemplate() {
     const sourceArtifacts = useMemo(() => parseSourceArtifacts(sourceHtml), []);
 
     const mergedData = useMemo(() => {
-        return mergeInvitationData(defaultSchema, fetchedData || {});
-    }, [fetchedData]);
+        return mergeInvitationData(defaultSchema, propData || fetchedData || {});
+    }, [fetchedData, propData]);
 
     const initialWishes = useMemo(() => extractInitialWishes(mergedData), [mergedData]);
 
