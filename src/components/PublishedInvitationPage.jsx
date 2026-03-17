@@ -16,6 +16,7 @@ import {
   PuspaAsmaraTemplate,
 } from "../templates/exclusive";
 import { fetchInvitationBySlug } from "../services/invitationApi";
+import { fetchOrderById, isRealOrderApiEnabled } from "../services/orderApi";
 import { getInvitationSlugFromPath, toAppPath } from "../utils/navigation";
 import { applyGuestQueryOverrides, readGuestQueryParams } from "../utils/guestParams";
 
@@ -52,11 +53,79 @@ const normalizedThemeLookup = Object.fromEntries(
   ]),
 );
 
+const ORDER_STATUSES = ["pending", "processing", "published", "done", "cancelled"];
+const PUBLICLY_ACCESSIBLE_STATUSES = new Set(["published", "done"]);
+
 function normalizeThemeKey(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
     .replace(/[_\s]+/g, "-");
+}
+
+function normalizePublicationStatus(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "-");
+}
+
+function isExplicitFalse(value) {
+  return value === false || value === 0 || value === "0" || value === "false" || value === "no";
+}
+
+function isExplicitTrue(value) {
+  return value === true || value === 1 || value === "1" || value === "true" || value === "yes";
+}
+
+function isInvitationPubliclyAccessible(invitationData) {
+  if (!invitationData || typeof invitationData !== "object") return false;
+
+  const statusCandidates = [
+    invitationData?.status,
+    invitationData?.publishStatus,
+    invitationData?.invitation?.status,
+    invitationData?.invitation?.publishStatus,
+    invitationData?.orderStatus,
+    invitationData?.order?.status,
+  ]
+    .map(normalizePublicationStatus)
+    .filter(Boolean);
+
+  const knownOrderStatus = statusCandidates.find((status) => ORDER_STATUSES.includes(status));
+  if (knownOrderStatus) {
+    return PUBLICLY_ACCESSIBLE_STATUSES.has(knownOrderStatus);
+  }
+
+  const publishFlags = [
+    invitationData?.isPublished,
+    invitationData?.published,
+    invitationData?.invitation?.isPublished,
+    invitationData?.invitation?.published,
+  ];
+
+  if (publishFlags.some(isExplicitFalse)) {
+    return false;
+  }
+
+  if (publishFlags.some(isExplicitTrue)) {
+    return true;
+  }
+
+  const publishedAtCandidates = [
+    invitationData?.publishedAt,
+    invitationData?.publishAt,
+    invitationData?.invitation?.publishedAt,
+    invitationData?.invitation?.publishAt,
+  ];
+
+  if (publishedAtCandidates.some((value) => String(value || "").trim())) {
+    return true;
+  }
+
+  // Inference: if the backend response does not expose publication metadata,
+  // keep the existing behavior to avoid blocking valid live invitations.
+  return true;
 }
 
 function resolveThemeSlug(invitationData, invitationSlug) {
@@ -117,16 +186,45 @@ export default function PublishedInvitationPage() {
         const nextInvitationData = await fetchInvitationBySlug(invitationSlug);
         if (!active) return;
 
-        const nextThemeSlug = resolveThemeSlug(nextInvitationData, invitationSlug);
+        const orderId =
+          nextInvitationData?.invitation?.orderId ||
+          nextInvitationData?.orderId ||
+          nextInvitationData?.invitation?.id ||
+          null;
+
+        let nextOrderData = null;
+        if (isRealOrderApiEnabled() && orderId) {
+          nextOrderData = await fetchOrderById(orderId);
+          if (!active) return;
+        }
+
+        const nextResolvedInvitationData = nextOrderData
+          ? {
+              ...nextInvitationData,
+              order: nextOrderData,
+              orderId: nextOrderData.orderId || orderId,
+              status: nextOrderData.status || nextInvitationData?.status || "",
+            }
+          : nextInvitationData;
+
+        if (!isInvitationPubliclyAccessible(nextResolvedInvitationData)) {
+          setInvitationData(null);
+          setThemeSlug(null);
+          setError("Undangan ini masih diproses atau belum dipublikasikan.");
+          setLoading(false);
+          return;
+        }
+
+        const nextThemeSlug = resolveThemeSlug(nextResolvedInvitationData, invitationSlug);
         if (!nextThemeSlug) {
-          setInvitationData(nextInvitationData || null);
+          setInvitationData(nextResolvedInvitationData || null);
           setThemeSlug(null);
           setError("Template undangan untuk slug ini belum bisa dipetakan.");
           setLoading(false);
           return;
         }
 
-        setInvitationData(nextInvitationData || null);
+        setInvitationData(nextResolvedInvitationData || null);
         setThemeSlug(nextThemeSlug);
       } catch (err) {
         if (!active) return;

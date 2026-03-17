@@ -42,12 +42,9 @@ function pickSlugNameSegment(person = {}) {
 }
 
 function buildInvitationSlug(payload = {}) {
-  const akadDate = String(payload?.akad?.date || "").trim();
-  const dateMatch = akadDate.match(/^(\d{4})-(\d{2})/);
-  const datePrefix = dateMatch ? `${dateMatch[1]}${dateMatch[2]}` : "";
   const brideSegment = pickSlugNameSegment(payload?.bride);
   const groomSegment = pickSlugNameSegment(payload?.groom);
-  const parts = [datePrefix, brideSegment, groomSegment].filter(Boolean);
+  const parts = [brideSegment, groomSegment].filter(Boolean);
   return parts.length > 0 ? parts.join("-") : null;
 }
 

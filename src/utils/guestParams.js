@@ -8,11 +8,11 @@
  * - `sapaan` or `greeting`
  *
  * Examples:
- * - `/undangan/202603-anisa-rio?to=Agus`
- * - `/undangan/202603-anisa-rio?to=Agus&gelar_depan=Dr.`
- * - `/undangan/202603-anisa-rio?to=Agus&gelar_belakang=S.T.,%20M.Kom`
- * - `/undangan/202603-anisa-rio?to=Agus&gelar_depan=Dr.&gelar_belakang=S.T.,%20M.Kom`
- * - `/undangan/202603-anisa-rio?to=Agus&sapaan=Kepada%20Yth.`
+ * - `/undangan/anisa-rio?to=Agus`
+ * - `/undangan/anisa-rio?to=Agus&gelar_depan=Dr.`
+ * - `/undangan/anisa-rio?to=Agus&gelar_belakang=S.T.,%20M.Kom`
+ * - `/undangan/anisa-rio?to=Agus&gelar_depan=Dr.&gelar_belakang=S.T.,%20M.Kom`
+ * - `/undangan/anisa-rio?to=Agus&sapaan=Kepada%20Yth.`
  *
  * Result example:
  * - `Dr. Agus, S.T., M.Kom`

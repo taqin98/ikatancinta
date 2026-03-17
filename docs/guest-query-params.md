@@ -14,31 +14,31 @@ Parameter query ini dipakai untuk mengubah nama tamu di halaman undangan tanpa m
 Nama tamu biasa:
 
 ```text
-/undangan/202603-anisa-rio?to=Agus
+/undangan/anisa-rio?to=Agus
 ```
 
 Nama tamu dengan gelar depan:
 
 ```text
-/undangan/202603-anisa-rio?to=Agus&gelar_depan=Dr.
+/undangan/anisa-rio?to=Agus&gelar_depan=Dr.
 ```
 
 Nama tamu dengan gelar belakang:
 
 ```text
-/undangan/202603-anisa-rio?to=Agus&gelar_belakang=S.T.,%20M.Kom
+/undangan/anisa-rio?to=Agus&gelar_belakang=S.T.,%20M.Kom
 ```
 
 Nama tamu dengan gelar depan dan belakang:
 
 ```text
-/undangan/202603-anisa-rio?to=Agus&gelar_depan=Dr.&gelar_belakang=S.T.,%20M.Kom
+/undangan/anisa-rio?to=Agus&gelar_depan=Dr.&gelar_belakang=S.T.,%20M.Kom
 ```
 
 Ubah label sapaan:
 
 ```text
-/undangan/202603-anisa-rio?to=Agus&sapaan=Kepada%20Yth.
+/undangan/anisa-rio?to=Agus&sapaan=Kepada%20Yth.
 ```
 
 ## Hasil format

@@ -254,6 +254,37 @@ function toInstagramUrl(handle) {
     return `https://instagram.com/${String(handle).replace(/^@/, "")}`;
 }
 
+function normalizeCountdownTarget(eventData, fallbackEventData = {}) {
+    const candidateValues = [
+        eventData?.dateISO,
+        fallbackEventData?.dateISO,
+    ].filter(Boolean);
+
+    for (const candidate of candidateValues) {
+        const parsed = new Date(candidate);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed.toISOString();
+        }
+    }
+
+    const rawDate = eventData?.akad?.date || fallbackEventData?.akad?.date || "";
+    const rawTime = eventData?.akad?.time || fallbackEventData?.akad?.time || "";
+    const timeMatch = String(rawTime).match(/(\d{1,2})[:.](\d{2})/);
+    const normalizedTime = timeMatch ? `${timeMatch[1].padStart(2, "0")}:${timeMatch[2]}` : "09:00";
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(rawDate))) {
+        return `${rawDate}T${normalizedTime}:00+07:00`;
+    }
+
+    const parsedDate = new Date(rawDate);
+    if (!Number.isNaN(parsedDate.getTime())) {
+        parsedDate.setHours(Number(normalizedTime.slice(0, 2)), Number(normalizedTime.slice(3, 5)), 0, 0);
+        return parsedDate.toISOString();
+    }
+
+    return fallbackEventData?.dateISO || "";
+}
+
 function formatCountdown(targetInput) {
     const target = new Date(targetInput).getTime();
     if (!Number.isFinite(target)) {
@@ -378,6 +409,13 @@ function mergeInvitationData(baseSchema, incomingData) {
             ...baseSchema.audio,
             ...(incomingData.audio || {}),
         },
+        wishes: {
+            ...baseSchema.wishes,
+            ...(incomingData.wishes || {}),
+            initial: Array.isArray(incomingData.wishes?.initial)
+                ? incomingData.wishes.initial
+                : baseSchema.wishes?.initial || [],
+        },
         behavior: {
             ...behaviorDefaults,
             ...(incomingData.behavior || {}),
@@ -421,6 +459,80 @@ function toParagraphsHtml(value) {
 
     if (lines.length === 0) return "";
     return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
+}
+
+function buildLocationHtml(venueName, addressText, fallbackText = "") {
+    const resolvedVenueName = normalizeText(venueName);
+    const resolvedAddress = normalizeText(addressText || fallbackText);
+
+    if (resolvedVenueName && resolvedAddress) {
+        return `<p><strong>${escapeHtml(resolvedVenueName)}</strong><br>${escapeHtml(resolvedAddress).replace(/,\s*/g, "<br>")}</p>`;
+    }
+
+    if (resolvedVenueName) {
+        return `<p><strong>${escapeHtml(resolvedVenueName)}</strong></p>`;
+    }
+
+    if (!resolvedAddress) return "";
+    return `<p>${escapeHtml(resolvedAddress).replace(/,\s*/g, "<br>")}</p>`;
+}
+
+function formatWishRelativeTime(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return "Baru saja";
+    if (/baru saja|yang lalu/i.test(normalized)) return normalized;
+
+    const timestamp = new Date(normalized).getTime();
+    if (!Number.isFinite(timestamp)) return normalized;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs <= 0) return "Baru saja";
+
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+    const yearMs = 365 * dayMs;
+
+    if (diffMs < minuteMs) return "Baru saja";
+    if (diffMs < hourMs) {
+        const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+        return `${minutes} menit yang lalu`;
+    }
+    if (diffMs < dayMs) {
+        const hours = Math.max(1, Math.floor(diffMs / hourMs));
+        return `${hours} jam yang lalu`;
+    }
+    if (diffMs < weekMs) {
+        const days = Math.max(1, Math.floor(diffMs / dayMs));
+        return `${days} hari yang lalu`;
+    }
+    if (diffMs < monthMs) {
+        const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+        return `${weeks} minggu yang lalu`;
+    }
+    if (diffMs < yearMs) {
+        const months = Math.max(1, Math.floor(diffMs / monthMs));
+        return `${months} bulan yang lalu`;
+    }
+
+    const years = Math.max(1, Math.floor(diffMs / yearMs));
+    return `${years} tahun yang lalu`;
+}
+
+function applyClassicBackground(node, imageUrl, position = "center center") {
+    const resolved = resolveAssetUrl(imageUrl);
+    if (!node || !resolved) return;
+
+    node.style.backgroundImage = `url("${resolved}")`;
+    node.style.backgroundSize = "cover";
+    node.style.backgroundPosition = position;
+
+    const settings = safeParseJson(node.getAttribute("data-settings") || "") || {};
+    settings.background_background = "classic";
+    delete settings.background_slideshow_gallery;
+    node.setAttribute("data-settings", JSON.stringify(settings));
 }
 
 function applySlideshowBackground(node, imageUrls, position = "center center") {
@@ -468,16 +580,35 @@ function applyCarouselImages(root, selector, imageUrls) {
     });
 }
 
-function applyInvitationData(root, invitationData) {
+function applyInvitationData(root, invitationData, options = {}) {
     const guest = invitationData?.guest || defaultSchema.guest;
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
     const event = invitationData?.event || defaultSchema.event;
     const copy = invitationData?.copy || defaultSchema.copy;
-    const heroPhoto = invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
-    const bridePhoto = bride?.photo || heroPhoto;
-    const groomPhoto = groom?.photo || heroPhoto;
-    const closingBackgroundPhoto = copy?.closingBackgroundPhoto || heroPhoto;
+    const features = invitationData?.features || defaultSchema.features;
+    const disableLockedBasicSections = Boolean(options?.disableLockedBasicSections);
+    const frontCoverPhoto = invitationData?.couple?.frontCoverPhoto || invitationData?.couple?.heroPhoto || "";
+    const heroPhoto = invitationData?.couple?.heroPhoto || invitationData?.couple?.frontCoverPhoto || "";
+    const isDistinctAsset = (candidate, ...fallbacks) => {
+        const normalizedCandidate = normalizeText(candidate);
+        if (!normalizedCandidate) return false;
+
+        return fallbacks.every((fallback) => {
+            const normalizedFallback = normalizeText(fallback);
+            return !normalizedFallback || normalizedFallback !== normalizedCandidate;
+        });
+    };
+
+    const bridePhoto = isDistinctAsset(bride?.photo, heroPhoto, frontCoverPhoto) ? bride.photo : "";
+    const groomPhoto = isDistinctAsset(groom?.photo, heroPhoto, frontCoverPhoto, bride?.photo) ? groom.photo : "";
+    const akadCoverPhoto = isDistinctAsset(event?.akad?.coverPhoto, heroPhoto, frontCoverPhoto) ? event.akad.coverPhoto : "";
+    const resepsiCoverPhoto = isDistinctAsset(event?.resepsi?.coverPhoto, heroPhoto, frontCoverPhoto, akadCoverPhoto)
+        ? event.resepsi.coverPhoto
+        : "";
+    const closingBackgroundPhoto = isDistinctAsset(copy?.closingBackgroundPhoto, heroPhoto, frontCoverPhoto)
+        ? copy.closingBackgroundPhoto
+        : "";
     const story = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length
         ? invitationData.lovestory
         : contentDefaults.lovestory;
@@ -492,13 +623,51 @@ function applyInvitationData(root, invitationData) {
     };
 
     const textSelector = ".elementor-widget-container p, .elementor-heading-title";
+    const livestreamSection = root.querySelector(".elementor-element-46e3d068");
+    const loveStorySection = root.querySelector(".elementor-element-5387f9cf");
+    const weddingGiftSection = root.querySelector(".elementor-element-422b9190");
+    const saveTheDateButton = root.querySelector(".elementor-element-7002ff54");
 
+    const removeAdjacentSpacer = (node) => {
+        const previous = node?.previousElementSibling;
+        if (!previous) return;
+        if (previous.classList.contains("elementor-widget-spacer")) {
+            previous.remove();
+        }
+    };
+
+    const setSectionAvailability = (section, enabled) => {
+        if (!section) return;
+
+        if (!enabled) {
+            if (disableLockedBasicSections) {
+                removeAdjacentSpacer(section);
+                section.remove();
+                return;
+            }
+
+            section.style.display = "none";
+            section.setAttribute("aria-hidden", "true");
+            section.setAttribute("inert", "");
+            return;
+        }
+
+        section.style.removeProperty("display");
+        section.removeAttribute("aria-hidden");
+        section.removeAttribute("inert");
+    };
+
+    setSectionAvailability(livestreamSection, Boolean(features?.livestreamEnabled && event?.livestream?.url));
+    setSectionAvailability(loveStorySection, disableLockedBasicSections ? false : story.length > 0);
+    setSectionAvailability(weddingGiftSection, disableLockedBasicSections ? false : Boolean(features?.digitalEnvelopeEnabled));
+    setSectionAvailability(saveTheDateButton, Boolean(features?.saveTheDateEnabled));
+
+    applyClassicBackground(root.querySelector(".elementor-element-67920115"), frontCoverPhoto, "center center");
     applySlideshowBackground(root.querySelector(".elementor-element-35e9d5a7"), [heroPhoto], "center center");
-    applyWidgetImage(root.querySelector(".elementor-element-6b1d27f6"), heroPhoto);
     applyWidgetImage(root.querySelector(".elementor-element-31ebc793"), bridePhoto);
     applyWidgetImage(root.querySelector(".elementor-element-40cd203b"), groomPhoto);
-    applyCarouselImages(root, ".elementor-element-305adcef", [event?.akad?.coverPhoto || heroPhoto]);
-    applyCarouselImages(root, ".elementor-element-1a8272fc", [event?.resepsi?.coverPhoto || event?.akad?.coverPhoto || heroPhoto]);
+    applyCarouselImages(root, ".elementor-element-305adcef", [akadCoverPhoto]);
+    applyCarouselImages(root, ".elementor-element-1a8272fc", [resepsiCoverPhoto]);
     applyWidgetImage(root.querySelector(".elementor-element-1a57482a"), closingBackgroundPhoto);
 
     replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
@@ -580,24 +749,22 @@ function applyInvitationData(root, invitationData) {
     const resepsiTimeNode = root.querySelector(".elementor-element-1c295340 .elementor-widget-container p");
     if (resepsiTimeNode) resepsiTimeNode.textContent = event?.resepsi?.time || contentDefaults.event.resepsi.time;
 
-    const formatAddressHtml = (addressValue) => {
-        const segments = String(addressValue || "")
-            .split(",")
-            .map((segment) => segment.trim())
-            .filter(Boolean);
-        if (segments.length === 0) return "";
-        if (segments.length === 1) return `<p>${escapeHtml(segments[0])}</p>`;
-        return `<p><strong>${escapeHtml(segments[0])}</strong><br>${escapeHtml(segments.slice(1).join(", "))}</p>`;
-    };
-
     const akadLocationNode = root.querySelector(".elementor-element-5403cd6e .elementor-widget-container");
     if (akadLocationNode) {
-        akadLocationNode.innerHTML = formatAddressHtml(event?.akad?.address || contentDefaults.event.akad.address);
+        akadLocationNode.innerHTML = buildLocationHtml(
+            event?.akad?.venueName,
+            event?.akad?.address,
+            contentDefaults.event.akad.address,
+        );
     }
 
     const resepsiLocationNode = root.querySelector(".elementor-element-7cec9ffc .elementor-widget-container");
     if (resepsiLocationNode) {
-        resepsiLocationNode.innerHTML = formatAddressHtml(event?.resepsi?.address || contentDefaults.event.resepsi.address);
+        resepsiLocationNode.innerHTML = buildLocationHtml(
+            event?.resepsi?.venueName,
+            event?.resepsi?.address,
+            contentDefaults.event.resepsi.address,
+        );
     }
 
     const mapsButtons = root.querySelectorAll(".elementor-element-1975556c .elementor-button, .elementor-element-1ba44a3a .elementor-button");
@@ -734,7 +901,7 @@ function renderWishList(listElement, wishes) {
     items.forEach((wish) => {
         const item = document.createElement("li");
         item.className = "cui-item-comment";
-        const meta = [wish?.createdAt, wish?.attendance].filter((part) => normalizeText(part));
+        const meta = [formatWishRelativeTime(wish?.createdAt), wish?.attendance].filter((part) => normalizeText(part));
 
         item.innerHTML = `
       <div class="cui-comment-content">
@@ -1005,9 +1172,10 @@ export default function NavyBlossomTemplate({
     onSubmitWish,
     onFetchWishes,
 }) {
+    const isStaticDemoMode = mode === "demo";
     const { data: fetchedData } = useInvitationData(invitationSlug, {
         fallbackSlug: "navy-blossom",
-        skipFetch: Boolean(externalData),
+        skipFetch: Boolean(externalData) || isStaticDemoMode,
     });
 
     const [opened, setOpened] = useState(false);
@@ -1174,7 +1342,9 @@ export default function NavyBlossomTemplate({
 
         ensureElementorFallbackBackgrounds(root);
         buildGalleryFallbackLayout(root);
-        applyInvitationData(root, mergedData);
+        applyInvitationData(root, mergedData, {
+            disableLockedBasicSections: mode !== "preview",
+        });
 
         root.querySelectorAll(".elementor-counter-number[data-to-value]").forEach((node) => {
             node.textContent = node.getAttribute("data-to-value") || node.textContent;
@@ -1182,6 +1352,22 @@ export default function NavyBlossomTemplate({
 
         const runtimeStyle = document.createElement("style");
         runtimeStyle.textContent = `
+          @media (min-width: 681px) and (max-width: 767px) {
+            .navy-blossom-template .elementor-element-46e3d068 {
+              --content-width: 470px !important;
+              padding-left: 18px !important;
+              padding-right: 18px !important;
+            }
+            .navy-blossom-template .elementor-element-7b458cc6 {
+              width: 100% !important;
+              max-width: 470px !important;
+              margin-left: auto !important;
+              margin-right: auto !important;
+              background-position: center top !important;
+              background-size: cover !important;
+              overflow: hidden !important;
+            }
+          }
           .navy-blossom-template .elementor-element-35ddbcb5 {
             position: fixed !important;
             right: 14px !important;
@@ -1377,11 +1563,13 @@ export default function NavyBlossomTemplate({
             }
 
             if (coverColumn) {
-                coverColumn.style.cssText = "transform: translateY(-100%); transition: transform 1.5s ease-in-out;";
+                coverColumn.style.transform = "translateY(-100%)";
+                coverColumn.style.transition = "transform 1.5s ease-in-out";
             }
 
             if (sec) {
-                sec.style.cssText = "opacity: 0; transition: opacity 1.5s ease-in-out;";
+                sec.style.opacity = "0";
+                sec.style.transition = "opacity 1.5s ease-in-out";
                 const timer = window.setTimeout(() => {
                     sec.style.visibility = "hidden";
                 }, behavior.cover.closeTransitionMs);
@@ -1439,7 +1627,7 @@ export default function NavyBlossomTemplate({
         addCleanup(() => document.removeEventListener("visibilitychange", handleVisibilityChange));
 
         if (behavior.countdown.enabled) {
-            const targetDate = mergedData?.event?.dateISO || contentDefaults?.event?.dateISO;
+            const targetDate = normalizeCountdownTarget(mergedData?.event, contentDefaults?.event);
             const countdownNodes = root.querySelectorAll("ul.wpkoi-elements-countdown-items");
             countdownNodes.forEach((node) => {
                 node.setAttribute("data-date", targetDate);

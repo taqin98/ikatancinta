@@ -23,6 +23,7 @@ export const defaultSchema = {
             photo: "",
             parentInfo: contentDefaults?.couple?.bride?.parentInfo || "Putri Pertama dari Bapak Putra & Ibu Putri",
         },
+        frontCoverPhoto: "",
         heroPhoto: "",
     },
     event: {
@@ -30,14 +31,18 @@ export const defaultSchema = {
         akad: {
             date: contentDefaults?.event?.akad?.date || "Minggu, 29 Desember 2026",
             time: contentDefaults?.event?.akad?.time || "08.00 WIB",
+            venueName: "",
             address: contentDefaults?.event?.akad?.address || "Simpang Lima Gumul, Kediri",
             mapsUrl: contentDefaults?.event?.akad?.mapsUrl || "https://maps.google.com",
+            coverPhoto: "",
         },
         resepsi: {
             date: contentDefaults?.event?.resepsi?.date || "Minggu, 29 Desember 2026",
             time: contentDefaults?.event?.resepsi?.time || "10.00 WIB",
+            venueName: "",
             address: contentDefaults?.event?.resepsi?.address || "Simpang Lima Gumul, Kediri",
             mapsUrl: contentDefaults?.event?.resepsi?.mapsUrl || "https://maps.google.com",
+            coverPhoto: "",
         },
         livestream: {
             date: contentDefaults?.event?.livestream?.date || "Minggu, 29 Desember 2026",
@@ -53,6 +58,7 @@ export const defaultSchema = {
             "Kami bersyukur dipertemukan Allah di waktu terbaik. Kini kami menanti hari istimewa kami.",
         quote: contentDefaults?.copy?.quote || "",
         quoteSource: contentDefaults?.copy?.quoteSource || "",
+        closingBackgroundPhoto: "",
         closingText: contentDefaults?.copy?.closingText || "",
         closingLabel: contentDefaults?.copy?.closingLabel || "KAMI YANG BERBAHAGIA",
         supportText: contentDefaults?.copy?.supportText || "",
@@ -62,7 +68,7 @@ export const defaultSchema = {
     features: {
         countdownEnabled: true,
         saveTheDateEnabled: true,
-        digitalEnvelopeEnabled: true,
+        digitalEnvelopeEnabled: false,
         digitalEnvelopeInfo: {
             bankList: contentDefaults?.gift?.bankList || [],
         },

@@ -156,7 +156,7 @@ function App() {
   }
 
   if (pathname === "/undangan/navy-blossom") {
-    return <NavyBlossomTemplate />;
+    return <NavyBlossomTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/timeless-promise") {
