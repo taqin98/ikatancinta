@@ -1446,7 +1446,25 @@ export default function NavyBlossomTemplate({
             cursor: pointer;
           }
           .navy-blossom-template #audio-container .elementor-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent !important;
             color: #ffffff !important;
+            fill: #ffffff !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+          }
+          .navy-blossom-template #audio-container .elementor-icon:hover,
+          .navy-blossom-template #audio-container .elementor-icon:focus {
+            background: transparent !important;
+            color: #ffffff !important;
+            fill: #ffffff !important;
+          }
+          .navy-blossom-template #audio-container .elementor-icon i,
+          .navy-blossom-template #audio-container .elementor-icon svg {
+            color: inherit !important;
+            fill: currentColor !important;
           }
           .navy-blossom-template #cui-wrap-commnent-14805 {
             display: block;

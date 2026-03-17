@@ -33,7 +33,7 @@ transform: rotate(360deg);
 /* Start custom CSS for weddingpress-kit2, class: .elementor-element-312832aa */.cui-wrapper.cui-facebook ul.cui-container-comments li.cui-item-comment .cui-comment-content .cui-comment-info a.cui-commenter-name {
     color: #0d0734 !important;
 }/* End custom CSS */
-/* Start custom CSS for weddingpress-audio, class: .elementor-element-35ddbcb5 */#mute-sound .elementor-icon {
+/* Start custom CSS for weddingpress-audio, class: .elementor-element-35ddbcb5 */#mute-sound .fa-compact-disc {
     -webkit-animation: rotating 9s linear infinite;
     -moz-animation: rotating 9s linear infinite;
     -ms-animation: rotating 9s linear infinite;
