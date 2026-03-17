@@ -854,7 +854,11 @@ function StepThreeFoto({
         </div>
         <ImageUploadCard
           title="Foto Background Pasangan"
-          description="Dipakai sebagai background section penutup atau ucapan terima kasih."
+          description={
+            isNavyBlossom
+              ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Untuk Navy Blossom, ukuran ideal 400x220 px."
+              : "Dipakai sebagai background section penutup atau ucapan terima kasih."
+          }
           image={closingBackgroundImage}
           onUpload={onUploadClosingBackground}
           onRemove={onRemoveClosingBackground}
@@ -871,7 +875,7 @@ function StepThreeFoto({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <ImageUploadCard
               title="Background Save The Date"
-              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan."
+              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan. Ukuran ideal 430x220 px."
               image={saveTheDateBackgroundImage}
               onUpload={onUploadSaveTheDateBackground}
               onRemove={onRemoveSaveTheDateBackground}
@@ -879,7 +883,7 @@ function StepThreeFoto({
             />
             <ImageUploadCard
               title="Background Wishes / Ucapan"
-              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan."
+              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan. Ukuran ideal 450x200 px."
               image={wishesBackgroundImage}
               onUpload={onUploadWishesBackground}
               onRemove={onRemoveWishesBackground}
