@@ -364,6 +364,13 @@ function mergeInvitationData(baseSchema, incomingData) {
             ...baseSchema.audio,
             ...(incomingData.audio || {}),
         },
+        wishes: {
+            ...baseSchema.wishes,
+            ...(incomingData.wishes || {}),
+            initial: Array.isArray(incomingData.wishes?.initial)
+                ? incomingData.wishes.initial
+                : baseSchema.wishes?.initial || [],
+        },
         behavior: {
             ...behaviorDefaults,
             ...(incomingData.behavior || {}),
@@ -434,6 +441,50 @@ function buildLocationHtml(venueName, addressText, fallbackText = "") {
     }
 
     return escapeHtml(resolvedAddress).replace(/,\s*/g, "<br>");
+}
+
+function formatWishRelativeTime(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return "Baru saja";
+    if (/baru saja|yang lalu/i.test(normalized)) return normalized;
+
+    const timestamp = new Date(normalized).getTime();
+    if (!Number.isFinite(timestamp)) return normalized;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs <= 0) return "Baru saja";
+
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+    const yearMs = 365 * dayMs;
+
+    if (diffMs < minuteMs) return "Baru saja";
+    if (diffMs < hourMs) {
+        const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+        return `${minutes} menit yang lalu`;
+    }
+    if (diffMs < dayMs) {
+        const hours = Math.max(1, Math.floor(diffMs / hourMs));
+        return `${hours} jam yang lalu`;
+    }
+    if (diffMs < weekMs) {
+        const days = Math.max(1, Math.floor(diffMs / dayMs));
+        return `${days} hari yang lalu`;
+    }
+    if (diffMs < monthMs) {
+        const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+        return `${weeks} minggu yang lalu`;
+    }
+    if (diffMs < yearMs) {
+        const months = Math.max(1, Math.floor(diffMs / monthMs));
+        return `${months} bulan yang lalu`;
+    }
+
+    const years = Math.max(1, Math.floor(diffMs / yearMs));
+    return `${years} tahun yang lalu`;
 }
 
 function applyClassicBackground(node, imageUrl, position = "center center") {
@@ -790,7 +841,9 @@ function renderWishList(listElement, wishes) {
     items.forEach((wish) => {
         const item = document.createElement("li");
         item.className = "cui-item-comment";
-        const meta = [wish?.createdAt, wish?.attendance].filter((part) => normalizeText(part));
+        item.dataset.createdAt = normalizeText(wish?.createdAt || "");
+        item.dataset.attendance = normalizeText(wish?.attendance || "");
+        const meta = [formatWishRelativeTime(wish?.createdAt), wish?.attendance].filter((part) => normalizeText(part));
 
         item.innerHTML = `
       <div class="cui-comment-content">
@@ -829,8 +882,8 @@ function collectWishesFromDom(root) {
     return Array.from(root.querySelectorAll("#cui-container-comment-5749 .cui-item-comment")).map((node) => ({
         author: normalizeText(node.querySelector(".cui-commenter-name")?.textContent || "Tamu"),
         comment: normalizeText(node.querySelector(".cui-comment-text")?.textContent || ""),
-        attendance: "-",
-        createdAt: normalizeText(node.querySelector(".cui-comment-time")?.textContent || "Baru saja"),
+        attendance: normalizeText(node.dataset.attendance || "-"),
+        createdAt: normalizeText(node.dataset.createdAt || "Baru saja"),
     }));
 }
 
@@ -1265,6 +1318,32 @@ export default function NoirMinimalistTemplate({
           .noir-minimalist-template #cui-box {
             display: block !important;
           }
+          .noir-minimalist-template .ikc-wish-submit-wrap {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .noir-minimalist-template .ikc-wish-submit-spinner {
+            display: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 999px;
+            border: 2px solid rgba(255, 255, 255, 0.35);
+            border-top-color: #ffffff;
+            animation: ikc-spin 0.8s linear infinite;
+          }
+          .noir-minimalist-template .ikc-wish-submit-wrap.is-loading .ikc-wish-submit-spinner {
+            display: inline-block;
+          }
+          .noir-minimalist-template #commentform-5749 input[type="submit"]:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+          }
+          @keyframes ikc-spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
         `;
         root.appendChild(runtimeStyle);
         window.requestAnimationFrame(() => {
@@ -1651,7 +1730,9 @@ export default function NoirMinimalistTemplate({
                 addCleanup(() => wishesLink.removeEventListener("click", focusWishes));
             }
 
-            const initialWishes = contentDefaults?.wishes?.initial || [];
+            const initialWishes = Array.isArray(mergedData?.wishes?.initial)
+                ? mergedData.wishes.initial
+                : contentDefaults?.wishes?.initial || [];
             renderWishList(wishesList, initialWishes);
             updateAttendanceCounts(root, initialWishes);
 
@@ -1667,6 +1748,25 @@ export default function NoirMinimalistTemplate({
 
             if (wishForm) {
                 const authorInput = wishForm.querySelector("#author");
+                const submitButton = wishForm.querySelector("input[type='submit'], button[type='submit']");
+                const submitWrapper = submitButton?.closest(".form-submit") || null;
+                let submitButtonDefaultLabel = "";
+                let isWishSubmitting = false;
+
+                if (submitButton) {
+                    submitButtonDefaultLabel = submitButton.tagName === "INPUT"
+                        ? submitButton.value
+                        : submitButton.textContent || "Kirim";
+                }
+
+                if (submitWrapper && !submitWrapper.querySelector(".ikc-wish-submit-spinner")) {
+                    submitWrapper.classList.add("ikc-wish-submit-wrap");
+                    const spinner = document.createElement("span");
+                    spinner.className = "ikc-wish-submit-spinner";
+                    spinner.setAttribute("aria-hidden", "true");
+                    submitWrapper.appendChild(spinner);
+                }
+
                 if (authorInput) {
                     authorInput.removeAttribute("readonly");
                     authorInput.removeAttribute("nofocus");
@@ -1682,6 +1782,7 @@ export default function NoirMinimalistTemplate({
 
                 const handleWishSubmit = async (event) => {
                     event.preventDefault();
+                    if (isWishSubmitting) return;
 
                     const formData = new FormData(wishForm);
                     const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "noir-minimalist";
@@ -1695,10 +1796,32 @@ export default function NoirMinimalistTemplate({
 
                     if (!payload.comment) return;
 
+                    isWishSubmitting = true;
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        if (submitButton.tagName === "INPUT") {
+                            submitButton.value = "Mengirim...";
+                        } else {
+                            submitButton.textContent = "Mengirim...";
+                        }
+                    }
+                    submitWrapper?.classList.add("is-loading");
+
                     try {
                         await postInvitationWish(activeInvitationSlug, payload);
                     } catch {
                         // keep optimistic local render
+                    } finally {
+                        isWishSubmitting = false;
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            if (submitButton.tagName === "INPUT") {
+                                submitButton.value = submitButtonDefaultLabel || "Kirim";
+                            } else {
+                                submitButton.textContent = submitButtonDefaultLabel || "Kirim";
+                            }
+                        }
+                        submitWrapper?.classList.remove("is-loading");
                     }
 
                     const currentWishes = collectWishesFromDom(root);

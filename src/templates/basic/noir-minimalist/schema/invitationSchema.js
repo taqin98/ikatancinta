@@ -75,5 +75,9 @@ export const defaultSchema = {
         autoplay: Boolean(contentDefaults?.audio?.autoplay),
         loop: contentDefaults?.audio?.loop !== false,
     },
+    wishes: {
+        title: "Ucapan",
+        initial: Array.isArray(contentDefaults?.wishes?.initial) ? contentDefaults.wishes.initial : [],
+    },
     behavior: behaviorDefaults,
 };
