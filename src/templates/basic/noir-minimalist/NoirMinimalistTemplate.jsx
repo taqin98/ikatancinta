@@ -533,7 +533,7 @@ function applySlideshowBackground(node, imageUrls, position = "center center") {
     node.setAttribute("data-settings", JSON.stringify(settings));
 }
 
-function applyInvitationData(root, invitationData) {
+function applyInvitationData(root, invitationData, options = {}) {
     const guest = invitationData?.guest || defaultSchema.guest;
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
@@ -560,30 +560,40 @@ function applyInvitationData(root, invitationData) {
     const livestreamSection = root.querySelector(".elementor-element-3454b083");
     const loveStorySection = root.querySelector(".elementor-element-45557bd0");
     const weddingGiftSection = root.querySelector(".elementor-element-66660311");
+    const removeDisabledSections = Boolean(options?.removeDisabledSections);
 
-    if (livestreamSection) {
-        if (!features?.livestreamEnabled || !event?.livestream?.url) {
-            livestreamSection.style.display = "none";
-        } else {
-            livestreamSection.style.removeProperty("display");
+    const removeAdjacentSpacer = (node) => {
+        const previous = node?.previousElementSibling;
+        if (!previous) return;
+        if (previous.classList.contains("elementor-widget-spacer")) {
+            previous.remove();
         }
-    }
+    };
 
-    if (loveStorySection) {
-        if (story.length === 0) {
-            loveStorySection.style.display = "none";
-        } else {
-            loveStorySection.style.removeProperty("display");
-        }
-    }
+    const setSectionAvailability = (section, enabled) => {
+        if (!section) return;
 
-    if (weddingGiftSection) {
-        if (!features?.digitalEnvelopeEnabled) {
-            weddingGiftSection.style.display = "none";
-        } else {
-            weddingGiftSection.style.removeProperty("display");
+        if (!enabled) {
+            if (removeDisabledSections) {
+                removeAdjacentSpacer(section);
+                section.remove();
+                return;
+            }
+
+            section.style.display = "none";
+            section.setAttribute("aria-hidden", "true");
+            section.setAttribute("inert", "");
+            return;
         }
-    }
+
+        section.style.removeProperty("display");
+        section.removeAttribute("aria-hidden");
+        section.removeAttribute("inert");
+    };
+
+    setSectionAvailability(livestreamSection, Boolean(features?.livestreamEnabled && event?.livestream?.url));
+    setSectionAvailability(loveStorySection, story.length > 0);
+    setSectionAvailability(weddingGiftSection, Boolean(features?.digitalEnvelopeEnabled));
 
     applyClassicBackground(root.querySelector(".elementor-element-ccde1df"), frontCoverPhoto, "center center");
     applyClassicBackground(root.querySelector(".elementor-element-5e20c489"), heroPhoto, "top center");
@@ -1094,9 +1104,10 @@ export default function NoirMinimalistTemplate({
     onSubmitWish,
     onFetchWishes,
 }) {
+    const isStaticDemoMode = mode === "demo";
     const { data: fetchedData } = useInvitationData(invitationSlug, {
         fallbackSlug: "noir-minimalist",
-        skipFetch: Boolean(externalData),
+        skipFetch: Boolean(externalData) || isStaticDemoMode,
     });
 
     const [opened, setOpened] = useState(false);
@@ -1113,8 +1124,22 @@ export default function NoirMinimalistTemplate({
 
     const mergedData = useMemo(() => {
         const incoming = externalData || fetchedData || contentDefaults;
-        return mergeInvitationData(defaultSchema, incoming);
-    }, [externalData, fetchedData]);
+        const merged = mergeInvitationData(defaultSchema, incoming);
+
+        if (!isStaticDemoMode) {
+            return merged;
+        }
+
+        return {
+            ...merged,
+            lovestory: [],
+            features: {
+                ...merged.features,
+                livestreamEnabled: false,
+                digitalEnvelopeEnabled: false,
+            },
+        };
+    }, [externalData, fetchedData, isStaticDemoMode]);
 
     const behavior = useMemo(() => {
         return {
@@ -1263,7 +1288,9 @@ export default function NoirMinimalistTemplate({
         });
 
         ensureElementorFallbackBackgrounds(root);
-        applyInvitationData(root, mergedData);
+        applyInvitationData(root, mergedData, {
+            removeDisabledSections: isStaticDemoMode,
+        });
         buildGalleryFallbackLayout(root);
 
         root.querySelectorAll(".elementor-counter-number[data-to-value]").forEach((node) => {
@@ -1908,7 +1935,7 @@ export default function NoirMinimalistTemplate({
 
             audioRef.current = null;
         };
-    }, [sourceArtifacts.markup, mergedData, behavior, mode, invitationSlug, onFetchWishes, onSubmitWish]);
+    }, [sourceArtifacts.markup, mergedData, behavior, mode, invitationSlug, isStaticDemoMode, onFetchWishes, onSubmitWish]);
 
     useEffect(() => {
         const root = rootRef.current;

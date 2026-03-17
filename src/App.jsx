@@ -124,7 +124,7 @@ function App() {
   }
 
   if (pathname === "/undangan/noir-minimalist") {
-    return <NoirMinimalistTemplate />;
+    return <NoirMinimalistTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/ivory-grace") {
