@@ -647,6 +647,7 @@ function StepThreeFoto({
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
   const isNavyBlossom = selectedThemeSlug === "navy-blossom";
+  const isIvoryGrace = selectedThemeSlug === "ivory-grace";
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
     items: QUOTE_PRESETS.filter((preset) => preset.category === category.id),
@@ -693,7 +694,9 @@ function StepThreeFoto({
 
         <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm">info</span>
-          Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan.
+          {isIvoryGrace
+            ? "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan. Saran ukuran ideal portrait 9:16."
+            : "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan."}
         </p>
       </section>
 
@@ -731,7 +734,9 @@ function StepThreeFoto({
 
         <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm">info</span>
-          Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB, gunakan orientasi landscape.
+          {isIvoryGrace
+            ? "Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB. Saran ukuran ideal portrait 9:16."
+            : "Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB, gunakan orientasi landscape."}
         </p>
       </section>
 
@@ -801,14 +806,22 @@ function StepThreeFoto({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <ImageUploadCard
             title="Foto Mempelai Wanita"
-            description="Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama."
+            description={
+              isIvoryGrace
+                ? "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 410x325 px."
+                : "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama."
+            }
             image={bridePhoto}
             onUpload={onUploadBridePhoto}
             onRemove={onRemoveBridePhoto}
           />
           <ImageUploadCard
             title="Foto Mempelai Pria"
-            description="Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama."
+            description={
+              isIvoryGrace
+                ? "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 410x325 px."
+                : "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama."
+            }
             image={groomPhoto}
             onUpload={onUploadGroomPhoto}
             onRemove={onRemoveGroomPhoto}
@@ -824,7 +837,11 @@ function StepThreeFoto({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <ImageUploadCard
             title="Cover Akad"
-            description="Dipakai pada section wedding event akad."
+            description={
+              isIvoryGrace
+                ? "Dipakai pada section wedding event akad. Saran ukuran ideal 410x225 px."
+                : "Dipakai pada section wedding event akad."
+            }
             image={akadCoverImage}
             onUpload={onUploadAkadCover}
             onRemove={onRemoveAkadCover}
@@ -833,7 +850,11 @@ function StepThreeFoto({
           {isReceptionEnabled ? (
             <ImageUploadCard
               title="Cover Resepsi"
-              description="Dipakai pada section wedding event resepsi."
+              description={
+                isIvoryGrace
+                  ? "Dipakai pada section wedding event resepsi. Saran ukuran ideal 410x225 px."
+                  : "Dipakai pada section wedding event resepsi."
+              }
               image={resepsiCoverImage}
               onUpload={onUploadResepsiCover}
               onRemove={onRemoveResepsiCover}
@@ -857,6 +878,8 @@ function StepThreeFoto({
           description={
             isNavyBlossom
               ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Untuk Navy Blossom, ukuran ideal 400x220 px."
+              : isIvoryGrace
+                ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Saran ukuran ideal 1:1."
               : "Dipakai sebagai background section penutup atau ucapan terima kasih."
           }
           image={closingBackgroundImage}
