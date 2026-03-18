@@ -1739,6 +1739,25 @@ export default function NavyBlossomTemplate({
         document.addEventListener("visibilitychange", handleVisibilityChange);
         addCleanup(() => document.removeEventListener("visibilitychange", handleVisibilityChange));
 
+        const acaraAnchors = root.querySelectorAll('a[href="#acara"]');
+        const acaraSection = root.querySelector("#acara");
+        if (acaraAnchors.length > 0 && acaraSection) {
+            const handleAcaraScroll = (event) => {
+                event.preventDefault();
+
+                const top = window.scrollY + acaraSection.getBoundingClientRect().top - 24;
+                window.scrollTo({
+                    top: Math.max(top, 0),
+                    behavior: "smooth",
+                });
+            };
+
+            acaraAnchors.forEach((anchor) => {
+                anchor.addEventListener("click", handleAcaraScroll);
+                addCleanup(() => anchor.removeEventListener("click", handleAcaraScroll));
+            });
+        }
+
         if (behavior.countdown.enabled) {
             const targetDate = normalizeCountdownTarget(mergedData?.event, contentDefaults?.event);
             const countdownNodes = root.querySelectorAll("ul.wpkoi-elements-countdown-items");
