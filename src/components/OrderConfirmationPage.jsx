@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { fetchOrderById, isRealOrderApiEnabled } from "../services/orderApi";
+import { fetchPaymentMethods } from "../services/paymentMethodsApi";
 import { getOrderIdFromConfirmationPath, navigateTo } from "../utils/navigation";
 
 const TERMINAL_ORDER_STATUSES = new Set(["done", "completed", "cancelled", "failed"]);
@@ -73,6 +74,8 @@ export default function OrderConfirmationPage() {
   const routeOrderId = getOrderIdFromConfirmationPath();
   const [orderData, setOrderData] = useState(() => createInitialOrderData(isRealMode, routeOrderId));
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [isLoadingPayments, setIsLoadingPayments] = useState(true);
   const orderId = orderData?.orderId || routeOrderId || "IKC-2409-882";
   const isTerminal = isTerminalOrderStatus(orderData?.status);
 
@@ -97,6 +100,20 @@ export default function OrderConfirmationPage() {
       completedAt: null,
     });
   }, [routeOrderId, orderData?.orderId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoadingPayments(true);
+    fetchPaymentMethods()
+      .then((methods) => {
+        if (!cancelled) setPaymentMethods(methods);
+      })
+      .catch(() => { })
+      .finally(() => {
+        if (!cancelled) setIsLoadingPayments(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (!isRealMode || !orderData?.orderId) return undefined;
@@ -186,11 +203,10 @@ export default function OrderConfirmationPage() {
               Konfirmasi Order
             </h1>
             <span
-              className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                isDone
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
-                  : "bg-primary/15 text-primary"
-              }`}
+              className={`mt-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${isDone
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                : "bg-primary/15 text-primary"
+                }`}
             >
               <span className="material-symbols-outlined text-[12px]">{isDone ? "task_alt" : "schedule"}</span>
               {isDone ? "Done" : "Processing"}
@@ -238,6 +254,138 @@ export default function OrderConfirmationPage() {
               </div>
             </div>
           )}
+
+          {!isDone && (() => {
+            const bankMethods = paymentMethods.filter((m) => m.type === "bank_transfer");
+            const walletMethods = paymentMethods.filter((m) => m.type === "e_wallet");
+            const hasAny = bankMethods.length > 0 || walletMethods.length > 0;
+
+            return (
+              <div className="w-full mb-6 rounded-2xl border border-amber-200 dark:border-amber-700/50 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/10 overflow-hidden">
+                <div className="px-4 py-3 bg-amber-100/60 dark:bg-amber-900/30 border-b border-amber-200/60 dark:border-amber-700/40 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[20px]">account_balance_wallet</span>
+                  <h3 className="text-sm font-bold text-amber-800 dark:text-amber-200">Metode Pembayaran</h3>
+                </div>
+                <div className="p-4 space-y-3">
+                  {isLoadingPayments ? (
+                    <div className="space-y-3 animate-pulse">
+                      <div className="h-3 w-3/4 bg-amber-200/60 dark:bg-amber-800/30 rounded" />
+                      <div className="h-16 bg-amber-200/40 dark:bg-amber-800/20 rounded-xl" />
+                      <div className="h-16 bg-amber-200/40 dark:bg-amber-800/20 rounded-xl" />
+                    </div>
+                  ) : !hasAny ? (
+                    <p className="text-xs text-amber-700 dark:text-amber-300/80">Hubungi admin untuk informasi pembayaran.</p>
+                  ) : (
+                    <>
+                      <p className="text-xs text-amber-700 dark:text-amber-300/80 leading-relaxed">
+                        Silakan transfer sesuai total pesanan ke salah satu rekening berikut:
+                      </p>
+
+                      {/* Bank Transfer */}
+                      {bankMethods.map((item) => (
+                        <div
+                          key={item.methodId}
+                          className="flex items-center justify-between bg-white dark:bg-slate-800/60 rounded-xl p-3 border border-amber-200/50 dark:border-slate-700/50"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            {item.logoUrl ? (
+                              <img src={item.logoUrl} alt={item.label} className="w-10 h-7 object-contain shrink-0 rounded" />
+                            ) : (
+                              <span className="material-symbols-outlined text-amber-600 dark:text-amber-400 text-[24px] shrink-0">account_balance</span>
+                            )}
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">{item.label}</span>
+                              <p className="text-sm font-mono font-bold text-slate-900 dark:text-slate-100 tracking-wide">{item.accountNumber}</p>
+                              {item.accountName && <p className="text-[11px] text-slate-500 dark:text-slate-400">a.n {item.accountName}</p>}
+                            </div>
+                          </div>
+                          {item.accountNumber && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                const btn = e.currentTarget;
+                                const textEl = btn.querySelector("span:last-child");
+                                navigator.clipboard?.writeText(item.accountNumber).catch(() => {
+                                  const ta = document.createElement("textarea");
+                                  ta.value = item.accountNumber;
+                                  document.body.appendChild(ta);
+                                  ta.select();
+                                  document.execCommand("copy");
+                                  document.body.removeChild(ta);
+                                });
+                                if (textEl) {
+                                  const orig = textEl.textContent;
+                                  textEl.textContent = "Tersalin!";
+                                  btn.classList.add("!bg-emerald-50", "!border-emerald-300", "!text-emerald-600");
+                                  setTimeout(() => {
+                                    textEl.textContent = orig;
+                                    btn.classList.remove("!bg-emerald-50", "!border-emerald-300", "!text-emerald-600");
+                                  }, 1500);
+                                }
+                              }}
+                              className="shrink-0 ml-2 flex items-center gap-1 text-xs font-bold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700/50 px-2.5 py-1.5 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all"
+                            >
+                              <span className="material-symbols-outlined text-[14px]">content_copy</span>
+                              <span>Salin</span>
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* E-Wallet */}
+                      {walletMethods.length > 0 && (
+                        <div className="bg-white dark:bg-slate-800/60 rounded-xl p-3 border border-amber-200/50 dark:border-slate-700/50">
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 mb-2">E-Wallet</p>
+                          <div className="flex flex-wrap gap-2">
+                            {walletMethods.map((wallet) => (
+                              <span
+                                key={wallet.methodId}
+                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700/50 px-2.5 py-1.5 rounded-lg"
+                              >
+                                {wallet.logoUrl ? (
+                                  <img src={wallet.logoUrl} alt={wallet.label} className="w-4 h-4 object-contain rounded-sm" />
+                                ) : (
+                                  <span className="material-symbols-outlined text-[14px] text-primary">
+                                    {wallet.label === "QRIS" ? "qr_code_2" : "account_balance_wallet"}
+                                  </span>
+                                )}
+                                {wallet.label}
+                              </span>
+                            ))}
+                          </div>
+
+                          {/* QR Code image from urlContent */}
+                          {walletMethods.some((w) => w.urlContent) && (
+                            <div className="mt-3 space-y-2">
+                              {walletMethods.filter((w) => w.urlContent).map((w) => (
+                                <div key={`qr-${w.methodId}`} className="flex flex-col items-center bg-white dark:bg-slate-900/30 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Scan {w.label}</p>
+                                  <img
+                                    src={w.urlContent}
+                                    alt={`QR Code ${w.label}`}
+                                    className="w-44 h-44 object-contain rounded-lg"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+                            {walletMethods[0]?.description || "Hubungi admin via WhatsApp untuk pembayaran e-wallet."}
+                          </p>
+                        </div>
+                      )}
+
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 flex items-start gap-1.5 pt-1">
+                        <span className="material-symbols-outlined text-[14px] mt-0.5 shrink-0">info</span>
+                        Setelah transfer, konfirmasi pembayaran ke admin agar pesanan segera diproses.
+                      </p>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           <h2 className="text-slate-900 dark:text-slate-100 text-[22px] sm:text-[26px] font-extrabold leading-tight text-center mb-4">
             Terima Kasih! <br />
@@ -326,9 +474,8 @@ export default function OrderConfirmationPage() {
             rel="noreferrer"
             aria-disabled={isRefreshing}
             tabIndex={isRefreshing ? -1 : undefined}
-            className={`w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] active:bg-[#075E54] text-white font-bold h-12 sm:h-14 rounded-full shadow-lg shadow-[#25D366]/20 transition-all transform active:scale-95 mb-3 text-sm sm:text-base ${
-              isRefreshing ? "pointer-events-none opacity-60" : ""
-            }`}
+            className={`w-full flex items-center justify-center gap-2 bg-[#25D366] hover:bg-[#128C7E] active:bg-[#075E54] text-white font-bold h-12 sm:h-14 rounded-full shadow-lg shadow-[#25D366]/20 transition-all transform active:scale-95 mb-3 text-sm sm:text-base ${isRefreshing ? "pointer-events-none opacity-60" : ""
+              }`}
           >
             <span className="material-symbols-outlined text-[24px]">chat</span>
             <span>Hubungi Admin via WhatsApp</span>
