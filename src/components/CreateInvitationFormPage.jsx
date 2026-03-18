@@ -17,6 +17,9 @@ const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "", 
 const INITIAL_BRIDE = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
 const INITIAL_AKAD = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
 const INITIAL_RESEPSI = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
+const INITIAL_GIFT_BANK = { bank: "", account: "", name: "" };
+const INITIAL_GIFT_BANKS = [INITIAL_GIFT_BANK, INITIAL_GIFT_BANK].map((item) => ({ ...item }));
+const INITIAL_GIFT_SHIPPING = { recipient: "", phone: "", address: "" };
 const INITIAL_SESSIONS = [
   { id: 1, start: "10:00", end: "11:00" },
   { id: 2, start: "11:30", end: "12:30" },
@@ -44,6 +47,33 @@ function StepItem({ index, label, currentStep }) {
         {label}
       </span>
     </div>
+  );
+}
+
+function normalizeGiftBankList(bankList = []) {
+  return bankList
+    .map((item) => ({
+      bank: String(item?.bank || "").trim(),
+      account: String(item?.account || "").trim(),
+      name: String(item?.name || "").trim(),
+    }))
+    .filter((item) => item.bank || item.account || item.name);
+}
+
+function normalizeGiftShipping(shipping = {}) {
+  return {
+    recipient: String(shipping?.recipient || "").trim(),
+    phone: String(shipping?.phone || "").trim(),
+    address: String(shipping?.address || "").trim(),
+  };
+}
+
+function hasGiftContent(bankList = [], shipping = {}) {
+  const normalizedBankList = normalizeGiftBankList(bankList);
+  const normalizedShipping = normalizeGiftShipping(shipping);
+  return (
+    normalizedBankList.length > 0 ||
+    Boolean(normalizedShipping.recipient || normalizedShipping.phone || normalizedShipping.address)
   );
 }
 
@@ -465,9 +495,31 @@ function StepOneMempelai({
   );
 }
 
-function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isSessionEnabled, setIsSessionEnabled, sessions, addSession, removeSession, updateSession }) {
+function StepTwoAcara({
+  akad,
+  setAkad,
+  resepsi,
+  setResepsi,
+  isSessionEnabled,
+  setIsSessionEnabled,
+  sessions,
+  addSession,
+  removeSession,
+  updateSession,
+  packageConfig,
+  giftBankList,
+  setGiftBankList,
+  giftShipping,
+  setGiftShipping,
+}) {
   const handleAkad = (key) => (e) => setAkad((prev) => ({ ...prev, [key]: e.target.value }));
   const handleResepsi = (key) => (e) => setResepsi((prev) => ({ ...prev, [key]: e.target.value }));
+  const canUseDigitalEnvelope = packageConfig?.capabilities?.digitalEnvelope === true;
+  const handleGiftBank = (index, key) => (e) => {
+    const nextValue = e.target.value;
+    setGiftBankList((prev) => prev.map((item, itemIndex) => (itemIndex === index ? { ...item, [key]: nextValue } : item)));
+  };
+  const handleGiftShipping = (key) => (e) => setGiftShipping((prev) => ({ ...prev, [key]: e.target.value }));
 
   return (
     <>
@@ -540,6 +592,86 @@ function StepTwoAcara({ akad, setAkad, resepsi, setResepsi, isSessionEnabled, se
               ))}
             </div>
           </div>
+        )}
+      </section>
+
+      <section className="mb-8 space-y-5 rounded-lg border border-slate-100 dark:border-slate-800 p-5 bg-white dark:bg-slate-800/40">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-xl font-bold">Wedding Gift / Amplop Digital</h3>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Atur rekening atau e-wallet yang ingin ditampilkan pada section gift.</p>
+          </div>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${canUseDigitalEnvelope ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300" : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-300"}`}>
+            {canUseDigitalEnvelope ? "Aktif di paket ini" : "Tidak aktif di paket ini"}
+          </span>
+        </div>
+
+        {!canUseDigitalEnvelope && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Amplop digital tersedia mulai paket PREMIUM.
+          </div>
+        )}
+
+        {canUseDigitalEnvelope && (
+          <>
+            <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+              {giftBankList.map((bank, index) => (
+                <div key={`gift-bank-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
+                  <p className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">Rekening / E-Wallet {index + 1}</p>
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      value={bank.bank}
+                      onChange={handleGiftBank(index, "bank")}
+                      placeholder="Contoh: BCA, Mandiri, BRI, DANA"
+                      className="w-full rounded-lg border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                    />
+                    <input
+                      type="text"
+                      value={bank.account}
+                      onChange={handleGiftBank(index, "account")}
+                      placeholder="Nomor rekening / nomor e-wallet"
+                      className="w-full rounded-lg border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                    />
+                    <input
+                      type="text"
+                      value={bank.name}
+                      onChange={handleGiftBank(index, "name")}
+                      placeholder="Nama pemilik rekening"
+                      className="w-full rounded-lg border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
+              <p className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">Alamat Pengiriman Hadiah</p>
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  value={giftShipping.recipient}
+                  onChange={handleGiftShipping("recipient")}
+                  placeholder="Nama penerima"
+                  className="w-full rounded-lg border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                />
+                <input
+                  type="tel"
+                  value={giftShipping.phone}
+                  onChange={handleGiftShipping("phone")}
+                  placeholder="No HP penerima"
+                  className="w-full rounded-lg border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                />
+                <textarea
+                  rows={3}
+                  value={giftShipping.address}
+                  onChange={handleGiftShipping("address")}
+                  placeholder="Alamat lengkap pengiriman hadiah"
+                  className="w-full rounded-lg border-slate-200 bg-white p-4 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
+                />
+              </div>
+            </div>
+          </>
         )}
       </section>
     </>
@@ -725,94 +857,94 @@ function StepThreeFoto({
 
       {uploadFields.frontCover?.visible && (
         <section id="cover_upload_section" className="space-y-4 mb-8">
-        <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Foto Cover Depan</h3>
-          <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
-        </div>
-
-        {frontCoverImage ? (
-          <div
-            className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
-            {...createDropZoneProps("front-cover", onUploadFrontCover)}
-          >
-            <img src={frontCoverImage.url} alt={frontCoverImage.name} className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">{frontCoverImage.name}</p>
-                <p className="text-white/80 text-xs">{frontCoverImage.sizeLabel}</p>
-              </div>
-              <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
-                <span className="material-symbols-outlined text-xl">edit</span>
-                <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
-              </label>
-            </div>
-            <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveFrontCover}>
-              <span className="material-symbols-outlined text-lg">close</span>
-            </button>
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Foto Cover Depan</h3>
+            <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
-        ) : (
-          <label
-            className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
-            {...createDropZoneProps("front-cover", onUploadFrontCover)}
-          >
-            <span className="material-symbols-outlined text-3xl">upload</span>
-            <span className="text-sm font-semibold">Upload atau Drop Foto Cover Depan</span>
-            <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
-          </label>
-        )}
 
-        <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-sm">info</span>
-          {uploadFields.frontCover?.description}
-        </p>
-      </section>
+          {frontCoverImage ? (
+            <div
+              className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
+              {...createDropZoneProps("front-cover", onUploadFrontCover)}
+            >
+              <img src={frontCoverImage.url} alt={frontCoverImage.name} className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-semibold truncate">{frontCoverImage.name}</p>
+                  <p className="text-white/80 text-xs">{frontCoverImage.sizeLabel}</p>
+                </div>
+                <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
+                  <span className="material-symbols-outlined text-xl">edit</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
+                </label>
+              </div>
+              <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveFrontCover}>
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+          ) : (
+            <label
+              className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
+              {...createDropZoneProps("front-cover", onUploadFrontCover)}
+            >
+              <span className="material-symbols-outlined text-3xl">upload</span>
+              <span className="text-sm font-semibold">Upload atau Drop Foto Cover Depan</span>
+              <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
+            </label>
+          )}
+
+          <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">info</span>
+            {uploadFields.frontCover?.description}
+          </p>
+        </section>
       )}
 
       {uploadFields.cover?.visible && (
         <section id="inner_cover_upload_section" className="space-y-4 mb-8">
-        <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Foto Setelah Buka Undangan</h3>
-          <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
-        </div>
-
-        {coverImage ? (
-          <div
-            className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
-            {...createDropZoneProps("inner-cover", onUploadCover)}
-          >
-            <img src={coverImage.url} alt={coverImage.name} className="absolute inset-0 w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
-            <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-              <div className="min-w-0">
-                <p className="text-white text-sm font-semibold truncate">{coverImage.name}</p>
-                <p className="text-white/80 text-xs">{coverImage.sizeLabel}</p>
-              </div>
-              <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
-                <span className="material-symbols-outlined text-xl">edit</span>
-                <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
-              </label>
-            </div>
-            <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveCover}>
-              <span className="material-symbols-outlined text-lg">close</span>
-            </button>
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Foto Setelah Buka Undangan</h3>
+            <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
-        ) : (
-          <label
-            className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
-            {...createDropZoneProps("inner-cover", onUploadCover)}
-          >
-            <span className="material-symbols-outlined text-3xl">upload</span>
-            <span className="text-sm font-semibold">Upload atau Drop Foto Setelah Buka</span>
-            <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
-          </label>
-        )}
 
-        <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
-          <span className="material-symbols-outlined text-sm">info</span>
-          {uploadFields.cover?.description}
-        </p>
-      </section>
+          {coverImage ? (
+            <div
+              className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
+              {...createDropZoneProps("inner-cover", onUploadCover)}
+            >
+              <img src={coverImage.url} alt={coverImage.name} className="absolute inset-0 w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
+              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-semibold truncate">{coverImage.name}</p>
+                  <p className="text-white/80 text-xs">{coverImage.sizeLabel}</p>
+                </div>
+                <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
+                  <span className="material-symbols-outlined text-xl">edit</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
+                </label>
+              </div>
+              <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveCover}>
+                <span className="material-symbols-outlined text-lg">close</span>
+              </button>
+            </div>
+          ) : (
+            <label
+              className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
+              {...createDropZoneProps("inner-cover", onUploadCover)}
+            >
+              <span className="material-symbols-outlined text-3xl">upload</span>
+              <span className="text-sm font-semibold">Upload atau Drop Foto Setelah Buka</span>
+              <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
+            </label>
+          )}
+
+          <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
+            <span className="material-symbols-outlined text-sm">info</span>
+            {uploadFields.cover?.description}
+          </p>
+        </section>
       )}
 
       <section className="mb-8 space-y-4">
@@ -875,31 +1007,31 @@ function StepThreeFoto({
 
       {(uploadFields.bridePhoto?.visible || uploadFields.groomPhoto?.visible) && (
         <section className="mb-8 space-y-4">
-        <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Foto Mempelai</h3>
-          <span className="text-xs font-medium text-slate-500">Profil pasangan</span>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {uploadFields.bridePhoto?.visible && (
-            <ImageUploadCard
-              title="Foto Mempelai Wanita"
-              description={uploadFields.bridePhoto?.description}
-              image={bridePhoto}
-              onUpload={onUploadBridePhoto}
-              onRemove={onRemoveBridePhoto}
-            />
-          )}
-          {uploadFields.groomPhoto?.visible && (
-            <ImageUploadCard
-              title="Foto Mempelai Pria"
-              description={uploadFields.groomPhoto?.description}
-              image={groomPhoto}
-              onUpload={onUploadGroomPhoto}
-              onRemove={onRemoveGroomPhoto}
-            />
-          )}
-        </div>
-      </section>
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Foto Mempelai</h3>
+            <span className="text-xs font-medium text-slate-500">Profil pasangan</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {uploadFields.bridePhoto?.visible && (
+              <ImageUploadCard
+                title="Foto Mempelai Wanita"
+                description={uploadFields.bridePhoto?.description}
+                image={bridePhoto}
+                onUpload={onUploadBridePhoto}
+                onRemove={onRemoveBridePhoto}
+              />
+            )}
+            {uploadFields.groomPhoto?.visible && (
+              <ImageUploadCard
+                title="Foto Mempelai Pria"
+                description={uploadFields.groomPhoto?.description}
+                image={groomPhoto}
+                onUpload={onUploadGroomPhoto}
+                onRemove={onRemoveGroomPhoto}
+              />
+            )}
+          </div>
+        </section>
       )}
 
       {(uploadFields.akadCover?.visible || (isReceptionEnabled && uploadFields.resepsiCover?.visible)) && (
@@ -939,19 +1071,19 @@ function StepThreeFoto({
 
       {uploadFields.closingBackground?.visible && (
         <section className="mb-8 space-y-4">
-        <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Background Penutup</h3>
-          <span className="text-xs font-medium text-slate-500">Section ucapan terima kasih</span>
-        </div>
-        <ImageUploadCard
-          title="Foto Background Pasangan"
-          description={uploadFields.closingBackground?.description}
-          image={closingBackgroundImage}
-          onUpload={onUploadClosingBackground}
-          onRemove={onRemoveClosingBackground}
-          aspectClass="aspect-video"
-        />
-      </section>
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Background Penutup</h3>
+            <span className="text-xs font-medium text-slate-500">Section ucapan terima kasih</span>
+          </div>
+          <ImageUploadCard
+            title="Foto Background Pasangan"
+            description={uploadFields.closingBackground?.description}
+            image={closingBackgroundImage}
+            onUpload={onUploadClosingBackground}
+            onRemove={onRemoveClosingBackground}
+            aspectClass="aspect-video"
+          />
+        </section>
       )}
 
       {(uploadFields.saveTheDateBackground?.visible || uploadFields.wishesBackground?.visible) && (
@@ -1153,86 +1285,86 @@ function StepThreeFoto({
 
         {canUseLoveStory && (
           <div className="relative space-y-6 pl-3">
-          <div className="absolute left-7 top-6 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
-          {stories.map((story, index) => (
-            <div key={story.id} className="group relative">
-              <div className="flex gap-4">
-                <div className="flex-shrink-0 mt-1 z-10">
-                  <div
-                    className={`w-8 h-8 rounded-full bg-surface-light dark:bg-surface-dark border-2 flex items-center justify-center shadow-sm ${index === 0
-                      ? "border-primary text-primary"
-                      : "border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
-                      }`}
-                  >
-                    <span className="material-symbols-outlined text-sm">{index === 0 ? "favorite" : "handshake"}</span>
+            <div className="absolute left-7 top-6 bottom-6 w-0.5 bg-gray-200 dark:bg-gray-700"></div>
+            {stories.map((story, index) => (
+              <div key={story.id} className="group relative">
+                <div className="flex gap-4">
+                  <div className="flex-shrink-0 mt-1 z-10">
+                    <div
+                      className={`w-8 h-8 rounded-full bg-surface-light dark:bg-surface-dark border-2 flex items-center justify-center shadow-sm ${index === 0
+                        ? "border-primary text-primary"
+                        : "border-gray-300 dark:border-gray-600 text-gray-400 dark:text-gray-500"
+                        }`}
+                    >
+                      <span className="material-symbols-outlined text-sm">{index === 0 ? "favorite" : "handshake"}</span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex-grow space-y-3 bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary/50 transition-all">
-                  <div className="space-y-1">
-                    <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                      Momen {index === 0 ? "Pertama" : `Ke-${index + 1}`}
-                    </label>
-                    <input
-                      className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 pb-2 text-slate-900 dark:text-slate-100 text-sm font-semibold focus:border-primary focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none transition-colors"
-                      placeholder={index === 0 ? "Contoh: Pertama Bertemu" : "Contoh: Menjalin Asmara"}
-                      value={story.title}
-                      onChange={(e) =>
-                        setStories((prev) => prev.map((item) => (item.id === story.id ? { ...item, title: e.target.value } : item)))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <textarea
-                      className="w-full bg-transparent border-none p-0 text-slate-900 dark:text-slate-100 text-sm resize-none focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none"
-                      placeholder={index === 0 ? "Ceritakan bagaimana momen itu terjadi..." : "Ceritakan proses kedekatan kalian..."}
-                      rows={3}
-                      value={story.description}
-                      onChange={(e) =>
-                        setStories((prev) =>
-                          prev.map((item) => (item.id === story.id ? { ...item, description: e.target.value } : item)),
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800 gap-2">
-                    <input
-                      className="text-xs bg-transparent border-none p-0 text-primary font-medium w-full focus:ring-0 placeholder:text-primary/60"
-                      placeholder="Tahun / Tanggal (Opsional)"
-                      value={story.date}
-                      onChange={(e) =>
-                        setStories((prev) => prev.map((item) => (item.id === story.id ? { ...item, date: e.target.value } : item)))
-                      }
-                    />
-                    {index > 0 && (
-                      <button
-                        type="button"
-                        className="text-red-500 hover:text-red-600"
-                        onClick={() => setStories((prev) => prev.filter((item) => item.id !== story.id))}
-                      >
-                        <span className="material-symbols-outlined text-lg">delete</span>
-                      </button>
-                    )}
+                  <div className="flex-grow space-y-3 bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary/50 transition-all">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Momen {index === 0 ? "Pertama" : `Ke-${index + 1}`}
+                      </label>
+                      <input
+                        className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 pb-2 text-slate-900 dark:text-slate-100 text-sm font-semibold focus:border-primary focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none transition-colors"
+                        placeholder={index === 0 ? "Contoh: Pertama Bertemu" : "Contoh: Menjalin Asmara"}
+                        value={story.title}
+                        onChange={(e) =>
+                          setStories((prev) => prev.map((item) => (item.id === story.id ? { ...item, title: e.target.value } : item)))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <textarea
+                        className="w-full bg-transparent border-none p-0 text-slate-900 dark:text-slate-100 text-sm resize-none focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none"
+                        placeholder={index === 0 ? "Ceritakan bagaimana momen itu terjadi..." : "Ceritakan proses kedekatan kalian..."}
+                        rows={3}
+                        value={story.description}
+                        onChange={(e) =>
+                          setStories((prev) =>
+                            prev.map((item) => (item.id === story.id ? { ...item, description: e.target.value } : item)),
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800 gap-2">
+                      <input
+                        className="text-xs bg-transparent border-none p-0 text-primary font-medium w-full focus:ring-0 placeholder:text-primary/60"
+                        placeholder="Tahun / Tanggal (Opsional)"
+                        value={story.date}
+                        onChange={(e) =>
+                          setStories((prev) => prev.map((item) => (item.id === story.id ? { ...item, date: e.target.value } : item)))
+                        }
+                      />
+                      {index > 0 && (
+                        <button
+                          type="button"
+                          className="text-red-500 hover:text-red-600"
+                          onClick={() => setStories((prev) => prev.filter((item) => item.id !== story.id))}
+                        >
+                          <span className="material-symbols-outlined text-lg">delete</span>
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
 
-          <div className="pl-12">
-            <button
-              type="button"
-              onClick={() =>
-                setStories((prev) => [
-                  ...prev,
-                  { id: Date.now(), title: "", description: "", date: "" },
-                ])
-              }
-              className="w-full py-3 border-2 border-dashed border-primary/30 rounded-xl flex items-center justify-center gap-2 text-primary text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
-            >
-              <span className="material-symbols-outlined text-lg">add_circle</span>
-              Tambah Cerita Baru
-            </button>
-          </div>
+            <div className="pl-12">
+              <button
+                type="button"
+                onClick={() =>
+                  setStories((prev) => [
+                    ...prev,
+                    { id: Date.now(), title: "", description: "", date: "" },
+                  ])
+                }
+                className="w-full py-3 border-2 border-dashed border-primary/30 rounded-xl flex items-center justify-center gap-2 text-primary text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
+              >
+                <span className="material-symbols-outlined text-lg">add_circle</span>
+                Tambah Cerita Baru
+              </button>
+            </div>
           </div>
         )}
       </section>
@@ -1258,12 +1390,17 @@ function StepFourReview({
   galleryImages,
   stories,
   music,
+  giftBankList,
+  giftShipping,
   onCopyPayment,
   selectedPackage,
   uploadConfig,
 }) {
   const effectiveStoriesCount = selectedPackage?.capabilities?.loveStory ? stories.length : 0;
   const uploadFields = uploadConfig || {};
+  const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
+  const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
+  const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
 
   return (
     <>
@@ -1409,64 +1546,57 @@ function StepFourReview({
         </details>
       </div>
 
-      <div className="mt-4 bg-surface-light dark:bg-surface-dark rounded-lg p-5 border border-primary/10">
-        <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
-          <span className="material-symbols-outlined text-primary text-[18px]">account_balance_wallet</span>
-          Metode Pembayaran
-        </h4>
+      {canUseDigitalEnvelope && (
+        <div className="mt-4 bg-surface-light dark:bg-surface-dark rounded-lg p-5 border border-primary/10">
+          <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100 mb-3 flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-[18px]">account_balance_wallet</span>
+            Wedding Gift / Amplop Digital
+          </h4>
 
-        <div className="space-y-3">
-          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-16 bg-white rounded flex items-center justify-center border border-slate-100 p-1"><div className="text-[10px] font-bold text-blue-800 tracking-tighter">BCA</div></div>
-                <div>
-                  <h5 className="font-bold text-sm">Bank BCA</h5>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Pengecekan Manual</p>
-                </div>
-              </div>
-            </div>
-            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Nomor Rekening</p>
-                <p className="text-lg font-mono font-bold tracking-wide">1234567890</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onCopyPayment("1234567890")}
-                className="text-primary text-xs font-bold bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-600 flex items-center gap-1"
-              >
-                <span className="material-symbols-outlined text-[16px]">content_copy</span>Salin
-              </button>
-            </div>
-          </article>
+          {normalizedGiftBankList.length === 0 && !normalizedGiftShipping.recipient && !normalizedGiftShipping.phone && !normalizedGiftShipping.address ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">Belum diisi. Section gift akan kosong sampai data rekening atau alamat pengiriman ditambahkan.</p>
+          ) : (
+            <div className="space-y-3">
+              {normalizedGiftBankList.map((bank, index) => (
+                <article key={`${bank.bank}-${bank.account}-${index}`} className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h5 className="font-bold text-sm">{bank.bank || `Rekening ${index + 1}`}</h5>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{bank.name || "Nama pemilik belum diisi"}</p>
+                    </div>
+                  </div>
+                  <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Nomor Rekening / E-Wallet</p>
+                      <p className="text-lg font-mono font-bold tracking-wide">{bank.account || "-"}</p>
+                    </div>
+                    {bank.account ? (
+                      <button
+                        type="button"
+                        onClick={() => onCopyPayment(bank.account)}
+                        className="text-primary text-xs font-bold bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-600 flex items-center gap-1"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">content_copy</span>Salin
+                      </button>
+                    ) : null}
+                  </div>
+                </article>
+              ))}
 
-          <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-16 bg-white rounded flex items-center justify-center border border-slate-100 p-1"><div className="text-[10px] font-bold text-blue-500 tracking-tighter">DANA</div></div>
-                <div>
-                  <h5 className="font-bold text-sm">E-Wallet DANA</h5>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Pengecekan Otomatis</p>
-                </div>
-              </div>
+              {(normalizedGiftShipping.recipient || normalizedGiftShipping.phone || normalizedGiftShipping.address) && (
+                <article className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4">
+                  <h5 className="font-bold text-sm mb-3">Alamat Pengiriman Hadiah</h5>
+                  <div className="space-y-1 text-sm text-slate-700 dark:text-slate-200">
+                    <p>Nama Penerima: {normalizedGiftShipping.recipient || "-"}</p>
+                    <p>No. HP: {normalizedGiftShipping.phone || "-"}</p>
+                    <p>{normalizedGiftShipping.address || "-"}</p>
+                  </div>
+                </article>
+              )}
             </div>
-            <div className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-3 flex items-center justify-between">
-              <div>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mb-0.5">Nomor Telepon</p>
-                <p className="text-lg font-mono font-bold tracking-wide">08123456789</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => onCopyPayment("08123456789")}
-                className="text-primary text-xs font-bold bg-white dark:bg-slate-700 px-3 py-1.5 rounded-full shadow-sm border border-slate-100 dark:border-slate-600 flex items-center gap-1"
-              >
-                <span className="material-symbols-outlined text-[16px]">content_copy</span>Salin
-              </button>
-            </div>
-          </article>
+          )}
         </div>
-      </div>
+      )}
 
       <div className="mt-4 bg-primary/5 rounded-lg p-5 border border-primary/10 flex justify-between items-center">
         <div>
@@ -1476,7 +1606,7 @@ function StepFourReview({
             <span className="text-slate-400 text-xs line-through">{formatMoneyID(selectedPackage.oldPrice)}</span>
           </div>
           <p className="text-[10px] text-primary bg-primary/10 px-2 py-0.5 rounded-full w-fit mt-1 font-medium">
-            Paket {selectedTheme?.packageTier || "BASIC"} - {selectedPackage.discount}
+            Paket {selectedPackage?.tier || "BASIC"} - {selectedPackage.discount}
           </p>
         </div>
         <div className="h-10 w-10 rounded-full bg-surface-light dark:bg-surface-dark flex items-center justify-center text-primary shadow-sm">
@@ -1516,6 +1646,8 @@ export default function CreateInvitationFormPage() {
   const [quotePresetId, setQuotePresetId] = useState("");
   const [quote, setQuote] = useState("");
   const [quoteSource, setQuoteSource] = useState("");
+  const [giftBankList, setGiftBankList] = useState(INITIAL_GIFT_BANKS);
+  const [giftShipping, setGiftShipping] = useState(INITIAL_GIFT_SHIPPING);
   const [saveTheDateBackgroundImage, setSaveTheDateBackgroundImage] = useState(null);
   const [wishesBackgroundImage, setWishesBackgroundImage] = useState(null);
   const [closingBackgroundImage, setClosingBackgroundImage] = useState(null);
@@ -1529,6 +1661,7 @@ export default function CreateInvitationFormPage() {
   const selectedPackage = useMemo(() => getPackageConfig(selectedTheme?.packageTier), [selectedTheme?.packageTier]);
   const uploadConfig = useMemo(() => getThemeUploadConfig(selectedTheme, selectedPackage), [selectedTheme, selectedPackage]);
   const isBasicTier = selectedPackage?.tier === "BASIC";
+  const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
   const selectedMusicTrack = useMemo(
     () => MUSIC_TRACKS.find((track) => track.id === selectedMusicTrackId) || MUSIC_TRACKS[0],
     [selectedMusicTrackId],
@@ -1578,8 +1711,9 @@ export default function CreateInvitationFormPage() {
       galleryImages.length > 0 ||
       stories.some((story) => story.title || story.description || story.date)
     );
+    const hasGift = canUseDigitalEnvelope && hasGiftContent(giftBankList, giftShipping);
     const hasMusic = Boolean(musicMode === "upload" || uploadedMusicFile || selectedMusicTrackId !== MUSIC_TRACKS[0].id);
-    return currentStep > 1 || hasCustomer || hasCouple || hasAcara || hasResepsi || hasMedia || hasMusic;
+    return currentStep > 1 || hasCustomer || hasCouple || hasAcara || hasResepsi || hasMedia || hasGift || hasMusic;
   }, [
     currentStep,
     customer,
@@ -1594,6 +1728,9 @@ export default function CreateInvitationFormPage() {
     saveTheDateBackgroundImage,
     wishesBackgroundImage,
     closingBackgroundImage,
+    canUseDigitalEnvelope,
+    giftBankList,
+    giftShipping,
     galleryImages.length,
     quote,
     quoteSource,
@@ -1644,6 +1781,12 @@ export default function CreateInvitationFormPage() {
     if (!uploadConfig.wishesBackground?.visible) setWishesBackgroundImage(null);
     if (!uploadConfig.closingBackground?.visible) setClosingBackgroundImage(null);
   }, [uploadConfig]);
+
+  useEffect(() => {
+    if (canUseDigitalEnvelope) return;
+    setGiftBankList(INITIAL_GIFT_BANKS.map((item) => ({ ...item })));
+    setGiftShipping({ ...INITIAL_GIFT_SHIPPING });
+  }, [canUseDigitalEnvelope]);
 
   useEffect(() => {
     const galleryLimit = selectedPackage?.limits?.galleryMax || 4;
@@ -1969,10 +2112,16 @@ export default function CreateInvitationFormPage() {
     }
     try {
       const defaultSchema = getDefaultSchemaBySlug(selectedTheme?.slug);
+      const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
+      const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
         frontCoverImage, coverImage, galleryImages, stories,
         quote, quoteSource, saveTheDateBackgroundImage, wishesBackgroundImage, closingBackgroundImage,
+        giftInfo: {
+          bankList: normalizedGiftBankList,
+          shipping: normalizedGiftShipping,
+        },
         selectedPackage,
         musicMode,
         selectedMusicTrack,
@@ -2101,6 +2250,8 @@ export default function CreateInvitationFormPage() {
     try {
       const orderId = draftOrderIdRef.current;
       const effectiveStories = selectedPackage?.capabilities?.loveStory ? stories : [];
+      const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
+      const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
       const shouldIncludeAkadCoverUpload = uploadConfig.akadCover?.visible;
       const shouldIncludeResepsiCoverUpload = uploadConfig.resepsiCover?.visible;
       const {
@@ -2179,6 +2330,15 @@ export default function CreateInvitationFormPage() {
           presetId: selectedTheme?.presetId || "",
           packageTier: selectedTheme?.packageTier || "BASIC",
         },
+        gift: canUseDigitalEnvelope
+          ? {
+            bankList: normalizedGiftBankList,
+            shipping: normalizedGiftShipping,
+          }
+          : {
+            bankList: [],
+            shipping: {},
+          },
         selectedPackage,
       };
 
@@ -2312,6 +2472,11 @@ export default function CreateInvitationFormPage() {
                 addSession={addSession}
                 removeSession={removeSession}
                 updateSession={updateSession}
+                packageConfig={selectedPackage}
+                giftBankList={giftBankList}
+                setGiftBankList={setGiftBankList}
+                giftShipping={giftShipping}
+                setGiftShipping={setGiftShipping}
               />
             )}
             {currentStep === 3 && (
@@ -2393,6 +2558,8 @@ export default function CreateInvitationFormPage() {
                   selectedTrackLabel: selectedMusicTrack.label,
                   uploadedFile: uploadedMusicFile,
                 }}
+                giftBankList={giftBankList}
+                giftShipping={giftShipping}
                 selectedPackage={selectedPackage}
                 uploadConfig={uploadConfig}
                 onCopyPayment={handleCopyPayment}
@@ -2406,10 +2573,11 @@ export default function CreateInvitationFormPage() {
               <button
                 type="button"
                 onClick={handlePreviewUndangan}
-                className="w-full mb-3 flex items-center justify-center gap-2 rounded-full border border-primary/40 text-primary font-semibold py-2.5 text-sm hover:bg-primary/5 transition-colors"
+                disabled={isSubmitting}
+                className="w-full mb-3 flex items-center justify-center gap-2 rounded-full border border-primary/40 text-primary font-semibold py-2.5 text-sm hover:bg-primary/5 transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
               >
                 <span className="material-symbols-outlined text-base">preview</span>
-                Desain Undangan
+                Contoh Undangan
               </button>
             )}
             <div className="flex gap-3 sm:gap-4">

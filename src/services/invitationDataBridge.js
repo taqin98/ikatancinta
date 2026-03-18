@@ -52,6 +52,7 @@ export function clearInvitationDraft() {
  * @param {object[]} params.stories        — [{ title, description, date }]
  * @param {string} params.quote
  * @param {string} params.quoteSource
+ * @param {object|null} params.giftInfo
  * @param {object|null} params.saveTheDateBackgroundImage
  * @param {object|null} params.wishesBackgroundImage
  * @param {object|null} params.closingBackgroundImage
@@ -74,6 +75,7 @@ export function mapFormToInvitationSchema({
     stories,
     quote,
     quoteSource,
+    giftInfo,
     saveTheDateBackgroundImage,
     wishesBackgroundImage,
     closingBackgroundImage,
@@ -148,6 +150,14 @@ export function mapFormToInvitationSchema({
     const packageCapabilities = selectedPackage?.capabilities || {};
     const galleryLimit = selectedPackage?.limits?.galleryMax || mappedGallery.length;
     const isBasicTier = selectedPackage?.tier === "BASIC";
+    const mappedGiftBankList = Array.isArray(giftInfo?.bankList)
+        ? giftInfo.bankList.filter((item) => item?.bank || item?.account || item?.name)
+        : [];
+    const mappedGiftShipping = {
+        ...(defaultSchema.gift?.shipping || {}),
+        ...(giftInfo?.shipping || {}),
+    };
+    const hasGiftData = mappedGiftBankList.length > 0 || Boolean(mappedGiftShipping.recipient || mappedGiftShipping.phone || mappedGiftShipping.address);
     const resolvedAudioSrc = musicMode === "upload"
         ? uploadedMusicFile?.dataUrl || defaultSchema.audio?.src || ""
         : selectedMusicTrack?.previewUrl || defaultSchema.audio?.src || "";
@@ -175,6 +185,11 @@ export function mapFormToInvitationSchema({
         },
         lovestory: packageCapabilities.loveStory === false ? [] : mappedLovestory,
         gallery: mappedGallery.slice(0, galleryLimit),
+        gift: {
+            ...(defaultSchema.gift || {}),
+            bankList: hasGiftData ? mappedGiftBankList : [],
+            shipping: hasGiftData ? mappedGiftShipping : {},
+        },
         copy: {
             ...defaultSchema.copy,
             quote: quote || defaultSchema.copy?.quote || "",
@@ -187,7 +202,12 @@ export function mapFormToInvitationSchema({
         },
         features: {
             ...defaultSchema.features,
-            digitalEnvelopeEnabled: packageCapabilities.digitalEnvelope ?? defaultSchema.features?.digitalEnvelopeEnabled,
+            digitalEnvelopeEnabled: Boolean(packageCapabilities.digitalEnvelope && hasGiftData),
+            digitalEnvelopeInfo: {
+                ...(defaultSchema.features?.digitalEnvelopeInfo || {}),
+                bankList: hasGiftData ? mappedGiftBankList : [],
+                shipping: hasGiftData ? mappedGiftShipping : {},
+            },
             rsvpEnabled: packageCapabilities.rsvp ?? defaultSchema.features?.rsvpEnabled,
             livestreamEnabled: packageCapabilities.livestream ?? defaultSchema.features?.livestreamEnabled,
         },
