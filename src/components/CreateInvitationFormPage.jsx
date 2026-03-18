@@ -689,6 +689,7 @@ function StepThreeFoto({
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
   const isNavyBlossom = selectedThemeSlug === "navy-blossom";
   const isIvoryGrace = selectedThemeSlug === "ivory-grace";
+  const isNoirMinimalist = selectedThemeSlug === "noir-minimalist";
   const [dragTarget, setDragTarget] = useState("");
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
@@ -769,6 +770,8 @@ function StepThreeFoto({
           <span className="material-symbols-outlined text-sm">info</span>
           {isIvoryGrace
             ? "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan. Saran ukuran ideal portrait 9:16."
+            : isNoirMinimalist
+              ? "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan. Saran ukuran ideal portrait 9:16."
             : "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan."}
         </p>
       </section>
@@ -888,6 +891,8 @@ function StepThreeFoto({
             description={
               isIvoryGrace
                 ? "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 410x325 px."
+                : isNoirMinimalist
+                  ? "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 295x355 px."
                 : "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama."
             }
             image={bridePhoto}
@@ -899,6 +904,8 @@ function StepThreeFoto({
             description={
               isIvoryGrace
                 ? "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 410x325 px."
+                : isNoirMinimalist
+                  ? "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 295x355 px."
                 : "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama."
             }
             image={groomPhoto}
@@ -919,6 +926,8 @@ function StepThreeFoto({
             description={
               isIvoryGrace
                 ? "Dipakai pada section wedding event akad. Saran ukuran ideal 410x225 px."
+                : isNoirMinimalist
+                  ? "Dipakai pada section wedding event akad. Saran ukuran ideal 410x225 px."
                 : "Dipakai pada section wedding event akad."
             }
             image={akadCoverImage}
@@ -932,6 +941,8 @@ function StepThreeFoto({
               description={
                 isIvoryGrace
                   ? "Dipakai pada section wedding event resepsi. Saran ukuran ideal 410x225 px."
+                  : isNoirMinimalist
+                    ? "Dipakai pada section wedding event resepsi. Saran ukuran ideal 410x225 px."
                   : "Dipakai pada section wedding event resepsi."
               }
               image={resepsiCoverImage}
@@ -959,6 +970,8 @@ function StepThreeFoto({
               ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Untuk Navy Blossom, ukuran ideal 400x220 px."
               : isIvoryGrace
                 ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Saran ukuran ideal 1:1."
+                : isNoirMinimalist
+                  ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Saran ukuran ideal 1:1."
               : "Dipakai sebagai background section penutup atau ucapan terima kasih."
           }
           image={closingBackgroundImage}
