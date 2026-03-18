@@ -57,6 +57,10 @@ function mergeInvitationData(baseSchema, incomingData) {
     return {
         ...baseSchema,
         ...incomingData,
+        invitation: {
+            ...(baseSchema.invitation || {}),
+            ...(incomingData.invitation || {}),
+        },
         guest: { ...baseSchema.guest, ...(incomingData.guest || {}) },
         couple: {
             ...baseSchema.couple,
@@ -144,6 +148,36 @@ function formatEventDate(dateText) {
     return dateText;
 }
 
+function buildLocationText(detail) {
+    if (!detail) return "";
+    const venueName = String(detail?.venueName || "").trim();
+    const address = String(detail?.address || "").trim();
+
+    return [venueName, address].filter(Boolean).join(", ");
+}
+
+function buildLocationMarkup(detail) {
+    if (!detail) return null;
+    const venueName = String(detail?.venueName || "").trim();
+    const address = String(detail?.address || "").trim();
+
+    if (venueName && address) {
+        return (
+            <>
+                <strong>{venueName}</strong>
+                <br />
+                {address}
+            </>
+        );
+    }
+
+    if (venueName) {
+        return <strong>{venueName}</strong>;
+    }
+
+    return address;
+}
+
 function formatCountdown(targetISO) {
     const now = Date.now();
     const target = new Date(targetISO).getTime();
@@ -166,19 +200,94 @@ function formatCountdown(targetISO) {
     };
 }
 
+function parseEventDateTime(dateValue, timeValue, fallbackDateValue = "") {
+    const directDate = new Date(dateValue || fallbackDateValue);
+    if (!Number.isNaN(directDate.getTime())) {
+        return directDate;
+    }
+
+    const text = String(dateValue || fallbackDateValue || "").trim();
+    if (!text) return null;
+
+    const monthMap = {
+        januari: 0,
+        februari: 1,
+        maret: 2,
+        april: 3,
+        mei: 4,
+        juni: 5,
+        juli: 6,
+        agustus: 7,
+        september: 8,
+        oktober: 9,
+        november: 10,
+        desember: 11,
+    };
+
+    const match = text.match(/(?:[A-Za-zÀ-ÿ]+,\s*)?(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s+(\d{4})/i);
+    if (!match) return null;
+
+    const day = Number(match[1]);
+    const monthName = String(match[2] || "").trim().toLowerCase();
+    const month = monthMap[monthName];
+    const year = Number(match[3]);
+    if (!Number.isFinite(day) || !Number.isFinite(year) || month === undefined) return null;
+
+    const timeMatch = String(timeValue || "").trim().match(/(\d{1,2})[.:](\d{2})/);
+    const hours = timeMatch ? Number(timeMatch[1]) : 0;
+    const minutes = timeMatch ? Number(timeMatch[2]) : 0;
+
+    return new Date(year, month, day, hours, minutes, 0, 0);
+}
+
+function formatIcsDateLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
+function escapeIcsText(value) {
+    return String(value || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+}
+
 function downloadICS(invitationData) {
-    const eventStart = invitationData?.event?.dateISO || "";
-    const cleanDate = eventStart.replace(/[-:]/g, "").slice(0, 15);
+    const startDate =
+        parseEventDateTime(
+            invitationData?.event?.akad?.date,
+            invitationData?.event?.akad?.time,
+            invitationData?.event?.dateISO,
+        ) || new Date(invitationData?.event?.dateISO || "");
+    if (!(startDate instanceof Date) || Number.isNaN(startDate.getTime())) return;
+
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
     const title = `${invitationData?.couple?.groom?.nickName || ""} & ${invitationData?.couple?.bride?.nickName || ""}`;
+    const location = buildLocationText(invitationData?.event?.akad);
     const icsContent = [
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
         "PRODID:-//Ikatan Cinta//BlueNature//EN",
+        "CALSCALE:GREGORIAN",
         "BEGIN:VEVENT",
-        `SUMMARY:Pernikahan ${title}`,
-        `DTSTART:${cleanDate}`,
-        `DESCRIPTION:${invitationData?.copy?.openingText || ""}`,
-        `LOCATION:${invitationData?.event?.akad?.address || ""}`,
+        `UID:${startDate.getTime()}-blue-nature@ikatancinta`,
+        `DTSTAMP:${formatIcsDateLocal(new Date())}`,
+        `SUMMARY:${escapeIcsText(`Pernikahan ${title}`)}`,
+        `DTSTART:${formatIcsDateLocal(startDate)}`,
+        `DTEND:${formatIcsDateLocal(endDate)}`,
+        `DESCRIPTION:${escapeIcsText(invitationData?.copy?.openingText || "")}`,
+        `LOCATION:${escapeIcsText(location)}`,
+        "BEGIN:VALARM",
+        "TRIGGER:-P1D",
+        "ACTION:DISPLAY",
+        `DESCRIPTION:${escapeIcsText(`Pengingat Pernikahan ${title}`)}`,
+        "END:VALARM",
         "END:VEVENT",
         "END:VCALENDAR",
     ].join("\r\n");
@@ -208,7 +317,7 @@ function EventCard({ title, detail, patternImage, delay = 0 }) {
             <div className="bn-event-card__divider" aria-hidden="true">
                 <i className="bn-fas bn-fa-map-marker-alt" />
             </div>
-            <p className="bn-event-card__location">{detail.address}</p>
+            <p className="bn-event-card__location">{buildLocationMarkup(detail)}</p>
             {detail.mapsUrl ? (
                 <a className="bn-btn-pill" href={detail.mapsUrl} target="_blank" rel="noreferrer" style={{ marginTop: 12 }}>
                     <i className="bn-fas bn-fa-map-marker-alt" />
@@ -219,10 +328,11 @@ function EventCard({ title, detail, patternImage, delay = 0 }) {
     );
 }
 
-export default function BlueNatureTemplate({ data: propData = null, invitationSlug = "blue-nature" }) {
+export default function BlueNatureTemplate({ data: propData = null, invitationSlug = "blue-nature", mode = "live" }) {
+    const isStaticDemoMode = mode === "demo";
     const { data: fetchedData, loading } = useInvitationData(invitationSlug, {
         fallbackSlug: "blue-nature",
-        skipFetch: Boolean(propData),
+        skipFetch: Boolean(propData) || isStaticDemoMode,
     });
     const mergedData = useMemo(
         () => mergeInvitationData(defaultSchema, { ...(fetchedData || {}), ...(propData || {}) }),
@@ -465,7 +575,11 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
         }).format(new Date());
 
         try {
-            await postInvitationWish("blue-nature", {
+            const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "blue-nature";
+            const activeOrderId = mergedData?.invitation?.orderId || mergedData?.orderId || "";
+            await postInvitationWish(activeInvitationSlug, {
+                invitationSlug: activeInvitationSlug,
+                orderId: activeOrderId,
                 author: wishForm.author.trim(),
                 comment: wishForm.comment.trim(),
                 attendance: wishForm.attendance,
@@ -521,10 +635,10 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                     <section className={`bn-cover-gate ${gateClosing ? "bn-cover-gate--closing" : ""}`}>
                         <div
                             className="bn-cover-gate__content"
-                            style={{ backgroundImage: `url(${resolveLocalAsset(couple.heroPhoto, HeroPhoto)})` }}
+                            style={{ backgroundImage: `url(${resolveLocalAsset(couple.frontCoverPhoto || couple.heroPhoto, HeroPhoto)})` }}
                         >
                             <p className="bn-cover-gate__label" data-aos={aosPreset("heading").aos}>
-                                The Wedding Of
+                                {copy.openingGreeting || "The Wedding Of"}
                             </p>
                             <h1 className="bn-cover-gate__names" data-aos={aosPreset("title").aos}>
                                 {couple.groom.nickName} &amp; {couple.bride.nickName}
@@ -541,7 +655,11 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
 
                 {opened && (
                     <main className="bn-main">
-                        <section id="section-hero" className="bn-section bn-hero" style={{ backgroundImage: `url(${BgCover})` }}>
+                        <section
+                            id="section-hero"
+                            className="bn-section bn-hero"
+                            style={{ backgroundImage: `url(${resolveLocalAsset(copy.saveTheDateBackgroundPhoto, BgCover)})` }}
+                        >
                             <div className="bn-hero__panel">
                                 <div className="bn-hero__photo" data-aos={aosPreset("photo").aos}>
                                     <img
@@ -549,7 +667,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                         alt={`Foto ${couple.groom.nickName} dan ${couple.bride.nickName}`}
                                     />
                                 </div>
-                                <p className="bn-hero__label" data-aos={aosPreset("heading").aos}>The Wedding Of</p>
+                                <p className="bn-hero__label" data-aos={aosPreset("heading").aos}>{copy.openingGreeting || "The Wedding Of"}</p>
                                 <h1 className="bn-hero__names" data-aos={aosPreset("title").aos}>
                                     {couple.groom.nickName} &amp; {couple.bride.nickName}
                                 </h1>
@@ -688,6 +806,11 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                     <p className="bn-live__text" data-aos="fade-up" data-aos-delay="180">
                                         Pukul: {event.livestream.time}
                                     </p>
+                                    {event.livestream.platformLabel ? (
+                                        <p className="bn-live__text" data-aos="fade-up" data-aos-delay="200">
+                                            Via {event.livestream.platformLabel}
+                                        </p>
+                                    ) : null}
                                     <a className="bn-btn-pill" href={event.livestream.url} target="_blank" rel="noreferrer" data-aos="zoom-in" data-aos-delay="220">
                                         Klik Disini
                                     </a>
@@ -882,9 +1005,9 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                         <section id="section-closing" className="bn-closing">
                             <div
                                 className="bn-closing__image"
-                                style={{ backgroundImage: `url(${resolveLocalAsset(timelineItems[2]?.photo, StoryPhoto)})` }}
+                                style={{ backgroundImage: `url(${resolveLocalAsset(copy.closingBackgroundPhoto, timelineItems[2]?.photo || StoryPhoto)})` }}
                             >
-                                <h2 className="bn-closing__thanks" data-aos="fade-down">Terimakasih</h2>
+                                <h2 className="bn-closing__thanks" data-aos="fade-down">{copy.closingLabel || "Terimakasih"}</h2>
                             </div>
                             <div className="bn-closing__message" style={{ backgroundImage: `url(${BgPatternLight})` }}>
                                 <p className="bn-closing__text" data-aos="fade-up">
@@ -898,9 +1021,13 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
 
                         <footer className="bn-footer">
                             <p className="bn-footer__credit">
-                                Support with
-                                <img src={HeartEmoji} alt="heart" />
-                                by ikatancinta.in
+                                {copy.supportText || (
+                                    <>
+                                        Support with
+                                        <img src={HeartEmoji} alt="heart" />
+                                        by ikatancinta.in
+                                    </>
+                                )}
                             </p>
                         </footer>
 

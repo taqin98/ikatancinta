@@ -3,6 +3,7 @@ import { buildOrderConfirmationPath, navigateTo, toAppPath } from "../utils/navi
 import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
 import { QUOTE_CATEGORIES, QUOTE_PRESETS } from "../data/Quotes";
 import { MUSIC_TRACKS } from "../data/musicTracks";
+import { getThemeUploadConfig } from "../data/themeFormRules";
 import { useThemeCatalog } from "../hooks/useCatalogData";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { submitOrder } from "../services/orderApi";
@@ -678,14 +679,12 @@ function StepThreeFoto({
   onUploadCustomMusic,
   onToggleMusicPreview,
   packageConfig,
-  selectedThemeSlug,
+  uploadConfig,
 }) {
   const galleryLimit = packageConfig?.limits?.galleryMax || 4;
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
-  const isNavyBlossom = selectedThemeSlug === "navy-blossom";
-  const isIvoryGrace = selectedThemeSlug === "ivory-grace";
-  const isNoirMinimalist = selectedThemeSlug === "noir-minimalist";
+  const uploadFields = uploadConfig || {};
   const [dragTarget, setDragTarget] = useState("");
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
@@ -721,10 +720,11 @@ function StepThreeFoto({
     <>
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Visual Undangan</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Sesuaikan foto, quote, dan media pendukung agar tema BASIC mengikuti desain undangan.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Sesuaikan foto, quote, dan media pendukung agar konten yang tampil tetap mengikuti desain tema yang dipilih.</p>
       </div>
 
-      <section id="cover_upload_section" className="space-y-4 mb-8">
+      {uploadFields.frontCover?.visible && (
+        <section id="cover_upload_section" className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Foto Cover Depan</h3>
           <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
@@ -764,15 +764,13 @@ function StepThreeFoto({
 
         <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm">info</span>
-          {isIvoryGrace
-            ? "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan. Saran ukuran ideal portrait 9:16."
-            : isNoirMinimalist
-              ? "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan. Saran ukuran ideal portrait 9:16."
-            : "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan."}
+          {uploadFields.frontCover?.description}
         </p>
       </section>
+      )}
 
-      <section id="inner_cover_upload_section" className="space-y-4 mb-8">
+      {uploadFields.cover?.visible && (
+        <section id="inner_cover_upload_section" className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Foto Setelah Buka Undangan</h3>
           <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
@@ -812,11 +810,10 @@ function StepThreeFoto({
 
         <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
           <span className="material-symbols-outlined text-sm">info</span>
-          {isIvoryGrace
-            ? "Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB. Saran ukuran ideal portrait 9:16."
-            : "Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB, gunakan orientasi landscape."}
+          {uploadFields.cover?.description}
         </p>
       </section>
+      )}
 
       <section className="mb-8 space-y-4">
         <div className="flex items-baseline justify-between px-1">
@@ -876,130 +873,114 @@ function StepThreeFoto({
         </div>
       </section>
 
-      <section className="mb-8 space-y-4">
+      {(uploadFields.bridePhoto?.visible || uploadFields.groomPhoto?.visible) && (
+        <section className="mb-8 space-y-4">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Foto Mempelai</h3>
           <span className="text-xs font-medium text-slate-500">Profil pasangan</span>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <ImageUploadCard
-            title="Foto Mempelai Wanita"
-            description={
-              isIvoryGrace
-                ? "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 410x325 px."
-                : isNoirMinimalist
-                  ? "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 295x355 px."
-                : "Dipakai pada section profil wanita. Jika kosong, sistem pakai cover utama."
-            }
-            image={bridePhoto}
-            onUpload={onUploadBridePhoto}
-            onRemove={onRemoveBridePhoto}
-          />
-          <ImageUploadCard
-            title="Foto Mempelai Pria"
-            description={
-              isIvoryGrace
-                ? "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 410x325 px."
-                : isNoirMinimalist
-                  ? "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama. Saran ukuran ideal 295x355 px."
-                : "Dipakai pada section profil pria. Jika kosong, sistem pakai cover utama."
-            }
-            image={groomPhoto}
-            onUpload={onUploadGroomPhoto}
-            onRemove={onRemoveGroomPhoto}
-          />
-        </div>
-      </section>
-
-      <section className="mb-8 space-y-4">
-        <div className="flex items-baseline justify-between px-1">
-          <h3 className="text-lg font-bold">Foto Acara</h3>
-          <span className="text-xs font-medium text-slate-500">Akad & resepsi</span>
-        </div>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <ImageUploadCard
-            title="Cover Akad"
-            description={
-              isIvoryGrace
-                ? "Dipakai pada section wedding event akad. Saran ukuran ideal 410x225 px."
-                : isNoirMinimalist
-                  ? "Dipakai pada section wedding event akad. Saran ukuran ideal 410x225 px."
-                : "Dipakai pada section wedding event akad."
-            }
-            image={akadCoverImage}
-            onUpload={onUploadAkadCover}
-            onRemove={onRemoveAkadCover}
-            aspectClass="aspect-video"
-          />
-          {isReceptionEnabled ? (
+          {uploadFields.bridePhoto?.visible && (
             <ImageUploadCard
-              title="Cover Resepsi"
-              description={
-                isIvoryGrace
-                  ? "Dipakai pada section wedding event resepsi. Saran ukuran ideal 410x225 px."
-                  : isNoirMinimalist
-                    ? "Dipakai pada section wedding event resepsi. Saran ukuran ideal 410x225 px."
-                  : "Dipakai pada section wedding event resepsi."
-              }
-              image={resepsiCoverImage}
-              onUpload={onUploadResepsiCover}
-              onRemove={onRemoveResepsiCover}
-              aspectClass="aspect-video"
+              title="Foto Mempelai Wanita"
+              description={uploadFields.bridePhoto?.description}
+              image={bridePhoto}
+              onUpload={onUploadBridePhoto}
+              onRemove={onRemoveBridePhoto}
             />
-          ) : (
-            <article className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/20 dark:text-slate-400">
-              Cover resepsi tidak diperlukan karena acara resepsi belum diaktifkan.
-            </article>
+          )}
+          {uploadFields.groomPhoto?.visible && (
+            <ImageUploadCard
+              title="Foto Mempelai Pria"
+              description={uploadFields.groomPhoto?.description}
+              image={groomPhoto}
+              onUpload={onUploadGroomPhoto}
+              onRemove={onRemoveGroomPhoto}
+            />
           )}
         </div>
       </section>
+      )}
 
-      <section className="mb-8 space-y-4">
+      {(uploadFields.akadCover?.visible || (isReceptionEnabled && uploadFields.resepsiCover?.visible)) && (
+        <section className="mb-8 space-y-4">
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Foto Acara</h3>
+            <span className="text-xs font-medium text-slate-500">Akad & resepsi</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {uploadFields.akadCover?.visible && (
+              <ImageUploadCard
+                title="Cover Akad"
+                description={uploadFields.akadCover?.description}
+                image={akadCoverImage}
+                onUpload={onUploadAkadCover}
+                onRemove={onRemoveAkadCover}
+                aspectClass="aspect-video"
+              />
+            )}
+            {isReceptionEnabled && uploadFields.resepsiCover?.visible ? (
+              <ImageUploadCard
+                title="Cover Resepsi"
+                description={uploadFields.resepsiCover?.description}
+                image={resepsiCoverImage}
+                onUpload={onUploadResepsiCover}
+                onRemove={onRemoveResepsiCover}
+                aspectClass="aspect-video"
+              />
+            ) : uploadFields.resepsiCover?.visible ? (
+              <article className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/20 dark:text-slate-400">
+                Cover resepsi tidak diperlukan karena acara resepsi belum diaktifkan.
+              </article>
+            ) : null}
+          </div>
+        </section>
+      )}
+
+      {uploadFields.closingBackground?.visible && (
+        <section className="mb-8 space-y-4">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Background Penutup</h3>
           <span className="text-xs font-medium text-slate-500">Section ucapan terima kasih</span>
         </div>
         <ImageUploadCard
           title="Foto Background Pasangan"
-          description={
-            isNavyBlossom
-              ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Untuk Navy Blossom, ukuran ideal 400x220 px."
-              : isIvoryGrace
-                ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Saran ukuran ideal 1:1."
-                : isNoirMinimalist
-                  ? "Dipakai sebagai background section penutup atau ucapan terima kasih. Saran ukuran ideal 1:1."
-              : "Dipakai sebagai background section penutup atau ucapan terima kasih."
-          }
+          description={uploadFields.closingBackground?.description}
           image={closingBackgroundImage}
           onUpload={onUploadClosingBackground}
           onRemove={onRemoveClosingBackground}
           aspectClass="aspect-video"
         />
       </section>
+      )}
 
-      {isNavyBlossom && (
+      {(uploadFields.saveTheDateBackground?.visible || uploadFields.wishesBackground?.visible) && (
         <section className="mb-8 space-y-4">
           <div className="flex items-baseline justify-between px-1">
-            <h3 className="text-lg font-bold">Background Khusus Navy Blossom</h3>
-            <span className="text-xs font-medium text-slate-500">Save The Date & Wishes</span>
+            <h3 className="text-lg font-bold">Background Tambahan Tema</h3>
+            <span className="text-xs font-medium text-slate-500">Section khusus template</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <ImageUploadCard
-              title="Background Save The Date"
-              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan. Ukuran ideal 430x220 px."
-              image={saveTheDateBackgroundImage}
-              onUpload={onUploadSaveTheDateBackground}
-              onRemove={onRemoveSaveTheDateBackground}
-              aspectClass="aspect-video"
-            />
-            <ImageUploadCard
-              title="Background Wishes / Ucapan"
-              description="Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan. Ukuran ideal 450x200 px."
-              image={wishesBackgroundImage}
-              onUpload={onUploadWishesBackground}
-              onRemove={onRemoveWishesBackground}
-              aspectClass="aspect-video"
-            />
+            {uploadFields.saveTheDateBackground?.visible && (
+              <ImageUploadCard
+                title="Background Save The Date"
+                description={uploadFields.saveTheDateBackground?.description}
+                image={saveTheDateBackgroundImage}
+                onUpload={onUploadSaveTheDateBackground}
+                onRemove={onRemoveSaveTheDateBackground}
+                aspectClass="aspect-video"
+              />
+            )}
+            {uploadFields.wishesBackground?.visible && (
+              <ImageUploadCard
+                title="Background Wishes / Ucapan"
+                description={uploadFields.wishesBackground?.description}
+                image={wishesBackgroundImage}
+                onUpload={onUploadWishesBackground}
+                onRemove={onRemoveWishesBackground}
+                aspectClass="aspect-video"
+              />
+            )}
           </div>
         </section>
       )}
@@ -1278,11 +1259,11 @@ function StepFourReview({
   stories,
   music,
   onCopyPayment,
-  selectedTheme,
   selectedPackage,
+  uploadConfig,
 }) {
   const effectiveStoriesCount = selectedPackage?.capabilities?.loveStory ? stories.length : 0;
-  const isNavyBlossom = selectedTheme?.slug === "navy-blossom";
+  const uploadFields = uploadConfig || {};
 
   return (
     <>
@@ -1349,41 +1330,55 @@ function StepFourReview({
             <span className="material-symbols-outlined text-slate-400 group-open:rotate-180 transition-transform duration-300">expand_more</span>
           </summary>
           <div className="px-4 pb-5 border-t border-dashed border-slate-200 dark:border-slate-700/50">
-            <div className="pt-4">
-              <p className="text-xs text-slate-500 mb-2">Cover Depan</p>
-              <p className="text-sm font-medium">{frontCoverImage?.name || "Belum upload"}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-xs text-slate-500 mb-2">Foto Setelah Buka Undangan</p>
-              <p className="text-sm font-medium">{coverImage?.name || "Belum upload"}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-xs text-slate-500 mb-2">Foto Mempelai Wanita</p>
-              <p className="text-sm font-medium">{bride.photo?.name || "Menggunakan cover utama"}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-xs text-slate-500 mb-2">Foto Mempelai Pria</p>
-              <p className="text-sm font-medium">{groom.photo?.name || "Menggunakan cover utama"}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-xs text-slate-500 mb-2">Cover Akad</p>
-              <p className="text-sm font-medium">{akad.coverImage?.name || "Menggunakan cover utama"}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-xs text-slate-500 mb-2">Cover Resepsi</p>
-              <p className="text-sm font-medium">{resepsi.coverImage?.name || "Menggunakan cover utama"}</p>
-            </div>
-            <div className="pt-3">
-              <p className="text-xs text-slate-500 mb-2">Background Penutup</p>
-              <p className="text-sm font-medium">{closingBackgroundImage?.name || "Menggunakan cover utama"}</p>
-            </div>
-            {isNavyBlossom && (
+            {uploadFields.frontCover?.visible && (
+              <div className="pt-4">
+                <p className="text-xs text-slate-500 mb-2">Cover Depan</p>
+                <p className="text-sm font-medium">{frontCoverImage?.name || "Belum upload"}</p>
+              </div>
+            )}
+            {uploadFields.cover?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Foto Setelah Buka Undangan</p>
+                <p className="text-sm font-medium">{coverImage?.name || "Belum upload"}</p>
+              </div>
+            )}
+            {uploadFields.bridePhoto?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Foto Mempelai Wanita</p>
+                <p className="text-sm font-medium">{bride.photo?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
+            {uploadFields.groomPhoto?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Foto Mempelai Pria</p>
+                <p className="text-sm font-medium">{groom.photo?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
+            {uploadFields.akadCover?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Cover Akad</p>
+                <p className="text-sm font-medium">{akad.coverImage?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
+            {uploadFields.resepsiCover?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Cover Resepsi</p>
+                <p className="text-sm font-medium">{resepsi.coverImage?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
+            {uploadFields.closingBackground?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Background Penutup</p>
+                <p className="text-sm font-medium">{closingBackgroundImage?.name || "Menggunakan cover utama"}</p>
+              </div>
+            )}
+            {uploadFields.saveTheDateBackground?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Background Save The Date</p>
                 <p className="text-sm font-medium">{saveTheDateBackgroundImage?.name || "Menggunakan cover utama"}</p>
               </div>
             )}
-            {isNavyBlossom && (
+            {uploadFields.wishesBackground?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Background Wishes / Ucapan</p>
                 <p className="text-sm font-medium">{wishesBackgroundImage?.name || "Menggunakan cover utama"}</p>
@@ -1532,6 +1527,8 @@ export default function CreateInvitationFormPage() {
   const musicPreviewRef = useRef(null);
   const [selectedTheme, setSelectedTheme] = useState(null);
   const selectedPackage = useMemo(() => getPackageConfig(selectedTheme?.packageTier), [selectedTheme?.packageTier]);
+  const uploadConfig = useMemo(() => getThemeUploadConfig(selectedTheme, selectedPackage), [selectedTheme, selectedPackage]);
+  const isBasicTier = selectedPackage?.tier === "BASIC";
   const selectedMusicTrack = useMemo(
     () => MUSIC_TRACKS.find((track) => track.id === selectedMusicTrackId) || MUSIC_TRACKS[0],
     [selectedMusicTrackId],
@@ -1544,12 +1541,12 @@ export default function CreateInvitationFormPage() {
       groom.nickname ||
       groom.parents ||
       groom.instagram ||
-      groom.photo ||
+      (uploadConfig.groomPhoto?.visible && groom.photo) ||
       bride.fullname ||
       bride.nickname ||
       bride.parents ||
       bride.instagram ||
-      bride.photo
+      (uploadConfig.bridePhoto?.visible && bride.photo)
     );
     const hasAcara = Boolean(
       akad.date ||
@@ -1558,7 +1555,7 @@ export default function CreateInvitationFormPage() {
       akad.venue ||
       akad.address ||
       akad.mapsLink ||
-      akad.coverImage
+      (uploadConfig.akadCover?.visible && akad.coverImage)
     );
     const hasResepsi = Boolean(
       resepsi.date ||
@@ -1567,15 +1564,15 @@ export default function CreateInvitationFormPage() {
       resepsi.venue ||
       resepsi.address ||
       resepsi.mapsLink ||
-      resepsi.coverImage ||
+      (uploadConfig.resepsiCover?.visible && resepsi.coverImage) ||
       isSessionEnabled
     );
     const hasMedia = Boolean(
-      coverImage ||
-      frontCoverImage ||
-      saveTheDateBackgroundImage ||
-      wishesBackgroundImage ||
-      closingBackgroundImage ||
+      (uploadConfig.cover?.visible && coverImage) ||
+      (uploadConfig.frontCover?.visible && frontCoverImage) ||
+      (uploadConfig.saveTheDateBackground?.visible && saveTheDateBackgroundImage) ||
+      (uploadConfig.wishesBackground?.visible && wishesBackgroundImage) ||
+      (uploadConfig.closingBackground?.visible && closingBackgroundImage) ||
       quote ||
       quoteSource ||
       galleryImages.length > 0 ||
@@ -1589,6 +1586,7 @@ export default function CreateInvitationFormPage() {
     groom,
     bride,
     akad,
+    uploadConfig,
     isSessionEnabled,
     resepsi,
     coverImage,
@@ -1628,10 +1626,24 @@ export default function CreateInvitationFormPage() {
   }, [selectedTheme]);
 
   useEffect(() => {
-    if (selectedTheme?.slug === "navy-blossom") return;
-    setSaveTheDateBackgroundImage(null);
-    setWishesBackgroundImage(null);
-  }, [selectedTheme?.slug]);
+    if (!uploadConfig.frontCover?.visible) setFrontCoverImage(null);
+    if (!uploadConfig.cover?.visible) setCoverImage(null);
+    if (!uploadConfig.bridePhoto?.visible) {
+      setBride((prev) => (prev.photo ? { ...prev, photo: null } : prev));
+    }
+    if (!uploadConfig.groomPhoto?.visible) {
+      setGroom((prev) => (prev.photo ? { ...prev, photo: null } : prev));
+    }
+    if (!uploadConfig.akadCover?.visible) {
+      setAkad((prev) => (prev.coverImage ? { ...prev, coverImage: null } : prev));
+    }
+    if (!uploadConfig.resepsiCover?.visible) {
+      setResepsi((prev) => (prev.coverImage ? { ...prev, coverImage: null } : prev));
+    }
+    if (!uploadConfig.saveTheDateBackground?.visible) setSaveTheDateBackgroundImage(null);
+    if (!uploadConfig.wishesBackground?.visible) setWishesBackgroundImage(null);
+    if (!uploadConfig.closingBackground?.visible) setClosingBackgroundImage(null);
+  }, [uploadConfig]);
 
   useEffect(() => {
     const galleryLimit = selectedPackage?.limits?.galleryMax || 4;
@@ -2042,14 +2054,14 @@ export default function CreateInvitationFormPage() {
       return null;
     }
     if (currentStep === 3) {
-      if (!coverImage) {
+      if (uploadConfig.cover?.required && !coverImage) {
         return {
           message: "Mohon upload foto setelah buka undangan terlebih dahulu.",
           selector: "#inner_cover_upload_section",
           shouldFocus: false,
         };
       }
-      if (!frontCoverImage) {
+      if (uploadConfig.frontCover?.required && !frontCoverImage) {
         return {
           message: "Mohon upload foto cover depan terlebih dahulu.",
           selector: "#cover_upload_section",
@@ -2089,6 +2101,8 @@ export default function CreateInvitationFormPage() {
     try {
       const orderId = draftOrderIdRef.current;
       const effectiveStories = selectedPackage?.capabilities?.loveStory ? stories : [];
+      const shouldIncludeAkadCoverUpload = uploadConfig.akadCover?.visible;
+      const shouldIncludeResepsiCoverUpload = uploadConfig.resepsiCover?.visible;
       const {
         uploadedFrontCover,
         uploadedCover,
@@ -2107,8 +2121,8 @@ export default function CreateInvitationFormPage() {
         coverImage,
         groomPhoto: groom.photo,
         bridePhoto: bride.photo,
-        akadCoverImage: akad.coverImage,
-        resepsiCoverImage: isReceptionEnabled ? resepsi.coverImage : null,
+        akadCoverImage: shouldIncludeAkadCoverUpload ? akad.coverImage : null,
+        resepsiCoverImage: shouldIncludeResepsiCoverUpload && isReceptionEnabled ? resepsi.coverImage : null,
         saveTheDateBackgroundImage,
         wishesBackgroundImage,
         closingBackgroundImage,
@@ -2129,12 +2143,12 @@ export default function CreateInvitationFormPage() {
         },
         akad: {
           ...akad,
-          coverImage: uploadedAkadCover,
+          coverImage: shouldIncludeAkadCoverUpload ? uploadedAkadCover : null,
         },
         resepsi: isReceptionEnabled
           ? {
             ...resepsi,
-            coverImage: uploadedResepsiCover,
+            coverImage: shouldIncludeResepsiCoverUpload ? uploadedResepsiCover : null,
           }
           : null,
         isReceptionEnabled,
@@ -2349,7 +2363,7 @@ export default function CreateInvitationFormPage() {
                   isPlaying: isMusicPlaying,
                 }}
                 packageConfig={selectedPackage}
-                selectedThemeSlug={selectedTheme?.slug || ""}
+                uploadConfig={uploadConfig}
                 onChangeMusicMode={handleChangeMusicMode}
                 onChangeMusicTrack={setSelectedMusicTrackId}
                 onUploadCustomMusic={handleUploadCustomMusic}
@@ -2379,8 +2393,8 @@ export default function CreateInvitationFormPage() {
                   selectedTrackLabel: selectedMusicTrack.label,
                   uploadedFile: uploadedMusicFile,
                 }}
-                selectedTheme={selectedTheme}
                 selectedPackage={selectedPackage}
+                uploadConfig={uploadConfig}
                 onCopyPayment={handleCopyPayment}
               />
             )}

@@ -144,7 +144,7 @@ function App() {
 
 
   if (pathname === "/undangan/blue-nature") {
-    return <BlueNatureTemplate />;
+    return <BlueNatureTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/noir-minimalist") {

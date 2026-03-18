@@ -147,6 +147,7 @@ export function mapFormToInvitationSchema({
 
     const packageCapabilities = selectedPackage?.capabilities || {};
     const galleryLimit = selectedPackage?.limits?.galleryMax || mappedGallery.length;
+    const isBasicTier = selectedPackage?.tier === "BASIC";
     const resolvedAudioSrc = musicMode === "upload"
         ? uploadedMusicFile?.dataUrl || defaultSchema.audio?.src || ""
         : selectedMusicTrack?.previewUrl || defaultSchema.audio?.src || "";
@@ -199,16 +200,24 @@ export function mapFormToInvitationSchema({
             dateISO: buildDateISO(akad?.date, akad?.startTime),
             akad: {
                 ...mappedAkad,
-                coverPhoto: akad?.coverImage?.url || coverImage?.url || defaultSchema.event?.akad?.coverPhoto || "",
+                ...(isBasicTier
+                    ? {
+                        coverPhoto: akad?.coverImage?.url || coverImage?.url || defaultSchema.event?.akad?.coverPhoto || "",
+                    }
+                    : {}),
             },
             resepsi: {
                 ...mappedResepsi,
-                coverPhoto:
-                    (isReceptionEnabled ? resepsi?.coverImage?.url : "") ||
-                    akad?.coverImage?.url ||
-                    coverImage?.url ||
-                    defaultSchema.event?.resepsi?.coverPhoto ||
-                    "",
+                ...(isBasicTier
+                    ? {
+                        coverPhoto:
+                            (isReceptionEnabled ? resepsi?.coverImage?.url : "") ||
+                            akad?.coverImage?.url ||
+                            coverImage?.url ||
+                            defaultSchema.event?.resepsi?.coverPhoto ||
+                            "",
+                    }
+                    : {}),
             },
         },
     };

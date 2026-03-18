@@ -3,6 +3,10 @@ import behaviorDefaults from "./behavior.json";
 
 /** @type {import('./invitationSchema').defaultSchema & {behavior?: object}} */
 export const defaultSchema = {
+    invitation: {
+        slug: "blue-nature",
+        orderId: "",
+    },
     guest: {
         name: contentDefaults?.guest?.name || "Nama Tamu",
         greetingLabel: contentDefaults?.guest?.greetingLabel || "Kepada Bapak/Ibu/Saudara/i",
@@ -23,6 +27,7 @@ export const defaultSchema = {
             photo: contentDefaults?.couple?.bride?.photo || "",
             parentInfo: contentDefaults?.couple?.bride?.parentInfo || "Putri dari Bapak Putra & Ibu Putri",
         },
+        frontCoverPhoto: contentDefaults?.couple?.frontCoverPhoto || contentDefaults?.couple?.heroPhoto || "",
         heroPhoto: contentDefaults?.couple?.heroPhoto || "",
     },
     event: {
@@ -30,12 +35,14 @@ export const defaultSchema = {
         akad: {
             date: contentDefaults?.event?.akad?.date || "Jumat, 12 Juni 2026",
             time: contentDefaults?.event?.akad?.time || "10.00 WIB - Selesai",
+            venueName: contentDefaults?.event?.akad?.venueName || "",
             address: contentDefaults?.event?.akad?.address || "Sportorium UMY, Yogyakarta",
             mapsUrl: contentDefaults?.event?.akad?.mapsUrl || "https://maps.google.com",
         },
         resepsi: {
             date: contentDefaults?.event?.resepsi?.date || "Jumat, 12 Juni 2026",
             time: contentDefaults?.event?.resepsi?.time || "13.00 WIB - 16.00 WIB",
+            venueName: contentDefaults?.event?.resepsi?.venueName || "",
             address: contentDefaults?.event?.resepsi?.address || "Sportorium UMY, Yogyakarta",
             mapsUrl: contentDefaults?.event?.resepsi?.mapsUrl || "https://maps.google.com",
         },
@@ -53,6 +60,10 @@ export const defaultSchema = {
             "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami.",
         quote: contentDefaults?.copy?.quote || "",
         quoteSource: contentDefaults?.copy?.quoteSource || "",
+        saveTheDateBackgroundPhoto: contentDefaults?.copy?.saveTheDateBackgroundPhoto || "",
+        wishesBackgroundPhoto: contentDefaults?.copy?.wishesBackgroundPhoto || "",
+        closingBackgroundPhoto: contentDefaults?.copy?.closingBackgroundPhoto || "",
+        closingLabel: contentDefaults?.copy?.closingLabel || "Kami Yang Berbahagia",
         closingText: contentDefaults?.copy?.closingText || "",
         supportText: contentDefaults?.copy?.supportText || "Support with ❤ by ikatancinta.in",
     },
