@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { buildOrderConfirmationPath, navigateTo, toAppPath } from "../utils/navigation";
 import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
 import { QUOTE_CATEGORIES, QUOTE_PRESETS } from "../data/Quotes";
+import { MUSIC_TRACKS } from "../data/musicTracks";
 import { useThemeCatalog } from "../hooks/useCatalogData";
 import { ORDER_CONFIRMATION_STORAGE_KEY } from "../services/dummyOrderApi";
 import { submitOrder } from "../services/orderApi";
@@ -10,7 +11,6 @@ import { uploadOrderAsset } from "../services/uploadApi";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 import { createOrderId } from "../utils/orderId";
 
-const APP_BASE_URL = import.meta.env.BASE_URL || "/";
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
 const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
 const INITIAL_BRIDE = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
@@ -23,10 +23,6 @@ const INITIAL_SESSIONS = [
 const INITIAL_STORIES = [
   { id: 1, title: "Pertama Bertemu", description: "Kami bertemu pertama kali di acara kampus dan mulai saling mengenal.", date: "2019" },
   { id: 2, title: "Menjalin Asmara", description: "Setelah berteman lama, kami memutuskan melangkah lebih serius.", date: "2021" },
-];
-const MUSIC_TRACKS = [
-  { id: "andmesh-cinta-luar-biasa", label: "Andmesh - Cinta Luar Biasa", previewUrl: `${APP_BASE_URL}audio/andmesh-cinta-luar-biasa.mp3` },
-  { id: "novo-amor-anchor", label: "Novo Amor - Anchor", previewUrl: `${APP_BASE_URL}audio/novo-amor.mp3` },
 ];
 
 function StepItem({ index, label, currentStep }) {
@@ -1114,47 +1110,51 @@ function StepThreeFoto({
             )}
           </label>
 
-          <label className={`block ${canUploadCustomMusic ? "cursor-pointer" : "cursor-not-allowed"}`}>
-            <input
-              className="hidden"
-              name="music_option"
-              type="radio"
-              checked={music.mode === "upload"}
-              disabled={!canUploadCustomMusic}
-              onChange={() => onChangeMusicMode("upload")}
-            />
-            <div className={`p-4 flex items-center justify-between transition-colors ${canUploadCustomMusic ? "hover:bg-gray-50 dark:hover:bg-surface-dark/50" : "opacity-60"} ${music.mode === "upload" ? "bg-primary-50/70 dark:bg-primary/10" : ""}`}>
-              <div className="flex items-center gap-3">
-                <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center relative ${music.mode === "upload" ? "border-primary" : "border-gray-300 dark:border-gray-600"}`}>
-                  <div className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${music.mode === "upload" ? "scale-100 bg-primary" : "scale-0 bg-white"}`}></div>
-                </div>
-                <div>
-                  <span className="block text-sm font-bold text-slate-900 dark:text-slate-100">Upload Musik Sendiri</span>
-                  <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                    {canUploadCustomMusic ? "Gunakan file MP3 pribadi (Max 5MB)" : "Tersedia mulai paket PREMIUM"}
-                  </span>
-                </div>
-              </div>
-              <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">upload_file</span>
-            </div>
-
-            {music.mode === "upload" && canUploadCustomMusic && (
-              <div className="p-4 pt-0 bg-primary-50/30 dark:bg-primary-900/5 border-t border-primary/10">
-                <label className="mt-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-white dark:hover:bg-surface-dark/30 hover:border-primary/50 transition-all cursor-pointer group block">
-                  <div className="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
-                    <span className="material-symbols-outlined">cloud_upload</span>
+          {canUploadCustomMusic ? (
+            <label className="block cursor-pointer">
+              <input
+                className="hidden"
+                name="music_option"
+                type="radio"
+                checked={music.mode === "upload"}
+                onChange={() => onChangeMusicMode("upload")}
+              />
+              <div className={`p-4 flex items-center justify-between transition-colors hover:bg-gray-50 dark:hover:bg-surface-dark/50 ${music.mode === "upload" ? "bg-primary-50/70 dark:bg-primary/10" : ""}`}>
+                <div className="flex items-center gap-3">
+                  <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center relative ${music.mode === "upload" ? "border-primary" : "border-gray-300 dark:border-gray-600"}`}>
+                    <div className={`w-2.5 h-2.5 rounded-full transition-transform duration-200 ${music.mode === "upload" ? "scale-100 bg-primary" : "scale-0 bg-white"}`}></div>
                   </div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    {music.uploadedFile?.name ? "Ganti file musik" : "Klik untuk upload"}
-                  </p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    {music.uploadedFile?.name ? `${music.uploadedFile.name} (${music.uploadedFile.sizeLabel})` : "File MP3 only, maksimal 5MB"}
-                  </p>
-                  <input id="music_upload_input" type="file" accept="audio/mpeg,audio/mp3,.mp3" className="hidden" onChange={onUploadCustomMusic} />
-                </label>
+                  <div>
+                    <span className="block text-sm font-bold text-slate-900 dark:text-slate-100">Upload Musik Sendiri</span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400">Gunakan file MP3 pribadi (Max 5MB)</span>
+                  </div>
+                </div>
+                <span className="material-symbols-outlined text-slate-500 dark:text-slate-400 text-xl">upload_file</span>
               </div>
-            )}
-          </label>
+
+              {music.mode === "upload" && (
+                <div className="p-4 pt-0 bg-primary-50/30 dark:bg-primary-900/5 border-t border-primary/10">
+                  <label className="mt-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-6 text-center hover:bg-white dark:hover:bg-surface-dark/30 hover:border-primary/50 transition-all cursor-pointer group block">
+                    <div className="w-10 h-10 rounded-full bg-primary-50 dark:bg-primary-900/20 text-primary flex items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform">
+                      <span className="material-symbols-outlined">cloud_upload</span>
+                    </div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                      {music.uploadedFile?.name ? "Ganti file musik" : "Klik untuk upload"}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                      {music.uploadedFile?.name ? `${music.uploadedFile.name} (${music.uploadedFile.sizeLabel})` : "File MP3 only, maksimal 5MB"}
+                    </p>
+                    <input id="music_upload_input" type="file" accept="audio/mpeg,audio/mp3,.mp3" className="hidden" onChange={onUploadCustomMusic} />
+                  </label>
+                </div>
+              )}
+            </label>
+          ) : (
+            <div className="border-t border-gray-100 dark:border-gray-800 bg-slate-50/80 dark:bg-slate-900/40 px-4 py-3">
+              <p className="text-sm font-medium text-slate-700 dark:text-slate-200">Paket BASIC hanya bisa memilih musik dari list yang tersedia.</p>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Upload musik custom dibuka mulai paket PREMIUM.</p>
+            </div>
+          )}
         </div>
       </section>
 
