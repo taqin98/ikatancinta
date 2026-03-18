@@ -124,6 +124,18 @@ function createLocalImageAsset(file, dataUrl) {
   };
 }
 
+function extractFilesFromDropEvent(event) {
+  return Array.from(event?.dataTransfer?.files || []);
+}
+
+function createSyntheticFileChangeEvent(files) {
+  const normalizedFiles = Array.from(files || []);
+  return {
+    target: { files: normalizedFiles, value: "" },
+    currentTarget: { files: normalizedFiles, value: "" },
+  };
+}
+
 function uploadOptionalImageAsset(orderId, image, kind) {
   if (!image) return Promise.resolve(null);
 
@@ -546,8 +558,37 @@ function ImageUploadCard({
   badge = "Opsional",
   aspectClass = "aspect-[4/5]",
 }) {
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = "copy";
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    const nextTarget = event.relatedTarget;
+    if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+    setIsDragOver(false);
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    const files = extractFilesFromDropEvent(event);
+    if (!files.length) return;
+    await onUpload(createSyntheticFileChangeEvent(files));
+  };
+
   return (
-    <article className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/40 p-4 shadow-sm">
+    <article
+      className={`rounded-2xl border bg-white p-4 shadow-sm transition-colors dark:bg-slate-900/40 ${isDragOver ? "border-primary ring-2 ring-primary/20 dark:border-primary" : "border-slate-200 dark:border-slate-700"}`}
+      onDragEnter={handleDragOver}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">{title}</h4>
@@ -585,7 +626,7 @@ function ImageUploadCard({
         <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary-50/40 text-center text-primary transition-colors hover:border-primary hover:bg-primary-50 dark:bg-primary-900/10 ${aspectClass}`}>
           <span className="material-symbols-outlined text-3xl">upload</span>
           <div>
-            <p className="text-sm font-semibold">Upload Foto</p>
+            <p className="text-sm font-semibold">Upload atau Drop Foto</p>
             <p className="mt-1 text-[11px] text-primary/80">JPG/PNG, maksimal 5MB</p>
           </div>
           <input type="file" accept="image/*" className="hidden" onChange={onUpload} />
@@ -648,10 +689,36 @@ function StepThreeFoto({
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
   const isNavyBlossom = selectedThemeSlug === "navy-blossom";
   const isIvoryGrace = selectedThemeSlug === "ivory-grace";
+  const [dragTarget, setDragTarget] = useState("");
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
     items: QUOTE_PRESETS.filter((preset) => preset.category === category.id),
   })).filter((category) => category.items.length > 0);
+
+  const createDropZoneProps = (zoneId, onUpload) => ({
+    onDragEnter: (event) => {
+      event.preventDefault();
+      setDragTarget(zoneId);
+    },
+    onDragOver: (event) => {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      setDragTarget(zoneId);
+    },
+    onDragLeave: (event) => {
+      event.preventDefault();
+      const nextTarget = event.relatedTarget;
+      if (nextTarget instanceof Node && event.currentTarget.contains(nextTarget)) return;
+      setDragTarget((current) => (current === zoneId ? "" : current));
+    },
+    onDrop: async (event) => {
+      event.preventDefault();
+      setDragTarget((current) => (current === zoneId ? "" : current));
+      const files = extractFilesFromDropEvent(event);
+      if (!files.length) return;
+      await onUpload(createSyntheticFileChangeEvent(files));
+    },
+  });
 
   return (
     <>
@@ -667,7 +734,10 @@ function StepThreeFoto({
         </div>
 
         {frontCoverImage ? (
-          <div className="group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border border-primary/10">
+          <div
+            className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
+            {...createDropZoneProps("front-cover", onUploadFrontCover)}
+          >
             <img src={frontCoverImage.url} alt={frontCoverImage.name} className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
@@ -685,9 +755,12 @@ function StepThreeFoto({
             </button>
           </div>
         ) : (
-          <label className="w-full aspect-video rounded-lg border-2 border-dashed border-primary/30 bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer hover:border-primary transition-colors">
+          <label
+            className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
+            {...createDropZoneProps("front-cover", onUploadFrontCover)}
+          >
             <span className="material-symbols-outlined text-3xl">upload</span>
-            <span className="text-sm font-semibold">Upload Foto Cover Depan</span>
+            <span className="text-sm font-semibold">Upload atau Drop Foto Cover Depan</span>
             <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
           </label>
         )}
@@ -707,7 +780,10 @@ function StepThreeFoto({
         </div>
 
         {coverImage ? (
-          <div className="group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border border-primary/10">
+          <div
+            className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
+            {...createDropZoneProps("inner-cover", onUploadCover)}
+          >
             <img src={coverImage.url} alt={coverImage.name} className="absolute inset-0 w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
             <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
@@ -725,9 +801,12 @@ function StepThreeFoto({
             </button>
           </div>
         ) : (
-          <label className="w-full aspect-video rounded-lg border-2 border-dashed border-primary/30 bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer hover:border-primary transition-colors">
+          <label
+            className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
+            {...createDropZoneProps("inner-cover", onUploadCover)}
+          >
             <span className="material-symbols-outlined text-3xl">upload</span>
-            <span className="text-sm font-semibold">Upload Foto Setelah Buka</span>
+            <span className="text-sm font-semibold">Upload atau Drop Foto Setelah Buka</span>
             <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
           </label>
         )}
@@ -933,11 +1012,14 @@ function StepThreeFoto({
           ))}
 
           {galleryImages.length < galleryLimit && (
-            <label className="aspect-square rounded-xl border-2 border-dashed border-primary/30 hover:border-primary bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-1 text-primary hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all group cursor-pointer">
+            <label
+              className={`aspect-square rounded-xl border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-1 text-primary transition-all group cursor-pointer ${dragTarget === "gallery" ? "border-primary ring-2 ring-primary/20 bg-primary-50 dark:bg-primary-900/20" : "border-primary/30 hover:border-primary hover:bg-primary-50 dark:hover:bg-primary-900/20"}`}
+              {...createDropZoneProps("gallery", onUploadGallery)}
+            >
               <div className="w-8 h-8 rounded-full bg-primary/10 group-hover:bg-primary group-hover:text-white flex items-center justify-center transition-colors">
                 <span className="material-symbols-outlined text-lg">add</span>
               </div>
-              <span className="text-[10px] font-semibold">Tambah</span>
+              <span className="text-[10px] font-semibold">Tambah / Drop</span>
               <input type="file" accept="image/*" className="hidden" multiple onChange={onUploadGallery} />
             </label>
           )}
