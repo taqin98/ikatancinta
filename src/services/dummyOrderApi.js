@@ -32,6 +32,7 @@ export async function submitOrderDummy(payload) {
     invitationSlug: payload?.invitationSlug || null,
     createdAt: new Date().toISOString(),
     status: "processing",
+    paymentStatus: "pending",
     message: "Pesanan berhasil diterima dan sedang diproses admin.",
   };
 }

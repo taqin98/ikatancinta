@@ -127,6 +127,7 @@ function buildOrderResultShape(raw) {
     createdAt: raw?.createdAt || raw?.data?.createdAt || new Date().toISOString(),
     completedAt: raw?.completedAt || raw?.data?.completedAt || null,
     status: raw?.status || raw?.data?.status || "processing",
+    paymentStatus: raw?.paymentStatus || raw?.data?.paymentStatus || raw?.data?.payment_status || "pending",
     message: raw?.message || raw?.data?.message || "Pesanan berhasil diterima dan sedang diproses admin.",
     customerName: raw?.customerName || raw?.data?.customerName || raw?.data?.customer?.name || null,
     themeName: raw?.themeName || raw?.data?.themeName || raw?.data?.selectedTheme?.name || null,
