@@ -844,6 +844,50 @@ function applyInvitationData(root, invitationData, options = {}) {
     }
 }
 
+function formatWishRelativeTime(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return "Baru saja";
+    if (/baru saja|yang lalu/i.test(normalized)) return normalized;
+
+    const timestamp = new Date(normalized).getTime();
+    if (!Number.isFinite(timestamp)) return normalized;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs <= 0) return "Baru saja";
+
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+    const yearMs = 365 * dayMs;
+
+    if (diffMs < minuteMs) return "Baru saja";
+    if (diffMs < hourMs) {
+        const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+        return `${minutes} menit yang lalu`;
+    }
+    if (diffMs < dayMs) {
+        const hours = Math.max(1, Math.floor(diffMs / hourMs));
+        return `${hours} jam yang lalu`;
+    }
+    if (diffMs < weekMs) {
+        const days = Math.max(1, Math.floor(diffMs / dayMs));
+        return `${days} hari yang lalu`;
+    }
+    if (diffMs < monthMs) {
+        const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+        return `${weeks} minggu yang lalu`;
+    }
+    if (diffMs < yearMs) {
+        const months = Math.max(1, Math.floor(diffMs / monthMs));
+        return `${months} bulan yang lalu`;
+    }
+
+    const years = Math.max(1, Math.floor(diffMs / yearMs));
+    return `${years} tahun yang lalu`;
+}
+
 function renderWishList(listElement, wishes) {
     if (!listElement) return;
     listElement.innerHTML = "";
@@ -852,7 +896,7 @@ function renderWishList(listElement, wishes) {
     items.forEach((wish) => {
         const item = document.createElement("li");
         item.className = "cui-item-comment";
-        const meta = [wish?.createdAt, wish?.attendance].filter((part) => normalizeText(part));
+        const meta = [formatWishRelativeTime(wish?.createdAt), wish?.attendance].filter((part) => normalizeText(part));
 
         item.innerHTML = `
       <div class="cui-comment-content">
@@ -1350,6 +1394,35 @@ export default function IvoryGraceTemplate({
           }
           .ivory-grace-template #cui-box {
             display: block !important;
+          }
+
+          /* Wish form loading spinner */
+          .ivory-grace-template .cui-submit-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: ivory-grace-spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 6px;
+          }
+          @keyframes ivory-grace-spin {
+            to { transform: rotate(360deg); }
+          }
+          .ivory-grace-template #commentform-6088.is-submitting input,
+          .ivory-grace-template #commentform-6088.is-submitting textarea,
+          .ivory-grace-template #commentform-6088.is-submitting select,
+          .ivory-grace-template #commentform-6088.is-submitting button {
+            opacity: 0.6;
+            pointer-events: none;
+            cursor: not-allowed;
+          }
+          .ivory-grace-template #commentform-6088.is-submitting input[type='submit'] {
+            opacity: 0.7;
+            pointer-events: none;
+            cursor: not-allowed;
           }
         `;
         root.appendChild(runtimeStyle);
@@ -1880,7 +1953,25 @@ export default function IvoryGraceTemplate({
 
                     if (!payload.comment) return;
 
+                    // --- Disable all form inputs and show loading spinner ---
                     wishForm.classList.add("is-submitting");
+                    const formInputs = wishForm.querySelectorAll("input, textarea, select, button");
+                    formInputs.forEach((el) => { el.disabled = true; });
+
+                    const submitBtn = wishForm.querySelector("input[type='submit']");
+                    let originalSubmitValue = "";
+                    if (submitBtn) {
+                        originalSubmitValue = submitBtn.value;
+                        // Create a wrapper to show spinner + text
+                        const spinnerWrapper = document.createElement("span");
+                        spinnerWrapper.className = "cui-submit-spinner-wrap";
+                        spinnerWrapper.innerHTML = '<span class="cui-submit-spinner"></span>';
+                        submitBtn.style.position = "relative";
+                        submitBtn.value = "  Mengirim...";
+                        submitBtn.parentNode.insertBefore(spinnerWrapper, submitBtn);
+                        spinnerWrapper.style.cssText = "position:absolute;left:50%;top:50%;transform:translate(-70px,-50%);z-index:2;pointer-events:none;";
+                    }
+
                     let savedWish = null;
                     try {
                         const response = await postInvitationWish(activeInvitationSlug, payload);
@@ -1897,7 +1988,14 @@ export default function IvoryGraceTemplate({
                     } catch {
                         // keep optimistic local render
                     } finally {
+                        // --- Re-enable all form inputs and remove spinner ---
                         wishForm.classList.remove("is-submitting");
+                        formInputs.forEach((el) => { el.disabled = false; });
+                        if (submitBtn) {
+                            submitBtn.value = originalSubmitValue;
+                            const spinnerWrap = submitBtn.parentNode.querySelector(".cui-submit-spinner-wrap");
+                            if (spinnerWrap) spinnerWrap.remove();
+                        }
                     }
 
                     const currentWishes = collectWishesFromDom(root);
