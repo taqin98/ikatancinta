@@ -31,4 +31,13 @@ transform: rotate(0deg);
 
  .b{
    justify-content: flex-end;  
- }/* End custom CSS */
+ }
+
+.elementor-6088 .elementor-element.elementor-element-7ae8bc62,
+.elementor-6088 .elementor-element.elementor-element-7ae8bc62 > .elementor-background-slideshow,
+.elementor-6088 .elementor-element.elementor-element-7ae8bc62 > .e-con-inner > .elementor-background-slideshow,
+.elementor-6088 .elementor-element.elementor-element-184a38a0,
+.elementor-6088 .elementor-element.elementor-element-184a38a0 > .elementor-background-slideshow,
+.elementor-6088 .elementor-element.elementor-element-184a38a0 > .e-con-inner > .elementor-background-slideshow{
+    background-position:center !important;
+}/* End custom CSS */

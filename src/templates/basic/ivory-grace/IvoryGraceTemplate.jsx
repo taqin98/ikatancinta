@@ -263,6 +263,10 @@ function mergeInvitationData(baseSchema, incomingData) {
     return {
         ...baseSchema,
         ...incomingData,
+        invitation: {
+            ...(baseSchema.invitation || {}),
+            ...(incomingData.invitation || {}),
+        },
         guest: { ...baseSchema.guest, ...(incomingData.guest || {}) },
         couple: {
             ...baseSchema.couple,
@@ -287,6 +291,14 @@ function mergeInvitationData(baseSchema, incomingData) {
             ...baseSchema.copy,
             ...(incomingData.copy || {}),
         },
+        gift: {
+            ...(baseSchema.gift || {}),
+            ...(incomingData.gift || {}),
+            shipping: {
+                ...(baseSchema.gift?.shipping || {}),
+                ...(incomingData.gift?.shipping || {}),
+            },
+        },
         features: {
             ...baseSchema.features,
             ...(incomingData.features || {}),
@@ -298,6 +310,15 @@ function mergeInvitationData(baseSchema, incomingData) {
         audio: {
             ...baseSchema.audio,
             ...(incomingData.audio || {}),
+        },
+        wishes: {
+            ...(baseSchema.wishes || {}),
+            ...(incomingData.wishes || {}),
+            initial: Array.isArray(incomingData.wishes?.initial)
+                ? incomingData.wishes.initial
+                : Array.isArray(baseSchema.wishes?.initial)
+                    ? baseSchema.wishes.initial
+                    : [],
         },
         behavior: {
             ...behaviorDefaults,
@@ -321,10 +342,12 @@ function formatEventDateParts(dateInput) {
     const date = new Date(dateInput);
     if (!Number.isNaN(date.getTime())) {
         const dayName = date.toLocaleDateString("id-ID", { weekday: "long" });
+        const dayNumber = String(date.getDate()).padStart(2, "0");
         const month = date.toLocaleDateString("id-ID", { month: "long" });
         const year = date.getFullYear();
         return {
             dayName: dayName.charAt(0).toUpperCase() + dayName.slice(1),
+            dayNumber,
             month: month.charAt(0).toUpperCase() + month.slice(1),
             year: String(year),
         };
@@ -335,12 +358,28 @@ function formatEventDateParts(dateInput) {
     if (match) {
         return {
             dayName: match[1],
+            dayNumber: String(match[2]).padStart(2, "0"),
             month: match[3],
             year: match[4],
         };
     }
 
-    return { dayName: "Minggu", month: "Maret", year: "2025" };
+    return { dayName: "Minggu", dayNumber: "30", month: "Maret", year: "2025" };
+}
+
+function buildLocationHtml(venueName, addressText, fallbackText = "") {
+    const resolvedVenueName = normalizeText(venueName);
+    const resolvedAddress = normalizeText(addressText || fallbackText);
+
+    if (resolvedVenueName && resolvedAddress) {
+        return `<strong>${escapeHtml(resolvedVenueName)}</strong><br>${escapeHtml(resolvedAddress).replace(/,\s*/g, "<br>")}`;
+    }
+
+    if (resolvedVenueName) {
+        return `<strong>${escapeHtml(resolvedVenueName)}</strong>`;
+    }
+
+    return escapeHtml(resolvedAddress).replace(/,\s*/g, "<br>");
 }
 
 function toParagraphsHtml(value) {
@@ -384,15 +423,17 @@ function applySlideshowBackground(node, imageUrls, position = "center center") {
     node.setAttribute("data-settings", JSON.stringify(settings));
 }
 
-function applyInvitationData(root, invitationData) {
+function applyInvitationData(root, invitationData, options = {}) {
     const guest = invitationData?.guest || defaultSchema.guest;
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
     const event = invitationData?.event || defaultSchema.event;
     const copy = invitationData?.copy || defaultSchema.copy;
+    const features = invitationData?.features || defaultSchema.features;
     const heroPhoto = invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
     const bridePhoto = bride?.photo || heroPhoto;
     const groomPhoto = groom?.photo || heroPhoto;
+    const wishesBackgroundPhoto = copy?.wishesBackgroundPhoto || heroPhoto;
     const closingBackgroundPhoto = copy?.closingBackgroundPhoto || heroPhoto;
     const story = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length
         ? invitationData.lovestory
@@ -408,6 +449,51 @@ function applyInvitationData(root, invitationData) {
     };
 
     const textSelector = ".elementor-widget-container p, .elementor-heading-title";
+    const saveTheDateLabel = root.querySelector(".elementor-element-5bdec34");
+    const countdownWidget = root.querySelector(".elementor-element-385031bd");
+    const livestreamSection = root.querySelector(".elementor-element-eadbb83");
+    const loveStorySection = root.querySelector(".elementor-element-677387a1");
+    const weddingGiftSection = root.querySelector(".elementor-element-6a9229a4");
+    const wishesHeadingSection = root.querySelector(".elementor-element-5ff7119a");
+    const wishesContentSection = root.querySelector(".elementor-element-2a3245ce");
+    const disableLockedBasicSections = Boolean(options?.disableLockedBasicSections);
+
+    const removeAdjacentSpacer = (node) => {
+        const previous = node?.previousElementSibling;
+        if (!previous) return;
+        if (previous.classList.contains("elementor-widget-spacer")) {
+            previous.remove();
+        }
+    };
+
+    const setSectionAvailability = (section, enabled) => {
+        if (!section) return;
+
+        if (!enabled) {
+            if (disableLockedBasicSections) {
+                removeAdjacentSpacer(section);
+                section.remove();
+                return;
+            }
+
+            section.style.display = "none";
+            section.setAttribute("aria-hidden", "true");
+            section.setAttribute("inert", "");
+            return;
+        }
+
+        section.style.removeProperty("display");
+        section.removeAttribute("aria-hidden");
+        section.removeAttribute("inert");
+    };
+
+    setSectionAvailability(saveTheDateLabel, Boolean(features?.saveTheDateEnabled));
+    setSectionAvailability(countdownWidget, Boolean(features?.countdownEnabled));
+    setSectionAvailability(livestreamSection, disableLockedBasicSections ? false : Boolean(features?.livestreamEnabled && event?.livestream?.url));
+    setSectionAvailability(loveStorySection, disableLockedBasicSections ? false : story.length > 0);
+    setSectionAvailability(weddingGiftSection, disableLockedBasicSections ? false : Boolean(features?.digitalEnvelopeEnabled));
+    setSectionAvailability(wishesHeadingSection, Boolean(features?.rsvpEnabled));
+    setSectionAvailability(wishesContentSection, Boolean(features?.rsvpEnabled));
 
     applyClassicBackground(root.querySelector(".elementor-element-4ac17b4"), heroPhoto, "center center");
     applyClassicBackground(root.querySelector(".elementor-element-2b291b18"), bridePhoto, "center top");
@@ -418,6 +504,7 @@ function applyInvitationData(root, invitationData) {
         [event?.resepsi?.coverPhoto || event?.akad?.coverPhoto || heroPhoto],
         "center center",
     );
+    applyClassicBackground(root.querySelector(".elementor-element-31c3b0d"), wishesBackgroundPhoto, "center center");
     applyClassicBackground(root.querySelector(".elementor-element-4982d8ca"), closingBackgroundPhoto, "center center");
 
     replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
@@ -482,8 +569,8 @@ function applyInvitationData(root, invitationData) {
     if (closingTextNode && copy?.closingText) closingTextNode.textContent = copy.closingText;
 
     const closingLabelNode = root.querySelector(".elementor-element-c8e94f2 .elementor-widget-container p");
-    if (closingLabelNode && contentDefaults?.copy?.closingLabel) {
-        closingLabelNode.textContent = contentDefaults.copy.closingLabel;
+    if (closingLabelNode && copy?.closingLabel) {
+        closingLabelNode.textContent = copy.closingLabel;
     }
 
     const supportNode = root.querySelector(".elementor-element-6ba9c300 .elementor-widget-container p");
@@ -497,9 +584,21 @@ function applyInvitationData(root, invitationData) {
     const akadParts = formatEventDateParts(event?.akad?.date || event?.dateISO);
     const resepsiParts = formatEventDateParts(event?.resepsi?.date || event?.dateISO);
 
+    const akadDayNumberNode = root.querySelector(".elementor-element-3ee792e1 .elementor-counter-number");
+    if (akadDayNumberNode) {
+        akadDayNumberNode.setAttribute("data-to-value", akadParts.dayNumber);
+        akadDayNumberNode.textContent = akadParts.dayNumber;
+    }
+
     const akadDateNode = root.querySelector(".elementor-element-27bc26ac .elementor-widget-container");
     if (akadDateNode) {
         akadDateNode.innerHTML = `<p><strong>${escapeHtml(akadParts.dayName)}</strong></p><p>${escapeHtml(akadParts.month)}</p><p>${escapeHtml(akadParts.year)}</p>`;
+    }
+
+    const resepsiDayNumberNode = root.querySelector(".elementor-element-7cb73a83 .elementor-counter-number");
+    if (resepsiDayNumberNode) {
+        resepsiDayNumberNode.setAttribute("data-to-value", resepsiParts.dayNumber);
+        resepsiDayNumberNode.textContent = resepsiParts.dayNumber;
     }
 
     const resepsiDateNode = root.querySelector(".elementor-element-a1a638b .elementor-widget-container");
@@ -515,12 +614,20 @@ function applyInvitationData(root, invitationData) {
 
     const akadLocationNode = root.querySelector(".elementor-element-9f6db23 .elementor-widget-container p");
     if (akadLocationNode) {
-        akadLocationNode.innerHTML = escapeHtml(event?.akad?.address || contentDefaults.event.akad.address).replace(/,\s*/g, "<br>");
+        akadLocationNode.innerHTML = buildLocationHtml(
+            event?.akad?.venueName,
+            event?.akad?.address,
+            contentDefaults.event.akad.address,
+        );
     }
 
     const resepsiLocationNode = root.querySelector(".elementor-element-1c6215b4 .elementor-widget-container p");
     if (resepsiLocationNode) {
-        resepsiLocationNode.innerHTML = escapeHtml(event?.resepsi?.address || contentDefaults.event.resepsi.address).replace(/,\s*/g, "<br>");
+        resepsiLocationNode.innerHTML = buildLocationHtml(
+            event?.resepsi?.venueName,
+            event?.resepsi?.address,
+            contentDefaults.event.resepsi.address,
+        );
     }
 
     const mapsButtons = root.querySelectorAll(".elementor-element-5c49b31f .elementor-button, .elementor-element-1fe9c2b2 .elementor-button");
@@ -595,7 +702,10 @@ function applyInvitationData(root, invitationData) {
         }
     });
 
-    const bankList = invitationData?.features?.digitalEnvelopeInfo?.bankList || contentDefaults?.gift?.bankList || [];
+    const bankList = invitationData?.gift?.bankList
+        || invitationData?.features?.digitalEnvelopeInfo?.bankList
+        || contentDefaults?.gift?.bankList
+        || [];
 
     const accountNodes = [
         root.querySelector(".elementor-element-160ecac5 .elementor-heading-title"),
@@ -624,14 +734,15 @@ function applyInvitationData(root, invitationData) {
 
     const shippingContainer = root.querySelector(".elementor-element-42ab8f5e .elementor-widget-container");
     if (shippingContainer) {
-        const shipping = contentDefaults?.gift?.shipping || invitationData?.gift?.shipping || {};
+        const shipping = invitationData?.gift?.shipping || contentDefaults?.gift?.shipping || {};
         shippingContainer.innerHTML = `<p>Nama Penerima : ${escapeHtml(shipping.recipient || groom?.nameFull || "-")}</p><p>No. HP : ${escapeHtml(shipping.phone || "-")}</p><p>${escapeHtml(shipping.address || event?.akad?.address || "-")}</p>`;
     }
 
     const wishTitleMain = root.querySelector(".elementor-element-7fce3e6e .elementor-widget-container p");
     const wishTitleSub = root.querySelector(".elementor-element-51680b1d .elementor-widget-container p");
-    if (contentDefaults?.wishes?.title) {
-        const parts = normalizeText(contentDefaults.wishes.title).split(" ");
+    const wishTitle = invitationData?.wishes?.title || contentDefaults?.wishes?.title;
+    if (wishTitle) {
+        const parts = normalizeText(wishTitle).split(" ");
         if (wishTitleMain) wishTitleMain.textContent = parts[0] || "Ucapan";
         if (wishTitleSub) wishTitleSub.textContent = parts.slice(1).join(" ") || "Sesuatu";
     }
@@ -1082,7 +1193,9 @@ export default function IvoryGraceTemplate({
 
         ensureElementorFallbackBackgrounds(root);
         buildGalleryFallbackLayout(root);
-        applyInvitationData(root, mergedData);
+        applyInvitationData(root, mergedData, {
+            disableLockedBasicSections: mode !== "preview",
+        });
 
         root.querySelectorAll(".elementor-counter-number[data-to-value]").forEach((node) => {
             node.textContent = node.getAttribute("data-to-value") || node.textContent;
@@ -1110,8 +1223,31 @@ export default function IvoryGraceTemplate({
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
             cursor: pointer;
           }
+          .ivory-grace-template #audio-container .elementor-icon-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
           .ivory-grace-template #audio-container .elementor-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent !important;
             color: #ffffff !important;
+            fill: #ffffff !important;
+            padding: 0 !important;
+            box-shadow: none !important;
+          }
+          .ivory-grace-template #audio-container .elementor-icon:hover,
+          .ivory-grace-template #audio-container .elementor-icon:focus {
+            background: transparent !important;
+            color: #ffffff !important;
+            fill: #ffffff !important;
+          }
+          .ivory-grace-template #audio-container .elementor-icon i,
+          .ivory-grace-template #audio-container .elementor-icon svg {
+            color: inherit !important;
+            fill: inherit !important;
           }
           .ivory-grace-template #cui-wrap-commnent-6088 {
             display: block;
@@ -1541,9 +1677,15 @@ export default function IvoryGraceTemplate({
 
                 const handleWishSubmit = async (event) => {
                     event.preventDefault();
+                    if (wishForm.classList.contains("is-submitting")) return;
 
                     const formData = new FormData(wishForm);
+                    const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "ivory-grace";
                     const payload = {
+                        invitationSlug: activeInvitationSlug,
+                        invitation_slug: activeInvitationSlug,
+                        orderId: mergedData?.invitation?.orderId || mergedData?.orderId || null,
+                        order_id: mergedData?.invitation?.orderId || mergedData?.orderId || null,
                         author: normalizeText(formData.get("author") || mergedData?.guest?.name || "Tamu"),
                         comment: normalizeText(formData.get("comment") || ""),
                         attendance: normalizeText(formData.get("konfirmasi") || "-"),
@@ -1552,14 +1694,28 @@ export default function IvoryGraceTemplate({
 
                     if (!payload.comment) return;
 
+                    wishForm.classList.add("is-submitting");
+                    let savedWish = null;
                     try {
-                        await postInvitationWish("ivory-grace", payload);
+                        const response = await postInvitationWish(activeInvitationSlug, payload);
+                        savedWish = response?.data && typeof response.data === "object"
+                            ? {
+                                invitationSlug: response.data.invitationSlug || payload.invitationSlug || null,
+                                orderId: response.data.orderId || payload.orderId || null,
+                                author: normalizeText(response.data.author || response.data.name || payload.author || "Tamu"),
+                                comment: normalizeText(response.data.comment || response.data.message || payload.comment || ""),
+                                attendance: normalizeText(response.data.attendance || payload.attendance || "-"),
+                                createdAt: response.data.createdAt || payload.createdAt || "Baru saja",
+                            }
+                            : null;
                     } catch {
                         // keep optimistic local render
+                    } finally {
+                        wishForm.classList.remove("is-submitting");
                     }
 
                     const currentWishes = collectWishesFromDom(root);
-                    const nextWishes = [payload, ...currentWishes];
+                    const nextWishes = [savedWish || payload, ...currentWishes];
                     renderWishList(wishesList, nextWishes);
                     updateAttendanceCounts(root, nextWishes);
 
@@ -1629,7 +1785,7 @@ export default function IvoryGraceTemplate({
 
             audioRef.current = null;
         };
-    }, [sourceArtifacts.markup, mergedData, behavior, mode, onFetchWishes, onSubmitWish]);
+    }, [sourceArtifacts.markup, mergedData, behavior, mode, invitationSlug, onFetchWishes, onSubmitWish]);
 
     useEffect(() => {
         const root = rootRef.current;

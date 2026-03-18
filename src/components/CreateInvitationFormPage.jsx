@@ -2277,7 +2277,7 @@ export default function CreateInvitationFormPage() {
                 className="w-full mb-3 flex items-center justify-center gap-2 rounded-full border border-primary/40 text-primary font-semibold py-2.5 text-sm hover:bg-primary/5 transition-colors"
               >
                 <span className="material-symbols-outlined text-base">preview</span>
-                Preview Undangan Langsung
+                Desain Undangan
               </button>
             )}
             <div className="flex gap-3 sm:gap-4">

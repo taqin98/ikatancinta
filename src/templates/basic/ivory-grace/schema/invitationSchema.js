@@ -30,12 +30,14 @@ export const defaultSchema = {
         akad: {
             date: contentDefaults?.event?.akad?.date || "Minggu, 30 Maret 2025",
             time: contentDefaults?.event?.akad?.time || "09.00 WIB",
+            venueName: "",
             address: contentDefaults?.event?.akad?.address || "Simpang Lima Gumul, Kediri",
             mapsUrl: contentDefaults?.event?.akad?.mapsUrl || "https://maps.google.com",
         },
         resepsi: {
             date: contentDefaults?.event?.resepsi?.date || "Minggu, 30 Maret 2025",
             time: contentDefaults?.event?.resepsi?.time || "10.00 WIB",
+            venueName: "",
             address: contentDefaults?.event?.resepsi?.address || "Simpang Lima Gumul, Kediri",
             mapsUrl: contentDefaults?.event?.resepsi?.mapsUrl || "https://maps.google.com",
         },
@@ -53,10 +55,22 @@ export const defaultSchema = {
             "Tanpa mengurangi rasa hormat, kami mengundang Bapak/Ibu/Saudara/i serta kerabat sekalian untuk menghadiri acara pernikahan kami.",
         quote: contentDefaults?.copy?.quote || "",
         quoteSource: contentDefaults?.copy?.quoteSource || "",
+        wishesBackgroundPhoto: "",
+        closingBackgroundPhoto: "",
         closingText: contentDefaults?.copy?.closingText || "",
+        closingLabel: contentDefaults?.copy?.closingLabel || "KAMI YANG BERBAHAGIA",
+        supportText: contentDefaults?.copy?.supportText || "",
     },
     lovestory: Array.isArray(contentDefaults?.lovestory) ? contentDefaults.lovestory : [],
     gallery: Array.isArray(contentDefaults?.gallery) ? contentDefaults.gallery : [],
+    gift: {
+        bankList: contentDefaults?.gift?.bankList || [],
+        shipping: contentDefaults?.gift?.shipping || {
+            recipient: "",
+            phone: "",
+            address: "",
+        },
+    },
     features: {
         countdownEnabled: true,
         saveTheDateEnabled: true,
