@@ -152,7 +152,7 @@ function App() {
   }
 
   if (pathname === "/undangan/ivory-grace") {
-    return <IvoryGraceTemplate />;
+    return <IvoryGraceTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/navy-blossom") {

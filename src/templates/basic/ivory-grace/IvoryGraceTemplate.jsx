@@ -916,9 +916,10 @@ export default function IvoryGraceTemplate({
     onSubmitWish,
     onFetchWishes,
 }) {
+    const isStaticDemoMode = mode === "demo";
     const { data: fetchedData } = useInvitationData(invitationSlug, {
         fallbackSlug: "ivory-grace",
-        skipFetch: Boolean(externalData),
+        skipFetch: Boolean(externalData) || isStaticDemoMode,
     });
 
     const [opened, setOpened] = useState(false);
