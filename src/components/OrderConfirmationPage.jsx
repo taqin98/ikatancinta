@@ -136,7 +136,8 @@ export default function OrderConfirmationPage() {
             current?.customerName === next.customerName &&
             current?.packageTier === next.packageTier &&
             current?.themeName === next.themeName &&
-            current?.totalPrice === next.totalPrice
+            current?.totalPrice === next.totalPrice &&
+            current?.paymentStatus === next.paymentStatus
           ) {
             return current;
           }
@@ -178,7 +179,9 @@ export default function OrderConfirmationPage() {
   };
 
   const orderReceivedAt = formatDateTimeID(orderData?.createdAt) !== "-" ? `${formatDateTimeID(orderData?.createdAt)} WIB` : "24 Sep 2026, 14:30 WIB";
-  const isDone = orderData?.status === "done" || orderData?.status === "completed";
+  const isDone = orderData?.status === "published" || orderData?.status === "done" || orderData?.status === "completed";
+  const isPaymentConfirmed = orderData?.paymentStatus === "confirmed" || isDone;
+  const isPreparing = isPaymentConfirmed && !isDone;
   const orderCompletedAt =
     formatDateTimeID(orderData?.completedAt) !== "-" ? `${formatDateTimeID(orderData?.completedAt)} WIB` : "Estimasi 1x24 Jam";
 
@@ -309,9 +312,8 @@ export default function OrderConfirmationPage() {
                               </div>
                               {item.urlContent && (
                                 <span
-                                  className={`material-symbols-outlined text-[18px] text-amber-500 dark:text-amber-400 shrink-0 transition-transform duration-200 ${
-                                    expandedQr[item.methodId] ? "rotate-180" : ""
-                                  }`}
+                                  className={`material-symbols-outlined text-[18px] text-amber-500 dark:text-amber-400 shrink-0 transition-transform duration-200 ${expandedQr[item.methodId] ? "rotate-180" : ""
+                                    }`}
                                 >expand_more</span>
                               )}
                             </div>
@@ -393,6 +395,7 @@ export default function OrderConfirmationPage() {
             <div className="relative flex flex-col gap-6 pl-2">
               <div className="absolute left-[19px] top-3 bottom-8 w-[2px] bg-slate-200 dark:bg-slate-700"></div>
 
+              {/* Step 1: Pesanan Diterima — always checked */}
               <div className="flex gap-4 relative z-10">
                 <div className="size-10 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
                   <span className="material-symbols-outlined text-white text-[20px]">check</span>
@@ -403,8 +406,9 @@ export default function OrderConfirmationPage() {
                 </div>
               </div>
 
+              {/* Step 2: Verifikasi & Proses — checked when paymentStatus confirmed */}
               <div className="flex gap-4 relative z-10">
-                {isDone ? (
+                {isPaymentConfirmed ? (
                   <div className="size-10 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
                     <span className="material-symbols-outlined text-white text-[20px]">check</span>
                   </div>
@@ -414,11 +418,37 @@ export default function OrderConfirmationPage() {
                   </div>
                 )}
                 <div className="flex flex-col justify-center">
-                  <h3 className="text-primary font-bold text-sm">Verifikasi & Proses</h3>
-                  <span className="text-primary/80 text-xs">{isDone ? "Selesai" : "Menunggu pembayaran..."}</span>
+                  <h3 className={`${isPaymentConfirmed ? "text-slate-900 dark:text-slate-100" : "text-primary"} font-bold text-sm`}>Verifikasi & Proses</h3>
+                  <span className={`${isPaymentConfirmed ? "text-slate-500 dark:text-slate-400" : "text-primary/80"} text-xs`}>
+                    {isPaymentConfirmed ? "Pembayaran dikonfirmasi" : "Menunggu pembayaran..."}
+                  </span>
                 </div>
               </div>
 
+              {/* Step 3: Menyiapkan Undangan — active when payment confirmed, checked when done */}
+              <div className={`flex gap-4 relative z-10 ${!isPaymentConfirmed ? "opacity-50" : ""}`}>
+                {isDone ? (
+                  <div className="size-10 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
+                    <span className="material-symbols-outlined text-white text-[20px]">check</span>
+                  </div>
+                ) : isPreparing ? (
+                  <div className="size-10 rounded-full bg-white dark:bg-surface-dark border-2 border-primary flex items-center justify-center shrink-0 relative">
+                    <div className="size-3 bg-primary rounded-full animate-pulse"></div>
+                  </div>
+                ) : (
+                  <div className="size-10 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center shrink-0">
+                    <div className="size-3 bg-slate-400 dark:bg-slate-500 rounded-full"></div>
+                  </div>
+                )}
+                <div className="flex flex-col justify-center">
+                  <h3 className={`${isDone ? "text-slate-900 dark:text-slate-100 font-bold" : isPreparing ? "text-primary font-bold" : "text-slate-500 dark:text-slate-400 font-medium"} text-sm`}>Menyiapkan Undangan</h3>
+                  <span className={`${isDone ? "text-slate-500 dark:text-slate-400" : isPreparing ? "text-primary/80" : "text-slate-400 dark:text-slate-500"} text-xs`}>
+                    {isDone ? "Selesai" : isPreparing ? "Sedang dikerjakan..." : "Menunggu verifikasi"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Step 4: Undangan Selesai — checked when done */}
               <div className={`flex gap-4 relative z-10 ${isDone ? "" : "opacity-50"}`}>
                 {isDone ? (
                   <div className="size-10 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-sm shadow-primary/30">
