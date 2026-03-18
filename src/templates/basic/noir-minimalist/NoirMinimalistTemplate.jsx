@@ -443,6 +443,102 @@ function buildLocationHtml(venueName, addressText, fallbackText = "") {
     return escapeHtml(resolvedAddress).replace(/,\s*/g, "<br>");
 }
 
+function parseEventDateTime(dateValue, timeValue, fallbackDateValue = "") {
+    const directDate = new Date(dateValue || fallbackDateValue);
+    if (!Number.isNaN(directDate.getTime())) {
+        return directDate;
+    }
+
+    const text = normalizeText(dateValue || fallbackDateValue);
+    if (!text) return null;
+
+    const monthMap = {
+        januari: 0,
+        februari: 1,
+        maret: 2,
+        april: 3,
+        mei: 4,
+        juni: 5,
+        juli: 6,
+        agustus: 7,
+        september: 8,
+        oktober: 9,
+        november: 10,
+        desember: 11,
+    };
+
+    const match = text.match(/(?:[A-Za-zÀ-ÿ]+,\s*)?(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s+(\d{4})/i);
+    if (!match) return null;
+
+    const day = Number(match[1]);
+    const monthName = normalizeText(match[2]).toLowerCase();
+    const month = monthMap[monthName];
+    const year = Number(match[3]);
+    if (!Number.isFinite(day) || !Number.isFinite(year) || month === undefined) {
+        return null;
+    }
+
+    const timeMatch = normalizeText(timeValue).match(/(\d{1,2})[.:](\d{2})/);
+    const hours = timeMatch ? Number(timeMatch[1]) : 0;
+    const minutes = timeMatch ? Number(timeMatch[2]) : 0;
+
+    return new Date(year, month, day, hours, minutes, 0, 0);
+}
+
+function formatIcsDateLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
+function escapeIcsText(value) {
+    return String(value || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+}
+
+function downloadCalendarReminder({ title, startDate, location, description, fileName }) {
+    if (!(startDate instanceof Date) || Number.isNaN(startDate.getTime())) return;
+
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    const uid = `${startDate.getTime()}-${normalizeText(fileName || "event").replace(/\s+/g, "-").toLowerCase()}@ikatancinta`;
+    const icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Ikatan Cinta//NoirMinimalist//EN",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VEVENT",
+        `UID:${uid}`,
+        `DTSTAMP:${formatIcsDateLocal(new Date())}`,
+        `DTSTART:${formatIcsDateLocal(startDate)}`,
+        `DTEND:${formatIcsDateLocal(endDate)}`,
+        `SUMMARY:${escapeIcsText(title)}`,
+        `DESCRIPTION:${escapeIcsText(description)}`,
+        `LOCATION:${escapeIcsText(location)}`,
+        "BEGIN:VALARM",
+        "TRIGGER:-P1D",
+        "ACTION:DISPLAY",
+        `DESCRIPTION:${escapeIcsText(`Pengingat ${title}`)}`,
+        "END:VALARM",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ].join("\r\n");
+
+    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = fileName || "save-the-date.ics";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
 function formatWishRelativeTime(value) {
     const normalized = normalizeText(value);
     if (!normalized) return "Baru saja";
@@ -1637,6 +1733,91 @@ export default function NoirMinimalistTemplate({
 
             audioContainer.addEventListener("keydown", handleAudioKeyDown);
             addCleanup(() => audioContainer.removeEventListener("keydown", handleAudioKeyDown));
+        }
+
+        const calendarButtonConfigs = [
+            {
+                widgetSelector: ".elementor-element-69f16928",
+                eventName: "Akad",
+                detail: mergedData?.event?.akad,
+                fallbackDetail: contentDefaults?.event?.akad,
+            },
+            {
+                widgetSelector: ".elementor-element-6a78504b",
+                eventName: "Resepsi",
+                detail: mergedData?.event?.resepsi,
+                fallbackDetail: contentDefaults?.event?.resepsi,
+            },
+        ];
+
+        if (mergedData?.features?.saveTheDateEnabled) {
+            calendarButtonConfigs.forEach(({ widgetSelector, eventName, detail, fallbackDetail }) => {
+                const existingWidget = root.querySelector(widgetSelector);
+                if (!existingWidget) return;
+
+                const calendarWidget = existingWidget.cloneNode(true);
+                calendarWidget.setAttribute("data-calendar-widget-for", widgetSelector);
+
+                const calendarButton = calendarWidget.querySelector(".elementor-button");
+                if (!calendarButton) {
+                    calendarWidget.remove();
+                    return;
+                }
+
+                calendarButton.removeAttribute("href");
+                calendarButton.removeAttribute("target");
+                calendarButton.removeAttribute("rel");
+                calendarButton.setAttribute("role", "button");
+
+                const textNode = calendarButton.querySelector(".elementor-button-text");
+                if (textNode) {
+                    textNode.textContent = "Tambah ke Kalender";
+                }
+
+                const eventStart = parseEventDateTime(
+                    detail?.date,
+                    detail?.time,
+                    mergedData?.event?.dateISO || fallbackDetail?.date || contentDefaults?.event?.dateISO,
+                ) || parseEventDateTime(
+                    mergedData?.event?.dateISO,
+                    detail?.time || fallbackDetail?.time,
+                    contentDefaults?.event?.dateISO,
+                );
+
+                const locationText = [
+                    normalizeText(detail?.venueName || ""),
+                    normalizeText(detail?.address || fallbackDetail?.address || ""),
+                ]
+                    .filter(Boolean)
+                    .join(", ");
+
+                const reminderTitle = [
+                    "Pernikahan",
+                    normalizeText(mergedData?.couple?.groom?.nickName || contentDefaults?.couple?.groom?.nickName || ""),
+                    "&",
+                    normalizeText(mergedData?.couple?.bride?.nickName || contentDefaults?.couple?.bride?.nickName || ""),
+                    "-",
+                    eventName,
+                ]
+                    .filter(Boolean)
+                    .join(" ");
+
+                const handleCalendarClick = (event) => {
+                    event.preventDefault();
+                    downloadCalendarReminder({
+                        title: reminderTitle,
+                        startDate: eventStart,
+                        location: locationText,
+                        description: mergedData?.copy?.openingText || contentDefaults?.copy?.openingText || "",
+                        fileName: `${eventName.toLowerCase()}-noir-minimalist.ics`,
+                    });
+                };
+
+                calendarButton.addEventListener("click", handleCalendarClick);
+                addCleanup(() => calendarButton.removeEventListener("click", handleCalendarClick));
+
+                existingWidget.insertAdjacentElement("afterend", calendarWidget);
+            });
         }
 
         const activateMotionText = () => {
