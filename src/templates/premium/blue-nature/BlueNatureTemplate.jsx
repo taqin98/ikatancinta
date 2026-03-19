@@ -727,6 +727,11 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                         </div>
                     </section>
                 )}
+                {behavior?.audio?.enabled !== false && (
+                    <audio ref={audioRef} loop={audio?.loop !== false} preload="auto" style={{ display: "none" }}>
+                        <source src={resolveLocalAsset(audio?.src, BackgroundMusic)} type="audio/mp3" />
+                    </audio>
+                )}
 
                 {opened && (
                     <main className="bn-main">
@@ -1141,9 +1146,6 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                 >
                                     <i className={audioPlaying ? "bn-fas bn-fa-compact-disc" : "bn-fas bn-fa-play-circle"} />
                                 </button>
-                                <audio ref={audioRef} loop={audio?.loop !== false} preload="auto">
-                                    <source src={resolveLocalAsset(audio?.src, BackgroundMusic)} type="audio/mp3" />
-                                </audio>
                             </div>
                         ) : null}
                     </main>
