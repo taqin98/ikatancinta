@@ -558,7 +558,7 @@ export default function TimelessPromiseTemplate({
     onSubmitWish,
     onFetchWishes,
 }) {
-    const { data: fetchedData } = useInvitationData(invitationSlug, {
+    const { data: fetchedData, loading } = useInvitationData(invitationSlug, {
         fallbackSlug: "timeless-promise",
         skipFetch: Boolean(externalData),
     });
@@ -680,10 +680,8 @@ export default function TimelessPromiseTemplate({
 
     useEffect(() => {
         const root = rootRef.current;
-        if (!root) return undefined;
+        if (!root) return;
 
-        setOpened(false);
-        setAudioPlaying(false);
         root.innerHTML = sourceArtifacts.markup;
 
         // Elementor normally removes this class at runtime after animation bootstrap.
@@ -697,6 +695,11 @@ export default function TimelessPromiseTemplate({
         root.querySelectorAll(".e-con.e-parent").forEach((node) => {
             node.classList.add("e-lazyloaded");
         });
+    }, [sourceArtifacts.markup]);
+
+    useEffect(() => {
+        const root = rootRef.current;
+        if (!root || loading) return undefined;
 
         root.querySelectorAll("[src], [href], [poster], [data-thumbnail], [srcset], [style]").forEach((node) => {
             ["src", "href", "poster", "data-thumbnail"].forEach((attribute) => {
@@ -993,7 +996,7 @@ export default function TimelessPromiseTemplate({
         };
 
         const sec = root.querySelector("#sec");
-        if (behavior.cover.lockScrollUntilOpen && sec) {
+        if (behavior.cover.lockScrollUntilOpen && sec && !opened) {
             lockBody();
         }
 
@@ -1008,13 +1011,13 @@ export default function TimelessPromiseTemplate({
 
         const syncAudioIcons = () => {
             if (!muteSound || !unmuteSound) return;
-            if (!isOpened) {
+            if (!opened) { // CHANGED: use component state 'opened' instead of local 'isOpened'
                 muteSound.style.display = "none";
                 unmuteSound.style.display = "none";
                 return;
             }
 
-            if (isAudioPlaying) {
+            if (audioPlaying) { // CHANGED: use component state 'audioPlaying' instead of local 'isAudioPlaying'
                 muteSound.style.display = "block";
                 unmuteSound.style.display = "none";
             } else {
@@ -1469,20 +1472,35 @@ export default function TimelessPromiseTemplate({
         }, 400);
         timers.push(refreshTimer);
 
-        syncAudioIcons();
+        if (opened) {
+            isOpened = true;
+            isAudioPlaying = audioPlaying;
+            if (floatingNav) floatingNav.style.display = "flex";
+            if (audioWidget) audioWidget.style.display = "block";
+            if (audioContainer) audioContainer.style.display = "flex";
+
+            if (coverColumn) {
+                coverColumn.style.display = "none";
+            }
+            if (sec) {
+                sec.style.display = "none";
+            }
+            unlockBody();
+            activateMotionText();
+        }
 
         return () => {
-            timers.forEach((timer) => window.clearTimeout(timer));
-            cleanups.forEach((cleanup) => cleanup());
-            isOpened = false;
-
+            timers.forEach(window.clearTimeout);
+            cleanups.forEach((fn) => {
+                if (typeof fn === "function") fn();
+            });
             if (bodyLocked) {
                 unlockBody();
             }
 
             audioRef.current = null;
         };
-    }, [sourceArtifacts.markup, mergedData, behavior, mode, onFetchWishes, onSubmitWish]);
+    }, [mergedData, behavior, mode, onFetchWishes, onSubmitWish]);
 
     useEffect(() => {
         const root = rootRef.current;
