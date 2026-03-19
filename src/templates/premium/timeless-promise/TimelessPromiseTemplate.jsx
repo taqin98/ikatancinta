@@ -568,10 +568,12 @@ export default function TimelessPromiseTemplate({
     const [lightboxOpen, setLightboxOpen] = useState(false);
     const [lightboxIndex, setLightboxIndex] = useState(0);
     const [lightboxSlides, setLightboxSlides] = useState([]);
+    const [ready, setReady] = useState(false);
 
     const rootRef = useRef(null);
     const audioRef = useRef(null);
     const wasPlayingOnHiddenRef = useRef(false);
+    const isInitializedRef = useRef(false);
 
     const sourceArtifacts = useMemo(() => parseSourceArtifacts(sourceHtml), []);
 
@@ -618,39 +620,6 @@ export default function TimelessPromiseTemplate({
     }, []);
 
     useEffect(() => {
-        const nodes = [];
-
-        sourceArtifacts.styleSequence.forEach((entry) => {
-            if (entry.type === "link") {
-                const href = resolveAssetUrl(entry.href || "");
-                if (!href) return;
-
-                const link = document.createElement("link");
-                link.setAttribute("rel", "stylesheet");
-                link.setAttribute("href", href);
-                link.setAttribute("data-tp-style", "1");
-                document.head.appendChild(link);
-                nodes.push(link);
-                return;
-            }
-
-            const style = document.createElement("style");
-            style.setAttribute("data-tp-inline-style", "1");
-            style.textContent = rewriteCssAssetUrls(entry.css || "");
-            document.head.appendChild(style);
-            nodes.push(style);
-        });
-
-        return () => {
-            nodes.forEach((node) => {
-                if (node.parentNode) {
-                    node.parentNode.removeChild(node);
-                }
-            });
-        };
-    }, [sourceArtifacts.styleSequence]);
-
-    useEffect(() => {
         if (!behavior.aos) return undefined;
 
         AOS.init({
@@ -668,25 +637,58 @@ export default function TimelessPromiseTemplate({
     useEffect(() => {
         const root = rootRef.current;
         if (!root) return;
+        if (isInitializedRef.current) return;
 
+        // 1. Inject Markup
         root.innerHTML = sourceArtifacts.markup;
+        isInitializedRef.current = true;
 
-        // Elementor normally removes this class at runtime after animation bootstrap.
-        // In React migration (without Elementor runtime), keep content visible explicitly.
+        // 2. Apply Data
+        applyInvitationData(root, mergedData);
+
+        // 3. Reveal
         root.querySelectorAll(".elementor-invisible").forEach((node) => {
             node.classList.remove("elementor-invisible");
         });
-
-        // Source template relies on Elementor lazyload observer to reveal section backgrounds.
-        // In React mode (without Elementor runtime), mark all parent containers as loaded.
         root.querySelectorAll(".e-con.e-parent").forEach((node) => {
             node.classList.add("e-lazyloaded");
         });
-    }, [sourceArtifacts.markup]);
+
+        // 4. Finalize
+        setReady(true);
+    }, [sourceArtifacts.markup, mergedData]);
+
+    useEffect(() => {
+        const styleNodes = [];
+        sourceArtifacts.styleSequence.forEach((entry) => {
+            if (entry.type === "link") {
+                const href = resolveAssetUrl(entry.href || "");
+                if (!href) return;
+                const link = document.createElement("link");
+                link.setAttribute("rel", "stylesheet");
+                link.setAttribute("href", href);
+                link.setAttribute("data-tp-style", "1");
+                document.head.appendChild(link);
+                styleNodes.push(link);
+                return;
+            }
+            const style = document.createElement("style");
+            style.setAttribute("data-tp-inline-style", "1");
+            style.textContent = rewriteCssAssetUrls(entry.css || "");
+            document.head.appendChild(style);
+            styleNodes.push(style);
+        });
+
+        return () => {
+            styleNodes.forEach((node) => {
+                if (node.parentNode) node.parentNode.removeChild(node);
+            });
+        };
+    }, [sourceArtifacts.styleSequence]);
 
     useEffect(() => {
         const root = rootRef.current;
-        if (!root || loading) return undefined;
+        if (!root) return undefined;
 
         root.querySelectorAll("[src], [href], [poster], [data-thumbnail], [srcset], [style]").forEach((node) => {
             ["src", "href", "poster", "data-thumbnail"].forEach((attribute) => {
@@ -769,8 +771,6 @@ export default function TimelessPromiseTemplate({
             node.style.backgroundPosition = "top center";
             node.style.backgroundSize = "cover";
         });
-
-        applyInvitationData(root, mergedData);
 
         // Ensure digital-envelope headings stay visible even without full Elementor animation runtime.
         root.querySelectorAll(".elementor-element-5f53c68c, .elementor-element-79395a37, #klik").forEach((node) => {
@@ -1480,7 +1480,15 @@ export default function TimelessPromiseTemplate({
 
             audioRef.current = null;
         };
-    }, [mergedData, behavior, mode, onFetchWishes, onSubmitWish, wishes]);
+    }, [mergedData, behavior, mode, onFetchWishes, onSubmitWish]);
+
+    useEffect(() => {
+        const root = rootRef.current;
+        const wishesList = root?.querySelector("#cui-container-comment-5816");
+        if (wishesList) {
+            renderWishList(wishesList, wishes);
+        }
+    }, [wishes]);
 
     useEffect(() => {
         const root = rootRef.current;
@@ -1519,9 +1527,46 @@ export default function TimelessPromiseTemplate({
         }
     }, [opened, audioPlaying]);
 
+    if (loading && !mergedData && !externalData) {
+        return (
+            <div
+                className="timeless-promise-template-loading"
+                style={{
+                    minHeight: "100vh",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#fdf8f4",
+                    color: "#5f2424",
+                    fontFamily: "serif",
+                }}
+            >
+                <div style={{ textAlign: "center" }}>
+                    <div className="tp-loading-spinner" style={{ 
+                        display: "inline-block",
+                        width: 40, 
+                        height: 40, 
+                        border: "4px solid rgba(95, 36, 36, 0.2)",
+                        borderTopColor: "#5f2424",
+                        borderRadius: "50%",
+                        animation: "tp-spin 0.6s linear infinite"
+                    }}></div>
+                    <p style={{ marginTop: 16, fontSize: 18, letterSpacing: 1 }}>Memuat Undangan...</p>
+                    <style>{`
+                        @keyframes tp-spin { to { transform: rotate(360deg); } }
+                    `}</style>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <>
-            <div className="timeless-promise-template" ref={rootRef} />
+            <div 
+                className="timeless-promise-template" 
+                ref={rootRef} 
+                style={{ visibility: ready ? "visible" : "hidden", opacity: ready ? 1 : 0 }}
+            />
 
             <SimpleLightbox
                 open={lightboxOpen}
