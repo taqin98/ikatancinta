@@ -580,48 +580,35 @@ export default function TimelessPromiseTemplate({
         return mergeInvitationData(defaultSchema, incoming);
     }, [externalData, fetchedData]);
 
+    const guest = mergedData?.guest;
+    const couple = mergedData?.couple;
+    const event = mergedData?.event;
+    const copy = mergedData?.copy;
+    const lovestory = mergedData?.lovestory;
+    const gallery = mergedData?.gallery;
+    const features = mergedData?.features;
+    const gift = mergedData?.gift;
+
     const behavior = useMemo(() => {
         return {
             ...behaviorDefaults,
             ...(mergedData?.behavior || {}),
-            audio: {
-                ...behaviorDefaults.audio,
-                ...(mergedData?.behavior?.audio || {}),
-            },
-            countdown: {
-                ...behaviorDefaults.countdown,
-                ...(mergedData?.behavior?.countdown || {}),
-            },
-            cover: {
-                ...behaviorDefaults.cover,
-                ...(mergedData?.behavior?.cover || {}),
-            },
-            gift: {
-                ...behaviorDefaults.gift,
-                ...(mergedData?.behavior?.gift || {}),
-            },
-            copy: {
-                ...behaviorDefaults.copy,
-                ...(mergedData?.behavior?.copy || {}),
-            },
-            lightbox: {
-                ...behaviorDefaults.lightbox,
-                ...(mergedData?.behavior?.lightbox || {}),
-            },
-            motionText: {
-                ...behaviorDefaults.motionText,
-                ...(mergedData?.behavior?.motionText || {}),
-            },
-            viewportVh: {
-                ...behaviorDefaults.viewportVh,
-                ...(mergedData?.behavior?.viewportVh || {}),
-            },
-            wishes: {
-                ...behaviorDefaults.wishes,
-                ...(mergedData?.behavior?.wishes || {}),
-            },
+            audio: { ...behaviorDefaults.audio, ...(mergedData?.behavior?.audio || {}) },
+            countdown: { ...behaviorDefaults.countdown, ...(mergedData?.behavior?.countdown || {}) },
+            cover: { ...behaviorDefaults.cover, ...(mergedData?.behavior?.cover || {}) },
+            gift: { ...behaviorDefaults.gift, ...(mergedData?.behavior?.gift || {}) },
+            copy: { ...behaviorDefaults.copy, ...(mergedData?.behavior?.copy || {}) },
+            lightbox: { ...behaviorDefaults.lightbox, ...(mergedData?.behavior?.lightbox || {}) },
+            motionText: { ...behaviorDefaults.motionText, ...(mergedData?.behavior?.motionText || {}) },
+            viewportVh: { ...behaviorDefaults.viewportVh, ...(mergedData?.behavior?.viewportVh || {}) },
+            wishes: { ...behaviorDefaults.wishes, ...(mergedData?.behavior?.wishes || {}) },
         };
     }, [mergedData]);
+
+    const initialWishes = useMemo(() => (Array.isArray(mergedData?.wishes?.initial) ? mergedData.wishes.initial : contentDefaults.wishes?.initial || []), [mergedData]);
+    const [wishes, setWishes] = useState(() => initialWishes);
+    const [submittingWish, setSubmittingWish] = useState(false);
+    const [wishFormState, setWishFormState] = useState({ author: "", comment: "", attendance: "" });
 
     useEffect(() => {
         BODY_CLASSES.forEach((className) => document.body.classList.add(className));
@@ -1318,11 +1305,12 @@ export default function TimelessPromiseTemplate({
             });
         }
 
+        const wishesList = root.querySelector("#cui-container-comment-5816");
+
         if (behavior.wishes.enabled) {
             const wishesLink = root.querySelector("#cui-link-5816");
             const wishesWrap = root.querySelector("#cui-wrap-commnent-5816");
             const wishesBox = root.querySelector("#cui-box");
-            const wishesList = root.querySelector("#cui-container-comment-5816");
             const wishForm = root.querySelector("#commentform-5816");
 
             if (wishesWrap) {
@@ -1358,68 +1346,68 @@ export default function TimelessPromiseTemplate({
                 Promise.resolve(onFetchWishes())
                     .then((items) => {
                         if (Array.isArray(items) && items.length > 0) {
-                            renderWishList(wishesList, items);
+                            setWishes(items);
                         }
                     })
                     .catch(() => { });
             }
 
             if (wishForm) {
+                wishForm.removeAttribute("action");
+                wishForm.removeAttribute("method");
                 const authorInput = wishForm.querySelector("#author");
+                const commentInput = wishForm.querySelector("textarea[name='comment']");
+                const attendanceInput = wishForm.querySelector("select[name='konfirmasi']");
+
                 if (authorInput) {
                     authorInput.removeAttribute("readonly");
                     authorInput.removeAttribute("nofocus");
-                    if (mode === "preview") {
-                        authorInput.value = mergedData?.guest?.name || "";
-                    }
+                    authorInput.value = wishFormState.author || (mode === "preview" ? mergedData?.guest?.name || "" : "");
+                    authorInput.oninput = (e) => setWishFormState(prev => ({ ...prev, author: e.target.value }));
+                }
+                if (commentInput) {
+                    commentInput.value = wishFormState.comment;
+                    commentInput.oninput = (e) => setWishFormState(prev => ({ ...prev, comment: e.target.value }));
+                }
+                if (attendanceInput) {
+                    attendanceInput.value = wishFormState.attendance;
+                    attendanceInput.onchange = (e) => setWishFormState(prev => ({ ...prev, attendance: e.target.value }));
                 }
 
                 const errorInfoName = wishForm.querySelector(".cui-error-info-name");
-                if (errorInfoName) {
-                    errorInfoName.style.display = "none";
-                }
+                if (errorInfoName) errorInfoName.style.display = "none";
 
                 const runtimeStyle = document.createElement("style");
                 runtimeStyle.textContent = `
                     .timeless-promise-template .tp-submit-spinner {
-                        display: inline-block;
-                        width: 14px;
-                        height: 14px;
-                        border: 2px solid rgba(255, 255, 255, 0.3);
-                        border-top-color: #ffffff;
-                        border-radius: 50%;
-                        animation: tp-spin 0.6s linear infinite;
-                        vertical-align: middle;
-                        margin-right: 6px;
+                        display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, 0.3);
+                        border-top-color: #ffffff; border-radius: 50%; animation: tp-spin 0.6s linear infinite;
+                        vertical-align: middle; margin-right: 6px;
                     }
-                    @keyframes tp-spin {
-                        to { transform: rotate(360deg); }
-                    }
+                    @keyframes tp-spin { to { transform: rotate(360deg); } }
                     .timeless-promise-template #commentform-5816.is-submitting input,
                     .timeless-promise-template #commentform-5816.is-submitting textarea,
                     .timeless-promise-template #commentform-5816.is-submitting select,
                     .timeless-promise-template #commentform-5816.is-submitting button {
-                        opacity: 0.6;
-                        pointer-events: none !important;
-                        cursor: not-allowed !important;
+                        opacity: 0.6; pointer-events: none !important; cursor: not-allowed !important;
                     }
                 `;
                 root.appendChild(runtimeStyle);
 
                 const handleWishSubmit = async (event) => {
                     event.preventDefault();
-                    if (wishForm.classList.contains("is-submitting")) return;
+                    if (submittingWish) return;
 
-                    const formData = new FormData(wishForm);
                     const payload = {
-                        author: normalizeText(formData.get("author") || mergedData?.guest?.name || "Tamu"),
-                        comment: normalizeText(formData.get("comment") || ""),
-                        attendance: normalizeText(formData.get("konfirmasi") || "-"),
-                        createdAt: "Baru saja",
+                        author: normalizeText(wishFormState.author || mergedData?.guest?.name || "Tamu"),
+                        comment: normalizeText(wishFormState.comment || ""),
+                        attendance: normalizeText(wishFormState.attendance || "-"),
+                        createdAt: new Date().toISOString(),
                     };
 
                     if (!payload.comment) return;
 
+                    setSubmittingWish(true);
                     wishForm.classList.add("is-submitting");
                     const formInputs = wishForm.querySelectorAll("input, textarea, select, button");
                     formInputs.forEach((el) => { el.disabled = true; });
@@ -1434,29 +1422,19 @@ export default function TimelessPromiseTemplate({
 
                     try {
                         await postInvitationWish("timeless-promise", payload);
+                        setWishes(prev => [payload, ...prev]);
+                        setWishFormState({ author: "", comment: "", attendance: "" });
+                        wishForm.reset();
+                        if (authorInput && mode === "preview") authorInput.value = mergedData?.guest?.name || "";
                     } catch {
-                        // keep optimistic local render
                     } finally {
+                        setSubmittingWish(false);
                         wishForm.classList.remove("is-submitting");
                         formInputs.forEach((el) => { el.disabled = false; });
                         if (submitBtn) {
                             if (submitBtn.tagName === "INPUT") submitBtn.value = originalBtnContent;
                             else submitBtn.innerHTML = originalBtnContent;
                         }
-                    }
-
-                    const currentWishes = Array.from(wishesList?.querySelectorAll(".cui-item-comment") || []).map((node) => ({
-                        author: normalizeText(node.querySelector(".cui-comment-name")?.textContent || "Tamu"),
-                        comment: normalizeText(node.querySelector(".cui-comment-text")?.textContent || ""),
-                        attendance: "-",
-                        createdAt: "Sebelumnya",
-                    }));
-
-                    renderWishList(wishesList, [payload, ...currentWishes]);
-                    wishForm.reset();
-
-                    if (authorInput && mode === "preview") {
-                        authorInput.value = mergedData?.guest?.name || "";
                     }
                 };
 
@@ -1471,6 +1449,8 @@ export default function TimelessPromiseTemplate({
             }
         }, 400);
         timers.push(refreshTimer);
+
+        renderWishList(wishesList, wishes);
 
         if (opened) {
             isOpened = true;
@@ -1500,7 +1480,7 @@ export default function TimelessPromiseTemplate({
 
             audioRef.current = null;
         };
-    }, [mergedData, behavior, mode, onFetchWishes, onSubmitWish]);
+    }, [mergedData, behavior, mode, onFetchWishes, onSubmitWish, wishes]);
 
     useEffect(() => {
         const root = rootRef.current;
