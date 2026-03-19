@@ -18,7 +18,7 @@ export default function ThemeGalleryPage() {
       return themes;
     }
     return themes.filter((theme) => theme.category === activeCategory);
-  }, [activeCategory]);
+  }, [activeCategory, themes]);
   const visibleThemes = filteredThemes.slice(0, visibleCount);
   const hasMoreThemes = visibleCount < filteredThemes.length;
 
