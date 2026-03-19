@@ -636,6 +636,7 @@ function applyInvitationData(root, invitationData, options = {}) {
     const event = invitationData?.event || defaultSchema.event;
     const copy = invitationData?.copy || defaultSchema.copy;
     const features = invitationData?.features || defaultSchema.features;
+    const gift = invitationData?.gift || {};
     const frontCoverPhoto = invitationData?.couple?.frontCoverPhoto || invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
     const heroPhoto = invitationData?.couple?.heroPhoto || bride?.photo || groom?.photo || "";
     const bridePhoto = bride?.photo || heroPhoto;
@@ -900,7 +901,12 @@ function applyInvitationData(root, invitationData, options = {}) {
         }
     });
 
-    const bankList = features?.digitalEnvelopeInfo?.bankList || contentDefaults?.gift?.bankList || [];
+    const rawBankList = features?.digitalEnvelopeEnabled ? (gift?.bankList || features?.digitalEnvelopeInfo?.bankList || contentDefaults?.gift?.bankList || []) : [];
+    const bankList = rawBankList.map((item) => ({
+        bank: item.bank || "",
+        account: item.account || item.accountNumber || "",
+        name: item.name || item.accountName || "",
+    }));
 
     const accountNodes = [
         root.querySelector(".elementor-element-7b1e080b .elementor-heading-title"),

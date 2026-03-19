@@ -164,21 +164,34 @@ export function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
-export function formatWishTimestamp(value) {
+export function formatWishRelativeTime(value) {
     const text = normalizeText(value);
     if (!text) return "";
-    if (!text.includes("T")) return text;
 
     const date = new Date(text);
     if (Number.isNaN(date.getTime())) return text;
 
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return "Baru saja";
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} menit lalu`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} hari lalu`;
+
     return date.toLocaleString("id-ID", {
-        day: "2-digit",
+        day: "numeric",
         month: "short",
         year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
     });
+}
+
+export function formatWishTimestamp(value) {
+    return formatWishRelativeTime(value);
 }
 
 export async function copyToClipboard(text) {

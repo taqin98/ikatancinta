@@ -334,7 +334,7 @@
 
 .bn-hero__photo {
   width: 100%;
-  aspect-ratio: 7 / 10;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
   border-radius: 300px 300px 0 0;
   position: relative;
@@ -396,14 +396,14 @@
 }
 
 .bn-quote__floral {
-    position: absolute;
-    margin-right: auto;
-    margin-left: auto;
-    width: 56%;
-    top: -139px;
-    left: 0;
-    right: 0;
-    pointer-events: none;
+  position: absolute;
+  margin-right: auto;
+  margin-left: auto;
+  width: 56%;
+  top: -139px;
+  left: 0;
+  right: 0;
+  pointer-events: none;
 }
 
 .bn-quote__initials {
@@ -849,6 +849,7 @@
 .bn-bank-card__logo img {
   width: 26%;
   max-width: 96px;
+  padding-bottom: 10px;
 }
 
 .bn-bank-card__chip img {
@@ -872,6 +873,7 @@
 }
 
 .bn-copy-btn {
+  float: right;
   margin-top: 8px;
   display: inline-flex;
   align-items: center;
@@ -1187,6 +1189,17 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.bn-fa-spin {
+  animation: bn-rotating 2s linear infinite;
+  display: inline-block;
+}
+
+.bn-wishes__field:disabled,
+.bn-wishes__submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .bn-bottom-nav {

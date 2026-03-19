@@ -203,11 +203,6 @@ export function mapFormToInvitationSchema({
         features: {
             ...defaultSchema.features,
             digitalEnvelopeEnabled: Boolean(packageCapabilities.digitalEnvelope && hasGiftData),
-            digitalEnvelopeInfo: {
-                ...(defaultSchema.features?.digitalEnvelopeInfo || {}),
-                bankList: hasGiftData ? mappedGiftBankList : [],
-                shipping: hasGiftData ? mappedGiftShipping : {},
-            },
             rsvpEnabled: packageCapabilities.rsvp ?? defaultSchema.features?.rsvpEnabled,
             livestreamEnabled: packageCapabilities.livestream ?? defaultSchema.features?.livestreamEnabled,
         },

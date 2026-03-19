@@ -14,7 +14,7 @@ import {
     escapeHtml,
     formatAddressHtml,
     formatParentInfoHtml,
-    formatWishTimestamp,
+    formatWishRelativeTime,
     loadScriptOnce,
     normalizeText,
     parseDataSettings,
@@ -539,7 +539,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
                             `<li class="cui-item-comment"><div class="cui-comment-content"><div class="cui-comment-info"><a href="#" class="cui-commenter-name" onclick="return false;">${escapeHtml(
                                 entry.author
                             )}</a><span class="cui-post-author">${escapeHtml(entry.attendance)}</span><span class="cui-comment-time">${escapeHtml(
-                                formatWishTimestamp(entry.createdAt)
+                                formatWishRelativeTime(entry.createdAt)
                             )}</span></div><div class="cui-comment-text"><p>${escapeHtml(entry.comment)}</p></div></div></li>`
                     )
                     .join("");
@@ -570,21 +570,45 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
             const author = form?.querySelector("#author");
             const comment = form?.querySelector("#comment");
             const attendance = form?.querySelector("#attendance-13544");
+            const submitBtn = form?.querySelector("input[type='submit']");
             if (!author || !comment || !attendance) return;
             if (!author.reportValidity() || !comment.reportValidity() || !attendance.reportValidity()) return;
 
-            const nextEntry = normalizeWishItem({
+            const payload = {
                 author: author.value,
                 comment: comment.value,
                 attendance: attendance.value,
                 createdAt: new Date().toISOString(),
-            });
+            };
+            const nextEntry = normalizeWishItem(payload);
             if (!nextEntry) return;
+
+            // --- Start Loading ---
+            form.classList.add("is-submitting");
+            const formElements = form.querySelectorAll("input, textarea, select, button");
+            formElements.forEach((el) => {
+                el.disabled = true;
+            });
+
+            let originalSubmitValue = "";
+            if (submitBtn) {
+                originalSubmitValue = submitBtn.value;
+                submitBtn.value = "Mengirim...";
+            }
 
             try {
                 await postInvitationWish("botanical-elegance", nextEntry);
             } catch {
-                // Keep optimistic local render even if API is unavailable.
+                // Keep optimistic local render
+            } finally {
+                // --- Stop Loading ---
+                form.classList.remove("is-submitting");
+                formElements.forEach((el) => {
+                    el.disabled = false;
+                });
+                if (submitBtn) {
+                    submitBtn.value = originalSubmitValue;
+                }
             }
 
             const next = [nextEntry, ...wishes];
@@ -593,7 +617,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
             form.reset();
 
             if (commentStatus) {
-                commentStatus.textContent = "Ucapan berhasil disimpan di browser ini.";
+                commentStatus.textContent = "Ucapan berhasil dikirim.";
                 commentStatus.style.display = "block";
                 window.setTimeout(() => {
                     commentStatus.textContent = "";

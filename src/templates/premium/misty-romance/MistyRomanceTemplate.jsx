@@ -97,6 +97,50 @@ function normalizeText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function formatWishRelativeTime(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return "Baru saja";
+    if (/baru saja|yang lalu/i.test(normalized)) return normalized;
+
+    const timestamp = new Date(normalized).getTime();
+    if (!Number.isFinite(timestamp)) return normalized;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs <= 0) return "Baru saja";
+
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+    const yearMs = 365 * dayMs;
+
+    if (diffMs < minuteMs) return "Baru saja";
+    if (diffMs < hourMs) {
+        const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+        return `${minutes} menit yang lalu`;
+    }
+    if (diffMs < dayMs) {
+        const hours = Math.max(1, Math.floor(diffMs / hourMs));
+        return `${hours} jam yang lalu`;
+    }
+    if (diffMs < weekMs) {
+        const days = Math.max(1, Math.floor(diffMs / dayMs));
+        return `${days} hari yang lalu`;
+    }
+    if (diffMs < monthMs) {
+        const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+        return `${weeks} minggu yang lalu`;
+    }
+    if (diffMs < yearMs) {
+        const months = Math.max(1, Math.floor(diffMs / monthMs));
+        return `${months} bulan yang lalu`;
+    }
+
+    const years = Math.max(1, Math.floor(diffMs / yearMs));
+    return `${years} tahun yang lalu`;
+}
+
 function normalizeAttendanceLabel(value) {
     const text = normalizeText(value);
     if (!text) return "Hadir";
@@ -598,6 +642,7 @@ function applyInvitationData(root, invitationData) {
     const event = invitationData?.event || {};
     const copy = invitationData?.copy || {};
     const features = invitationData?.features || {};
+    const gift = invitationData?.gift || {};
 
     const coupleNames = `${groom.nickName || groom.nameFull || "Mempelai Pria"} & ${bride.nickName || bride.nameFull || "Mempelai Wanita"}`;
 
@@ -710,7 +755,12 @@ function applyInvitationData(root, invitationData) {
         }
     });
 
-    const bankList = features?.digitalEnvelopeInfo?.bankList || defaultSchema.features.digitalEnvelopeInfo.bankList || [];
+    const rawBankList = features?.digitalEnvelopeEnabled ? (gift?.bankList || features?.digitalEnvelopeInfo?.bankList || defaultSchema.features.digitalEnvelopeInfo.bankList || []) : [];
+    const bankList = rawBankList.map((item) => ({
+        bank: item.bank || "",
+        account: item.account || item.accountNumber || "",
+        name: item.name || item.accountName || "",
+    }));
     const bankA = bankList[0] || { bank: "BCA", account: "1234567890", name: groom.nickName || "Mempelai" };
     const bankB = bankList[1] || bankA;
 
@@ -1151,6 +1201,33 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
             authorInput.value = mergedData?.guest?.name || "";
         }
 
+        const runtimeStyle = document.createElement("style");
+        runtimeStyle.textContent = `
+            .misty-romance-template .cui-submit-spinner {
+                display: inline-block;
+                width: 14px;
+                height: 14px;
+                border: 2px solid rgba(255, 255, 255, 0.3);
+                border-top-color: #ffffff;
+                border-radius: 50%;
+                animation: misty-spin 0.6s linear infinite;
+                vertical-align: middle;
+                margin-right: 6px;
+            }
+            @keyframes misty-spin {
+                to { transform: rotate(360deg); }
+            }
+            .misty-romance-template #commentform-13455.is-submitting input,
+            .misty-romance-template #commentform-13455.is-submitting textarea,
+            .misty-romance-template #commentform-13455.is-submitting select,
+            .misty-romance-template #commentform-13455.is-submitting button {
+                opacity: 0.6;
+                pointer-events: none;
+                cursor: not-allowed;
+            }
+        `;
+        root.appendChild(runtimeStyle);
+
         const readonlyWarning = root.querySelector(".cui-error-info-name");
         if (readonlyWarning) readonlyWarning.style.display = "none";
 
@@ -1158,6 +1235,7 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
         if (commentForm) {
             const onSubmit = async (event) => {
                 event.preventDefault();
+                if (commentForm.classList.contains("is-submitting")) return;
 
                 const name = normalizeText(root.querySelector("#author")?.value || mergedData?.guest?.name || "");
                 const message = normalizeText(root.querySelector("#cui-textarea-13455")?.value || "");
@@ -1167,6 +1245,20 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                 );
 
                 if (!name || !message) return;
+
+                commentForm.classList.add("is-submitting");
+                const formElements = commentForm.querySelectorAll("input, textarea, select, button");
+                formElements.forEach((el) => {
+                    el.disabled = true;
+                });
+
+                const submitBtn = commentForm.querySelector("button[type='submit'], input[type='submit']");
+                let originalBtnContent = "";
+                if (submitBtn) {
+                    originalBtnContent = submitBtn.innerHTML || submitBtn.value;
+                    if (submitBtn.tagName === "INPUT") submitBtn.value = "Mengirim...";
+                    else submitBtn.innerHTML = '<span class="cui-submit-spinner"></span> Mengirim...';
+                }
 
                 const nextAttendance = normalizeAttendanceLabel(attendanceText || attendanceValue);
 
@@ -1178,6 +1270,15 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                     });
                 } catch {
                     // Keep optimistic local render even if API is unavailable.
+                } finally {
+                    commentForm.classList.remove("is-submitting");
+                    formElements.forEach((el) => {
+                        el.disabled = false;
+                    });
+                    if (submitBtn) {
+                        if (submitBtn.tagName === "INPUT") submitBtn.value = originalBtnContent;
+                        else submitBtn.innerHTML = originalBtnContent;
+                    }
                 }
 
                 setWishes((prev) => [
@@ -1339,7 +1440,7 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                         wish.comment
                     )}</p></div><div class="cui-comment-actions"><a href="#">${escapeHtml(
                         wish.attendance
-                    )}</a><span> · ${escapeHtml(wish.createdAt)}</span></div></div></li>`;
+                    )}</a><span> · ${escapeHtml(formatWishRelativeTime(wish.createdAt))}</span></div></div></li>`;
                 })
                 .join("");
         }

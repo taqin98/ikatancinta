@@ -10,6 +10,7 @@ import tokens from "./tokens";
 import {
   copyToClipboard,
   normalizeText,
+  formatWishRelativeTime,
   resolveAssetUrl,
   rewriteSrcset,
   runReveal,
@@ -565,11 +566,28 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
     const onWishSubmit = async (event) => {
       event.preventDefault();
       const target = event.currentTarget;
-      const fd = new FormData(target);
-      const author = normalizeText(fd.get("author"));
-      const comment = normalizeText(fd.get("comment"));
-      const attendance = normalizeText(fd.get("konfirmasi")) || "Hadir";
+      const authorInput = target.querySelector("#author");
+      const commentInput = target.querySelector("#cui-textarea-5856");
+      const attendanceInput = target.querySelector("#konfirmasi");
+      const submitBtn = target.querySelector("input[type='submit']");
+
+      const author = normalizeText(authorInput?.value);
+      const comment = normalizeText(commentInput?.value);
+      const attendance = normalizeText(attendanceInput?.value) || "Hadir";
       if (!author || !comment) return;
+
+      // --- Start Loading ---
+      target.classList.add("is-submitting");
+      const formElements = target.querySelectorAll("input, textarea, select, button");
+      formElements.forEach((el) => {
+        el.disabled = true;
+      });
+
+      let originalSubmitValue = "";
+      if (submitBtn) {
+        originalSubmitValue = submitBtn.value;
+        submitBtn.value = "Mengirim...";
+      }
 
       try {
         await postInvitationWish("velvet-burgundy", {
@@ -578,7 +596,16 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
           attendance,
         });
       } catch {
-        // Keep optimistic local render even if API is unavailable.
+        // Keep optimistic local render
+      } finally {
+        // --- Stop Loading ---
+        target.classList.remove("is-submitting");
+        formElements.forEach((el) => {
+          el.disabled = false;
+        });
+        if (submitBtn) {
+          submitBtn.value = originalSubmitValue;
+        }
       }
 
       setWishes((prev) => [
@@ -586,7 +613,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
           author,
           comment,
           attendance,
-          createdAt: formatWishTimestamp(new Date()),
+          createdAt: new Date().toISOString(),
         },
         ...prev,
       ]);
@@ -1712,7 +1739,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
                                     <p>{wish.comment}</p>
                                   </div>
                                   <div className="vb-wishes-meta">
-                                    <span>{wish.createdAt}</span>
+                                    <span>{formatWishRelativeTime(wish.createdAt)}</span>
                                     <span className="vb-wishes-attend">{wish.attendance}</span>
                                   </div>
                                 </div>

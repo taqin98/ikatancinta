@@ -156,6 +156,36 @@ export async function copyToClipboard(text) {
     }
 }
 
+export function formatWishRelativeTime(value) {
+    const text = normalizeText(value);
+    if (!text) return "";
+
+    const date = new Date(text);
+    if (Number.isNaN(date.getTime())) return text;
+
+    const seconds = Math.floor((new Date() - date) / 1000);
+    if (seconds < 60) return "Baru saja";
+
+    const minutes = Math.floor(seconds / 60);
+    if (minutes < 60) return `${minutes} menit lalu`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} jam lalu`;
+
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days} hari lalu`;
+
+    return date.toLocaleString("id-ID", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+}
+
+export function formatWishTimestamp(value) {
+    return formatWishRelativeTime(value);
+}
+
 export function normalizeText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
 }

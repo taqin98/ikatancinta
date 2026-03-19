@@ -961,10 +961,15 @@ function applyInvitationData(root, invitationData, options = {}) {
         }
     });
 
-    const bankList = invitationData?.gift?.bankList
+    const rawBankList = invitationData?.features?.digitalEnvelopeEnabled ? (invitationData?.gift?.bankList
         || invitationData?.features?.digitalEnvelopeInfo?.bankList
         || contentDefaults?.gift?.bankList
-        || [];
+        || []) : [];
+    const bankList = rawBankList.map((item) => ({
+        bank: item.bank || "",
+        account: item.account || item.accountNumber || "",
+        name: item.name || item.accountName || "",
+    }));
 
     const accountNodes = [
         root.querySelector(".elementor-element-3e651f0b .elementor-heading-title"),

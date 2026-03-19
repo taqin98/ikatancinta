@@ -51,6 +51,54 @@ function resolveLocalAsset(path, fallback = "") {
     return LOCAL_ASSET_MAP[path] || path || fallback;
 }
 
+function normalizeText(value) {
+    return String(value || "").replace(/\s+/g, " ").trim();
+}
+
+function formatWishRelativeTime(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return "Baru saja";
+    if (/baru saja|yang lalu/i.test(normalized)) return normalized;
+
+    const timestamp = new Date(normalized).getTime();
+    if (!Number.isFinite(timestamp)) return normalized;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs <= 0) return "Baru saja";
+
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+    const yearMs = 365 * dayMs;
+
+    if (diffMs < minuteMs) return "Baru saja";
+    if (diffMs < hourMs) {
+        const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+        return `${minutes} menit yang lalu`;
+    }
+    if (diffMs < dayMs) {
+        const hours = Math.max(1, Math.floor(diffMs / hourMs));
+        return `${hours} jam yang lalu`;
+    }
+    if (diffMs < weekMs) {
+        const days = Math.max(1, Math.floor(diffMs / dayMs));
+        return `${days} hari yang lalu`;
+    }
+    if (diffMs < monthMs) {
+        const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+        return `${weeks} minggu yang lalu`;
+    }
+    if (diffMs < yearMs) {
+        const months = Math.max(1, Math.floor(diffMs / monthMs));
+        return `${months} bulan yang lalu`;
+    }
+
+    const years = Math.max(1, Math.floor(diffMs / yearMs));
+    return `${years} tahun yang lalu`;
+}
+
 function mergeInvitationData(baseSchema, incomingData) {
     if (!incomingData || typeof incomingData !== "object") return baseSchema;
 
@@ -145,6 +193,24 @@ function mergeInvitationData(baseSchema, incomingData) {
 
 function formatEventDate(dateText) {
     if (!dateText) return "";
+
+    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const monthNames = [
+        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+        "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+    ];
+
+    // Try parsing as ISO or standard date string
+    const parsed = new Date(dateText);
+    if (!Number.isNaN(parsed.getTime())) {
+        const dayName = dayNames[parsed.getDay()];
+        const day = parsed.getDate();
+        const month = monthNames[parsed.getMonth()];
+        const year = parsed.getFullYear();
+        return `${dayName}, ${day} ${month} ${year}`;
+    }
+
+    // Already formatted or unparseable — return as-is
     return dateText;
 }
 
@@ -352,6 +418,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
     );
     const [wishes, setWishes] = useState(() => initialWishes);
     const [wishForm, setWishForm] = useState({ author: "", comment: "", attendance: "" });
+    const [submittingWish, setSubmittingWish] = useState(false);
     const [countdown, setCountdown] = useState({ days: "00", hours: "00", minutes: "00", seconds: "00", ended: false });
 
     const audioRef = useRef(null);
@@ -399,7 +466,12 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
         );
     }, [wishes]);
 
-    const bankList = features?.digitalEnvelopeInfo?.bankList || gift?.bankList || [];
+    const rawBankList = features?.digitalEnvelopeEnabled ? (gift?.bankList || features?.digitalEnvelopeInfo?.bankList || []) : [];
+    const bankList = rawBankList.map((item) => ({
+        bank: item.bank || "",
+        account: item.account || item.accountNumber || "",
+        name: item.name || item.accountName || "",
+    }));
 
     useEffect(() => {
         if (!behavior?.aos) return;
@@ -494,7 +566,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
             if (document.visibilityState === "hidden" && behavior?.audio?.pauseOnHidden !== false) {
                 audio.pause();
             } else if (document.visibilityState === "visible" && audioPlaying && behavior?.audio?.enabled !== false) {
-                audio.play().catch(() => {});
+                audio.play().catch(() => { });
             }
         };
 
@@ -564,7 +636,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
 
     async function handleWishSubmit(submitEvent) {
         submitEvent.preventDefault();
-        if (!wishForm.author.trim() || !wishForm.comment.trim() || !wishForm.attendance) return;
+        if (!wishForm.author.trim() || !wishForm.comment.trim() || !wishForm.attendance || submittingWish) return;
 
         const createdAt = new Intl.DateTimeFormat("id-ID", {
             day: "2-digit",
@@ -574,6 +646,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
             minute: "2-digit",
         }).format(new Date());
 
+        setSubmittingWish(true);
         try {
             const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "blue-nature";
             const activeOrderId = mergedData?.invitation?.orderId || mergedData?.orderId || "";
@@ -584,21 +657,23 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                 comment: wishForm.comment.trim(),
                 attendance: wishForm.attendance,
             });
+
+            setWishes((prev) => [
+                {
+                    author: wishForm.author.trim(),
+                    comment: wishForm.comment.trim(),
+                    attendance: wishForm.attendance,
+                    createdAt,
+                },
+                ...prev,
+            ]);
+
+            setWishForm({ author: "", comment: "", attendance: "" });
         } catch {
             // Keep optimistic local render even if API is unavailable.
+        } finally {
+            setSubmittingWish(false);
         }
-
-        setWishes((prev) => [
-            {
-                author: wishForm.author.trim(),
-                comment: wishForm.comment.trim(),
-                attendance: wishForm.attendance,
-                createdAt,
-            },
-            ...prev,
-        ]);
-
-        setWishForm({ author: "", comment: "", attendance: "" });
     }
 
     function navItem(id, icon, label) {
@@ -658,7 +733,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                         <section
                             id="section-hero"
                             className="bn-section bn-hero"
-                            style={{ backgroundImage: `url(${resolveLocalAsset(copy.saveTheDateBackgroundPhoto, BgCover)})` }}
+                            style={{ backgroundImage: `url(${BgCover})` }}
                         >
                             <div className="bn-hero__panel">
                                 <div className="bn-hero__photo" data-aos={aosPreset("photo").aos}>
@@ -667,18 +742,19 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                         alt={`Foto ${couple.groom.nickName} dan ${couple.bride.nickName}`}
                                     />
                                 </div>
-                                <p className="bn-hero__label" data-aos={aosPreset("heading").aos}>{copy.openingGreeting || "The Wedding Of"}</p>
-                                <h1 className="bn-hero__names" data-aos={aosPreset("title").aos}>
+                                <p className="bn-hero__label" data-aos={aosPreset("heading").aos} style={{ marginTop: 20, marginBottom: 20 }}>The Wedding Of</p>
+                                <h1 className="bn-hero__names" data-aos={aosPreset("title").aos} style={{ marginTop: 8, marginBottom: 8 }}>
                                     {couple.groom.nickName} &amp; {couple.bride.nickName}
                                 </h1>
-                                <p className="bn-hero__date" data-aos="fade-up" data-aos-delay="160">
+                                <p className="bn-hero__date" data-aos="fade-up" data-aos-delay="160"
+                                    style={{ marginTop: 8, marginBottom: 8 }}>
                                     {formatEventDate(event.akad.date)}
                                 </p>
                                 {features.saveTheDateEnabled ? (
                                     <button
                                         type="button"
                                         className="bn-btn-pill"
-                                        style={{ marginTop: 8 }}
+                                        style={{ marginTop: 8, marginBottom: 50 }}
                                         data-aos="zoom-in"
                                         data-aos-delay="240"
                                         onClick={() => downloadICS(mergedData)}
@@ -915,9 +991,9 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                                 </div>
                                                 <h3 className="bn-gift-address__title">Kirim Hadiah</h3>
                                                 <div className="bn-gift-address__info">
-                                                    <p>Nama Penerima: {gift?.shipping?.recipient || couple.groom.nameFull}</p>
-                                                    <p>No. HP: {gift?.shipping?.phone || "-"}</p>
-                                                    <p>{gift?.shipping?.address || "-"}</p>
+                                                    <p>Nama Penerima: {features?.digitalEnvelopeEnabled ? (gift?.shipping?.recipient || features?.digitalEnvelopeInfo?.shipping?.recipient || couple.groom.nameFull) : couple.groom.nameFull}</p>
+                                                    <p>No. HP: {features?.digitalEnvelopeEnabled ? (gift?.shipping?.phone || features?.digitalEnvelopeInfo?.shipping?.phone || "-") : "-"}</p>
+                                                    <p>{features?.digitalEnvelopeEnabled ? (gift?.shipping?.address || features?.digitalEnvelopeInfo?.shipping?.address || "-") : "-"}</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -957,6 +1033,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                             data-aos="fade-up"
                                             data-aos-delay="120"
                                             required
+                                            disabled={submittingWish}
                                         />
                                         <textarea
                                             className="bn-wishes__field bn-wishes__textarea"
@@ -966,6 +1043,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                             data-aos="fade-up"
                                             data-aos-delay="170"
                                             required
+                                            disabled={submittingWish}
                                         />
                                         <select
                                             className="bn-wishes__field"
@@ -974,6 +1052,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                             data-aos="fade-up"
                                             data-aos-delay="210"
                                             required
+                                            disabled={submittingWish}
                                         >
                                             <option value="" disabled>
                                                 Konfirmasi Kehadiran
@@ -981,8 +1060,15 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                             <option value="Hadir">Hadir</option>
                                             <option value="Tidak Hadir">Tidak Hadir</option>
                                         </select>
-                                        <button className="bn-wishes__submit" type="submit" data-aos="zoom-in" data-aos-delay="240">
-                                            Kirim
+                                        <button className="bn-wishes__submit" type="submit" data-aos="zoom-in" data-aos-delay="240" disabled={submittingWish}>
+                                            {submittingWish ? (
+                                                <>
+                                                    <i className="bn-fas bn-fa-spinner bn-fa-spin" style={{ marginRight: "8px" }} />
+                                                    Mengirim...
+                                                </>
+                                            ) : (
+                                                "Kirim"
+                                            )}
                                         </button>
                                     </form>
 
@@ -993,7 +1079,7 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                                 <p className="bn-wishes__comment-text">{wish.comment}</p>
                                                 <p className="bn-wishes__comment-meta">
                                                     <span>{wish.attendance}</span>
-                                                    <span>{wish.createdAt}</span>
+                                                    <span>{formatWishRelativeTime(wish.createdAt)}</span>
                                                 </p>
                                             </li>
                                         ))}

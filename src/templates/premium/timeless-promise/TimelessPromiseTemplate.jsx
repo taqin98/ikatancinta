@@ -32,6 +32,50 @@ function normalizeText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function formatWishRelativeTime(value) {
+    const normalized = normalizeText(value);
+    if (!normalized) return "Baru saja";
+    if (/baru saja|yang lalu/i.test(normalized)) return normalized;
+
+    const timestamp = new Date(normalized).getTime();
+    if (!Number.isFinite(timestamp)) return normalized;
+
+    const diffMs = Date.now() - timestamp;
+    if (diffMs <= 0) return "Baru saja";
+
+    const minuteMs = 60 * 1000;
+    const hourMs = 60 * minuteMs;
+    const dayMs = 24 * hourMs;
+    const weekMs = 7 * dayMs;
+    const monthMs = 30 * dayMs;
+    const yearMs = 365 * dayMs;
+
+    if (diffMs < minuteMs) return "Baru saja";
+    if (diffMs < hourMs) {
+        const minutes = Math.max(1, Math.floor(diffMs / minuteMs));
+        return `${minutes} menit yang lalu`;
+    }
+    if (diffMs < dayMs) {
+        const hours = Math.max(1, Math.floor(diffMs / hourMs));
+        return `${hours} jam yang lalu`;
+    }
+    if (diffMs < weekMs) {
+        const days = Math.max(1, Math.floor(diffMs / dayMs));
+        return `${days} hari yang lalu`;
+    }
+    if (diffMs < monthMs) {
+        const weeks = Math.max(1, Math.floor(diffMs / weekMs));
+        return `${weeks} minggu yang lalu`;
+    }
+    if (diffMs < yearMs) {
+        const months = Math.max(1, Math.floor(diffMs / monthMs));
+        return `${months} bulan yang lalu`;
+    }
+
+    const years = Math.max(1, Math.floor(diffMs / yearMs));
+    return `${years} tahun yang lalu`;
+}
+
 function pickNonEmptyText(...values) {
     for (const value of values) {
         if (value == null) continue;
@@ -320,7 +364,12 @@ function applyInvitationData(root, invitationData) {
     if (instagramNodes[0]) instagramNodes[0].setAttribute("href", toInstagramUrl(bride.instagram));
     if (instagramNodes[1]) instagramNodes[1].setAttribute("href", toInstagramUrl(groom.instagram));
 
-    const bankList = invitationData?.features?.digitalEnvelopeInfo?.bankList || [];
+    const rawBankList = invitationData?.features?.digitalEnvelopeEnabled ? (invitationData?.gift?.bankList || invitationData?.features?.digitalEnvelopeInfo?.bankList || []) : [];
+    const bankList = rawBankList.map((item) => ({
+        bank: item.bank || "",
+        account: item.account || item.accountNumber || "",
+        name: item.name || item.accountName || "",
+    }));
     const accountTitles = Array.from(root.querySelectorAll("#amplop .elementor-heading-title"));
     const numberNodes = accountTitles.filter((node) => /\d/.test(node.textContent || ""));
     const nameNodes = accountTitles.filter((node) => {
@@ -379,7 +428,7 @@ function renderWishList(listElement, wishes) {
         const item = document.createElement("li");
         item.className = "cui-item-comment";
         const metaParts = [];
-        if (wish?.createdAt) metaParts.push(escapeHtml(wish.createdAt));
+        if (wish?.createdAt) metaParts.push(escapeHtml(formatWishRelativeTime(wish.createdAt)));
         if (wish?.attendance && wish.attendance !== "-") metaParts.push(escapeHtml(wish.attendance));
         const metaText = metaParts.join(", ") || "Baru saja";
         item.innerHTML = `
@@ -1327,8 +1376,36 @@ export default function TimelessPromiseTemplate({
                     errorInfoName.style.display = "none";
                 }
 
+                const runtimeStyle = document.createElement("style");
+                runtimeStyle.textContent = `
+                    .timeless-promise-template .tp-submit-spinner {
+                        display: inline-block;
+                        width: 14px;
+                        height: 14px;
+                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        border-top-color: #ffffff;
+                        border-radius: 50%;
+                        animation: tp-spin 0.6s linear infinite;
+                        vertical-align: middle;
+                        margin-right: 6px;
+                    }
+                    @keyframes tp-spin {
+                        to { transform: rotate(360deg); }
+                    }
+                    .timeless-promise-template #commentform-5816.is-submitting input,
+                    .timeless-promise-template #commentform-5816.is-submitting textarea,
+                    .timeless-promise-template #commentform-5816.is-submitting select,
+                    .timeless-promise-template #commentform-5816.is-submitting button {
+                        opacity: 0.6;
+                        pointer-events: none !important;
+                        cursor: not-allowed !important;
+                    }
+                `;
+                root.appendChild(runtimeStyle);
+
                 const handleWishSubmit = async (event) => {
                     event.preventDefault();
+                    if (wishForm.classList.contains("is-submitting")) return;
 
                     const formData = new FormData(wishForm);
                     const payload = {
@@ -1340,10 +1417,29 @@ export default function TimelessPromiseTemplate({
 
                     if (!payload.comment) return;
 
+                    wishForm.classList.add("is-submitting");
+                    const formInputs = wishForm.querySelectorAll("input, textarea, select, button");
+                    formInputs.forEach((el) => { el.disabled = true; });
+
+                    const submitBtn = wishForm.querySelector("button[type='submit'], input[type='submit']");
+                    let originalBtnContent = "";
+                    if (submitBtn) {
+                        originalBtnContent = submitBtn.innerHTML || submitBtn.value;
+                        if (submitBtn.tagName === "INPUT") submitBtn.value = "Mengirim...";
+                        else submitBtn.innerHTML = '<span class="tp-submit-spinner"></span> Mengirim...';
+                    }
+
                     try {
                         await postInvitationWish("timeless-promise", payload);
                     } catch {
                         // keep optimistic local render
+                    } finally {
+                        wishForm.classList.remove("is-submitting");
+                        formInputs.forEach((el) => { el.disabled = false; });
+                        if (submitBtn) {
+                            if (submitBtn.tagName === "INPUT") submitBtn.value = originalBtnContent;
+                            else submitBtn.innerHTML = originalBtnContent;
+                        }
                     }
 
                     const currentWishes = Array.from(wishesList?.querySelectorAll(".cui-item-comment") || []).map((node) => ({
