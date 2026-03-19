@@ -160,27 +160,27 @@ function App() {
   }
 
   if (pathname === "/undangan/timeless-promise") {
-    return <TimelessPromiseTemplate />;
+    return <TimelessPromiseTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/misty-romance") {
-    return <MistyRomanceTemplate />;
+    return <MistyRomanceTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/velvet-burgundy") {
-    return <VelvetBurgundyTemplate />;
+    return <VelvetBurgundyTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/botanical-elegance") {
-    return <BotanicalEleganceTemplate />;
+    return <BotanicalEleganceTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/puspa-asmara") {
-    return <PuspaAsmaraTemplate />;
+    return <PuspaAsmaraTemplate mode="demo" />;
   }
 
   if (pathname === "/undangan/eternal-summit") {
-    return <EternalSummitTemplate />;
+    return <EternalSummitTemplate mode="demo" />;
   }
 
   if (pathname.startsWith("/undangan/")) {
