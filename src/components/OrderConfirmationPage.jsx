@@ -183,7 +183,14 @@ export default function OrderConfirmationPage() {
   const isPaymentConfirmed = orderData?.paymentStatus === "confirmed" || isDone;
   const isPreparing = isPaymentConfirmed && !isDone;
   const orderCompletedAt =
-    formatDateTimeID(orderData?.completedAt) !== "-" ? `${formatDateTimeID(orderData?.completedAt)} WIB` : "Estimasi 1x24 Jam";
+    formatDateTimeID(orderData?.completedAt) !== "-"
+      ? (
+        <>
+          {formatDateTimeID(orderData?.completedAt)} WIB <br />
+          Link undangan akan dikirim via WhatsApp / Email
+        </>
+      )
+      : "Estimasi 1x24 Jam";
 
   const adminWhatsappLink = `https://wa.me/628567452717?text=${encodeURIComponent(
     `Halo admin Ikatancinta.in, saya ingin konfirmasi status order undangan saya. Order ID: ${orderId}.`
@@ -233,7 +240,7 @@ export default function OrderConfirmationPage() {
 
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary/10 dark:bg-primary/20 rounded-full mb-6">
             <span className="material-symbols-outlined text-primary text-[18px]">receipt_long</span>
-            <span className="text-primary font-bold text-xs tracking-wide">ORDER #{orderId}</span>
+            <span className="text-primary font-bold text-xs tracking-wide">NOMOR: {orderId}</span>
           </div>
 
           {orderData && (
