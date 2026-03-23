@@ -264,6 +264,10 @@ function resolveInitialTheme(themesList) {
   return themesList.find((theme) => theme.packageTier === "BASIC") || themesList[0] || null;
 }
 
+function usesSingleCoverFlow(uploadConfig) {
+  return Boolean(uploadConfig?.frontCover?.visible && !uploadConfig?.cover?.visible);
+}
+
 function StepOneMempelai({
   customer,
   setCustomer,
@@ -817,6 +821,9 @@ function StepThreeFoto({
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
   const uploadFields = uploadConfig || {};
+  const singleCoverFlow = usesSingleCoverFlow(uploadFields);
+  const frontCoverTitle = singleCoverFlow ? "Foto Cover Utama" : "Foto Cover Depan";
+  const frontCoverUploadText = singleCoverFlow ? "Upload atau Drop Foto Cover Utama" : "Upload atau Drop Foto Cover Depan";
   const [dragTarget, setDragTarget] = useState("");
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
@@ -858,7 +865,7 @@ function StepThreeFoto({
       {uploadFields.frontCover?.visible && (
         <section id="cover_upload_section" className="space-y-4 mb-8">
           <div className="flex items-baseline justify-between px-1">
-            <h3 className="text-lg font-bold">Foto Cover Depan</h3>
+            <h3 className="text-lg font-bold">{frontCoverTitle}</h3>
             <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
 
@@ -889,7 +896,7 @@ function StepThreeFoto({
               {...createDropZoneProps("front-cover", onUploadFrontCover)}
             >
               <span className="material-symbols-outlined text-3xl">upload</span>
-              <span className="text-sm font-semibold">Upload atau Drop Foto Cover Depan</span>
+              <span className="text-sm font-semibold">{frontCoverUploadText}</span>
               <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
             </label>
           )}
@@ -1398,6 +1405,8 @@ function StepFourReview({
 }) {
   const effectiveStoriesCount = selectedPackage?.capabilities?.loveStory ? stories.length : 0;
   const uploadFields = uploadConfig || {};
+  const singleCoverFlow = usesSingleCoverFlow(uploadFields);
+  const frontCoverLabel = singleCoverFlow ? "Cover Utama" : "Cover Depan";
   const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
   const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
   const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
@@ -1469,7 +1478,7 @@ function StepFourReview({
           <div className="px-4 pb-5 border-t border-dashed border-slate-200 dark:border-slate-700/50">
             {uploadFields.frontCover?.visible && (
               <div className="pt-4">
-                <p className="text-xs text-slate-500 mb-2">Cover Depan</p>
+                <p className="text-xs text-slate-500 mb-2">{frontCoverLabel}</p>
                 <p className="text-sm font-medium">{frontCoverImage?.name || "Belum upload"}</p>
               </div>
             )}
@@ -2203,6 +2212,7 @@ export default function CreateInvitationFormPage() {
       return null;
     }
     if (currentStep === 3) {
+      const singleCoverFlow = usesSingleCoverFlow(uploadConfig);
       if (uploadConfig.cover?.required && !coverImage) {
         return {
           message: "Mohon upload foto setelah buka undangan terlebih dahulu.",
@@ -2212,7 +2222,9 @@ export default function CreateInvitationFormPage() {
       }
       if (uploadConfig.frontCover?.required && !frontCoverImage) {
         return {
-          message: "Mohon upload foto cover depan terlebih dahulu.",
+          message: singleCoverFlow
+            ? "Mohon upload foto cover utama terlebih dahulu."
+            : "Mohon upload foto cover depan terlebih dahulu.",
           selector: "#cover_upload_section",
           shouldFocus: false,
         };

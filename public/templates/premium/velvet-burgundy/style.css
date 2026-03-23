@@ -117,10 +117,30 @@
 }
 
 .vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form input[type="submit"],
+.vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form .vb-wishes-submit,
 .vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form input[type="button"].cui-form-btn {
   width: 100%;
   font-size: 15px !important;
   margin-left: 0;
+}
+
+.vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form .vb-wishes-submit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 4px;
+  background: #87414c;
+  color: #fff;
+  cursor: pointer;
+}
+
+.vb-template .cui-wrapper.cui-facebook .cui-wrap-form .cui-container-form .vb-wishes-submit[disabled] {
+  opacity: 0.75;
+  cursor: wait;
 }
 
 .vb-template .cui-wrapper .cui-wrap-form .cui-container-form p.form-submit {

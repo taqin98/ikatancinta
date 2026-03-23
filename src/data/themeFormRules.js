@@ -114,6 +114,26 @@ const THEME_UPLOAD_OVERRIDES = {
       description: "Khusus template Navy Blossom. Jika kosong, akan mengikuti foto setelah buka undangan. Ukuran ideal 450x200 px.",
     },
   },
+  "velvet-burgundy": {
+    frontCover: {
+      visible: true,
+      required: true,
+      description: "Dipakai khusus untuk cover utama sebelum tamu menekan tombol buka undangan pada Velvet Burgundy.",
+    },
+    cover: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Velvet Burgundy.",
+    },
+    akadCover: {
+      visible: true,
+      description: "Dipakai sebagai background foto section akad pada Velvet Burgundy. Jika kosong, akan mengikuti cover utama. Saran ukuran ideal portrait 4:5 atau landscape yang fokus ke subjek.",
+    },
+    resepsiCover: {
+      visible: true,
+      description: "Dipakai sebagai background foto section resepsi pada Velvet Burgundy. Jika kosong, akan mengikuti cover utama atau foto akad. Saran ukuran ideal portrait 4:5 atau landscape yang fokus ke subjek.",
+    },
+  },
 };
 
 export function getThemeUploadConfig(theme, packageConfig) {

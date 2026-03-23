@@ -90,6 +90,245 @@ function setLink(root, selector, value) {
   node.setAttribute("href", value);
 }
 
+function setDisplay(root, selector, visible) {
+  const node = root.querySelector(selector);
+  if (!node) return;
+  node.style.display = visible ? "" : "none";
+}
+
+function setBackgroundImage(root, selector, image, options = {}) {
+  if (!root || !selector || !image) return;
+  const resolvedImage = resolveAssetUrl(image);
+  if (!resolvedImage) return;
+
+  const {
+    position = "center center",
+    size = "cover",
+    repeat = "no-repeat",
+  } = options;
+
+  const selectors = `${selector}, ${selector} > .elementor-motion-effects-container > .elementor-motion-effects-layer`;
+  root.querySelectorAll(selectors).forEach((node) => {
+    node.style.backgroundImage = `url("${resolvedImage}")`;
+    node.style.backgroundPosition = position;
+    node.style.backgroundSize = size;
+    node.style.backgroundRepeat = repeat;
+  });
+}
+
+function resetBackgroundImage(root, selector) {
+  if (!root || !selector) return;
+  const selectors = `${selector}, ${selector} > .elementor-motion-effects-container > .elementor-motion-effects-layer`;
+  root.querySelectorAll(selectors).forEach((node) => {
+    node.style.backgroundImage = "";
+    node.style.backgroundPosition = "";
+    node.style.backgroundSize = "";
+    node.style.backgroundRepeat = "";
+  });
+}
+
+function pickText(...values) {
+  for (const value of values) {
+    const text = normalizeText(value);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickAsset(...values) {
+  for (const value of values) {
+    if (typeof value === "string") {
+      const text = pickText(value);
+      if (text) return text;
+      continue;
+    }
+
+    if (value && typeof value === "object") {
+      const text = pickText(
+        value.url,
+        value.src,
+        value.photo,
+        value.image,
+        value.imageUrl,
+        value.fileUrl,
+        value.dataUrl
+      );
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
+function getNameInitial(value, fallback) {
+  const text = pickText(value, fallback);
+  if (!text) return "";
+  return text.trim().charAt(0).toUpperCase();
+}
+
+function resolveDynamicValue(primary, fallback, defaultValue, picker = pickText) {
+  const primaryValue = picker(primary);
+  const fallbackValue = picker(fallback);
+  const normalizedDefault = picker(defaultValue);
+
+  if (primaryValue && normalizedDefault && primaryValue !== normalizedDefault) {
+    return primaryValue;
+  }
+
+  if (fallbackValue) {
+    return fallbackValue;
+  }
+
+  if (primaryValue) {
+    return primaryValue;
+  }
+
+  return normalizedDefault;
+}
+
+function normalizePersonData(primary, fallback, defaults) {
+  const defaultNickName = defaults?.nickName || "";
+  const defaultFullName = defaults?.fullName || "";
+  const defaultParentInfo = defaults?.parentInfo || "";
+  const defaultInstagram = defaults?.instagram || "";
+  const defaultPhoto = defaults?.photo || "";
+
+  return {
+    nickName: resolveDynamicValue(
+      pickText(
+        primary?.nickName,
+        primary?.nickname,
+        primary?.nameFull?.split(" ")[0],
+        primary?.fullName?.split(" ")[0],
+        primary?.fullname?.split(" ")[0]
+      ),
+      pickText(
+        fallback?.nickName,
+        fallback?.nickname,
+        fallback?.nameFull?.split(" ")[0],
+        fallback?.fullName?.split(" ")[0],
+        fallback?.fullname?.split(" ")[0]
+      ),
+      defaultNickName
+    ),
+    fullName: resolveDynamicValue(
+      pickText(
+        primary?.fullName,
+        primary?.fullname,
+        primary?.nameFull
+      ),
+      pickText(
+        fallback?.fullName,
+        fallback?.fullname,
+        fallback?.nameFull
+      ),
+      defaultFullName
+    ),
+    parentInfo: resolveDynamicValue(
+      pickText(primary?.parentInfo, primary?.parents),
+      pickText(fallback?.parentInfo, fallback?.parents),
+      defaultParentInfo
+    ),
+    instagram: resolveDynamicValue(
+      primary?.instagram,
+      fallback?.instagram,
+      defaultInstagram
+    ),
+    photo: resolveDynamicValue(
+      pickAsset(
+        primary?.photo,
+        primary?.image
+      ),
+      pickAsset(
+        fallback?.photo,
+        fallback?.image
+      ),
+      defaultPhoto,
+      pickAsset
+    ),
+  };
+}
+
+function formatEventDate(dateText) {
+  if (!dateText) return "";
+
+  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const monthNames = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  ];
+
+  const parsed = new Date(dateText);
+  if (!Number.isNaN(parsed.getTime())) {
+    const dayName = dayNames[parsed.getDay()];
+    const day = parsed.getDate();
+    const month = monthNames[parsed.getMonth()];
+    const year = parsed.getFullYear();
+    return `${dayName}, ${day} ${month} ${year}`;
+  }
+
+  return dateText;
+}
+
+function formatEventTime(value, fallback) {
+  const text = pickText(value, fallback);
+  if (!text) return "";
+  return /^pukul\b/i.test(text) ? text : `Pukul : ${text}`;
+}
+
+function formatEventLocation(detail, fallback) {
+  const venueName = pickText(detail?.venueName, detail?.venue, detail?.locationName);
+  const address = pickText(detail?.address, fallback);
+  const combined = [venueName, address].filter(Boolean).join(", ");
+  return combined ? `Alamat : ${combined}` : "";
+}
+
+function normalizeGalleryImage(item) {
+  if (typeof item === "string") return pickText(item);
+  if (!item || typeof item !== "object") return "";
+  return pickText(item.url, item.src, item.photo, item.image?.url, item.imageUrl);
+}
+
+function normalizeLoveStoryItem(item) {
+  if (!item || typeof item !== "object") return null;
+  const date = pickText(item.date, item.year, item.label);
+  const text = pickText(item.text, item.description, item.story, item.content);
+  if (!date && !text) return null;
+  return { date, text };
+}
+
+const DEFAULT_BANK_CHIP = "assets/images/local/wp-content__uploads__2024__09__chip-atm-1-2-4.png";
+const BANK_LOGO_FALLBACKS = {
+  bca: "assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png",
+  dana: "assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png",
+};
+
+function resolveBankLogo(bankName, explicitLogo) {
+  const fromData = pickText(explicitLogo);
+  if (fromData) return fromData;
+
+  const key = pickText(bankName).toLowerCase();
+  if (!key) return "";
+  if (key.includes("bca")) return BANK_LOGO_FALLBACKS.bca;
+  if (key.includes("dana")) return BANK_LOGO_FALLBACKS.dana;
+  return "";
+}
+
+function normalizeBankAccount(item) {
+  const bankName = pickText(item?.bankName, item?.bank, item?.provider, item?.title);
+  const accountNumber = pickText(item?.accountNumber, item?.account, item?.number);
+  const accountHolder = pickText(item?.accountHolder, item?.name, item?.accountName);
+  const logo = resolveBankLogo(bankName, item?.logo || item?.logoUrl || item?.image);
+  const chip = pickText(item?.chip) || (bankName && !bankName.toLowerCase().includes("dana") ? DEFAULT_BANK_CHIP : "");
+
+  return {
+    bankName,
+    accountNumber,
+    accountHolder,
+    logo,
+    chip,
+  };
+}
+
 function formatShipping(shipping) {
   if (!shipping) return "";
   const recipient = normalizeText(shipping.recipient || "-");
@@ -120,10 +359,11 @@ function formatWishTimestamp(date) {
   return `${read("day")} ${read("month")} ${read("year")}, ${read("hour")}:${read("minute")}`;
 }
 
-export default function VelvetBurgundyTemplate({ data: propData, invitationSlug = "velvet-burgundy" }) {
+export default function VelvetBurgundyTemplate({ data: propData, invitationSlug = "velvet-burgundy", mode = "live" }) {
+  const isDemoMode = mode === "demo";
   const { data: fetchedData } = useInvitationData(invitationSlug, {
     fallbackSlug: "velvet-burgundy",
-    skipFetch: Boolean(propData),
+    skipFetch: Boolean(propData) || isDemoMode,
   });
   const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
   const fallbackWishes = useMemo(
@@ -140,7 +380,9 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
   const [opened, setOpened] = useState(false);
   const [scrollUnlocked, setScrollUnlocked] = useState(false);
   const [wishes, setWishes] = useState(() => fallbackWishes);
+  const [isSubmittingWish, setIsSubmittingWish] = useState(false);
   const commentAvatarSrc = resolveAssetUrl("assets/images/local/wp-content__uploads__2023__05__cropped-LOGO-32x32.jpg");
+  const livestreamEnabledInRender = mergedData?.features?.livestreamEnabled !== false;
   const hadirCount = useMemo(
     () => wishes.filter((item) => /hadir|datang/i.test(item.attendance)).length,
     [wishes]
@@ -219,33 +461,86 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       document.body.classList.remove("vb-lock-scroll");
     }
 
-    const guestName = normalizeText(mergedData?.guest?.name || "Nama Tamu");
+    const guestName = pickText(mergedData?.guest?.name, "Nama Tamu");
+    const couple = mergedData?.couple || {};
+    const copy = mergedData?.copy || {};
+    const features = mergedData?.features || {};
 
-    const groom = {
-      nickName: normalizeText(mergedData?.groom?.nickName || mergedData?.couple?.groom?.nickName || "Habib"),
-      fullName: normalizeText(mergedData?.groom?.fullName || mergedData?.couple?.groom?.nameFull || "Habib Yulianto"),
-      parentInfo:
-        normalizeText(mergedData?.groom?.parentInfo || mergedData?.couple?.groom?.parentInfo || "Putra Kedua Dari : Bapak Putra dan Ibu Putri"),
-      instagram: normalizeText(mergedData?.groom?.instagram || mergedData?.couple?.groom?.instagram || "wekita.id"),
-    };
+    const groom = normalizePersonData(mergedData?.groom, couple?.groom, {
+      nickName: "Habib",
+      fullName: "Habib Yulianto",
+      parentInfo: "Putra Kedua Dari : Bapak Putra dan Ibu Putri",
+      instagram: "wekita.id",
+      photo: pickAsset(couple?.frontCoverPhoto, mergedData?.frontCoverImage, couple?.heroPhoto, mergedData?.coverImage),
+    });
 
-    const bride = {
-      nickName: normalizeText(mergedData?.bride?.nickName || mergedData?.couple?.bride?.nickName || "Adiba"),
-      fullName: normalizeText(mergedData?.bride?.fullName || mergedData?.couple?.bride?.nameFull || "Adiba Putri Syakila"),
-      parentInfo:
-        normalizeText(mergedData?.bride?.parentInfo || mergedData?.couple?.bride?.parentInfo || "Putri Pertama Dari : Bapak Putra dan Ibu Putri"),
-      instagram: normalizeText(mergedData?.bride?.instagram || mergedData?.couple?.bride?.instagram || "wekita.id"),
-    };
+    const bride = normalizePersonData(mergedData?.bride, couple?.bride, {
+      nickName: "Adiba",
+      fullName: "Adiba Putri Syakila",
+      parentInfo: "Putri Pertama Dari : Bapak Putra dan Ibu Putri",
+      instagram: "wekita.id",
+      photo: pickAsset(couple?.frontCoverPhoto, mergedData?.frontCoverImage, couple?.heroPhoto, mergedData?.coverImage),
+    });
 
-    const eventDateISO = mergedData?.event?.dateISO || "2027-03-30T09:00:00+07:00";
+    const frontCoverPhoto = pickAsset(
+      couple?.frontCoverPhoto,
+      mergedData?.frontCoverImage,
+      couple?.heroPhoto,
+      mergedData?.coverImage
+    );
+    const heroPhoto = pickAsset(
+      couple?.heroPhoto,
+      mergedData?.coverImage,
+      couple?.frontCoverPhoto,
+      mergedData?.frontCoverImage,
+      frontCoverPhoto
+    );
+    const closingBackgroundPhoto = pickAsset(
+      copy?.closingBackgroundPhoto,
+      mergedData?.closingBackgroundImage,
+      heroPhoto,
+      frontCoverPhoto
+    );
+    const quoteText = pickText(copy?.quote, defaultSchema.copy?.quote);
+    const quoteSource = pickText(copy?.quoteSource, defaultSchema.copy?.quoteSource);
+
+    const eventDateISO = pickText(mergedData?.event?.dateISO, defaultSchema.event?.dateISO, "2027-03-30T09:00:00+07:00");
     const akad = mergedData?.event?.akad || {};
     const resepsi = mergedData?.event?.resepsi || {};
     const streaming = mergedData?.streaming || mergedData?.event?.livestream || {};
+    const livestreamEnabled = features?.livestreamEnabled !== false;
 
-    const giftInfo = mergedData?.gifts || {};
-    const bankList = Array.isArray(giftInfo.bankAccounts) ? giftInfo.bankAccounts : [];
-    const bank1 = bankList[0] || {};
-    const bank2 = bankList[1] || {};
+    const giftInfo = mergedData?.gift || {};
+    const giftFallback = mergedData?.gifts || {};
+    const fallbackDigitalEnvelope = features?.digitalEnvelopeInfo || {};
+    const rawBankList =
+      (Array.isArray(giftInfo.bankList) && giftInfo.bankList.length > 0 && giftInfo.bankList) ||
+      (Array.isArray(giftFallback.bankAccounts) && giftFallback.bankAccounts.length > 0 && giftFallback.bankAccounts) ||
+      (Array.isArray(fallbackDigitalEnvelope.bankList) && fallbackDigitalEnvelope.bankList.length > 0 && fallbackDigitalEnvelope.bankList) ||
+      [];
+    const bankList = rawBankList.map(normalizeBankAccount).filter((item) => item.accountNumber || item.accountHolder || item.bankName);
+    const bank1 = bankList[0] || normalizeBankAccount({});
+    const bank2 = bankList[1] || normalizeBankAccount({});
+    const shipping = {
+      ...(fallbackDigitalEnvelope.shipping || {}),
+      ...(giftFallback.shipping || {}),
+      ...(giftInfo.shipping || {}),
+    };
+    const gallery = (
+      Array.isArray(mergedData?.gallery) && mergedData.gallery.length > 0
+        ? mergedData.gallery
+        : defaultSchema.gallery || []
+    )
+      .map(normalizeGalleryImage)
+      .filter(Boolean);
+    const loveStoryItems = (
+      Array.isArray(mergedData?.lovestory) && mergedData.lovestory.length > 0
+        ? mergedData.lovestory
+        : defaultSchema.lovestory || []
+    )
+      .map(normalizeLoveStoryItem)
+      .filter(Boolean)
+      .slice(0, 3);
 
     root.querySelectorAll("[src]").forEach((node) => {
       const value = node.getAttribute("src") || "";
@@ -271,7 +566,6 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       if (next && next !== value) node.setAttribute("href", next);
     });
 
-    const gallery = Array.isArray(mergedData?.gallery) && mergedData.gallery.length > 0 ? mergedData.gallery : defaultSchema.gallery || [];
     if (gallery.length > 0) {
       const galleryContainer = root.querySelector(".elementor-element-2d7b3f8d .elementor-gallery__container");
       const galleryItems = Array.from(root.querySelectorAll(".elementor-element-2d7b3f8d .e-gallery-item"));
@@ -298,8 +592,23 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       });
     }
 
+    setBackgroundImage(root, ".elementor-element-18ecfc31", frontCoverPhoto || heroPhoto, { position: "top center" });
+    setBackgroundImage(root, ".elementor-element-1646ddbf", groom.photo || heroPhoto || frontCoverPhoto, { position: "top center" });
+    setBackgroundImage(root, ".elementor-element-b1cd5cd", bride.photo || heroPhoto || frontCoverPhoto, { position: "top center" });
+    setBackgroundImage(root, ".elementor-element-5181f0f9", pickText(akad?.coverPhoto, heroPhoto, frontCoverPhoto), { position: "top center" });
+    setBackgroundImage(root, ".elementor-element-39596315", pickText(resepsi?.coverPhoto, akad?.coverPhoto, heroPhoto, frontCoverPhoto), { position: "top center" });
+    if (isDemoMode) {
+      resetBackgroundImage(root, ".elementor-element-526d66ae");
+    } else {
+      setBackgroundImage(root, ".elementor-element-526d66ae", closingBackgroundPhoto, { position: "center center" });
+    }
+    resetBackgroundImage(root, ".elementor-element-5de4b0ce");
+    setBackgroundImage(root, ".elementor-element-52ba1529", frontCoverPhoto || heroPhoto, { position: "center center" });
+
     setText(root, ".elementor-element-17d8c3af .elementor-widget-container", guestName);
+    setText(root, ".elementor-element-48e6a0b3 .elementor-heading-title", getNameInitial(groom.nickName, "H"));
     setText(root, ".elementor-element-60f56f12 .elementor-heading-title", groom.nickName);
+    setText(root, ".elementor-element-156923bd .elementor-heading-title", getNameInitial(bride.nickName, "A"));
     setText(root, ".elementor-element-5963fd5d .elementor-heading-title", bride.nickName);
     setText(root, ".elementor-element-37936085 .elementor-heading-title", groom.nickName);
     setText(root, ".elementor-element-25fb2110 .elementor-heading-title", bride.nickName);
@@ -307,46 +616,89 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
     setText(root, ".elementor-element-7e40feef p", groom.fullName);
     setText(root, ".elementor-element-2033f181 p", bride.nickName);
     setText(root, ".elementor-element-406a9d62 p", bride.fullName);
+    setText(root, ".elementor-element-3774d091 p", quoteText);
+    setText(root, ".elementor-element-7a04a9ca p", quoteSource);
     setHtml(root, ".elementor-element-8c853a8 .elementor-widget-container", `<p><strong>Putra Kedua Dari :</strong></p><p>${groom.parentInfo.replace(/^.*?:\s*/, "") || "Bapak Putra dan Ibu Putri"}</p>`);
     setHtml(root, ".elementor-element-2bdae3fe .elementor-widget-container", `<p><strong>Putri Pertama Dari :</strong><br />${bride.parentInfo.replace(/^.*?:\s*/, "") || "Bapak Putra dan Ibu Putri"}</p>`);
 
-    setText(root, ".elementor-element-b4085f2 p", akad.date || resepsi.date || "Minggu, 30 Maret 2027");
-    setText(root, ".elementor-element-1854bc7a p", akad.date || "Minggu, 30 Maret 2027");
-    setText(root, ".elementor-element-2bca4ecc p", `Pukul : ${akad.time || "09:00 WIB"}`);
-    setText(root, ".elementor-element-6225ab71 p", `Alamat : ${akad.address || "Ds Pagu Kec. Wates Kab. Kediri"}`);
+    setText(root, ".elementor-element-b4085f2 p", formatEventDate(pickText(akad.date, resepsi.date, "Minggu, 30 Maret 2027")));
+    setText(root, ".elementor-element-1854bc7a p", formatEventDate(pickText(akad.date, "Minggu, 30 Maret 2027")));
+    setText(root, ".elementor-element-2bca4ecc p", formatEventTime(akad.time, "09:00 WIB"));
+    setText(root, ".elementor-element-6225ab71 p", formatEventLocation(akad, "Ds Pagu Kec. Wates Kab. Kediri"));
 
-    setText(root, ".elementor-element-1de9950f p", resepsi.date || "Minggu, 30 Maret 2027");
-    setText(root, ".elementor-element-7288414 p", `Pukul : ${resepsi.time || "09:00 WIB"}`);
-    setText(root, ".elementor-element-2b4fb691 p", `Alamat : ${resepsi.address || "Ds Pagu Kec. Wates Kab. Kediri"}`);
+    setText(root, ".elementor-element-1de9950f p", formatEventDate(pickText(resepsi.date, akad.date, "Minggu, 30 Maret 2027")));
+    setText(root, ".elementor-element-7288414 p", formatEventTime(resepsi.time, akad.time || "09:00 WIB"));
+    setText(root, ".elementor-element-2b4fb691 p", formatEventLocation(resepsi, akad.address || "Ds Pagu Kec. Wates Kab. Kediri"));
 
     setLink(root, ".elementor-element-46140128 a", akad.mapsUrl || resepsi.mapsUrl || "https://maps.app.goo.gl/D914WhqsNx1qxTRm6");
     setLink(root, ".elementor-element-5deddaeb a", resepsi.mapsUrl || akad.mapsUrl || "https://maps.app.goo.gl/D914WhqsNx1qxTRm6");
 
-    setText(root, ".elementor-element-29e3c153 p", streaming.date || resepsi.date || "Minggu, 30 Maret 2027");
-    setText(root, ".elementor-element-54cfaa68 p", `Pukul : ${streaming.time || resepsi.time || "09:00 WIB"}`);
-    setLink(root, ".elementor-element-25605cc7 a", streaming.url || "https://instagram.com");
-    setText(root, ".elementor-element-25605cc7 .elementor-button-text", streaming.label || "Join Streaming");
+    setText(root, ".elementor-element-29e3c153 p", formatEventDate(pickText(streaming.date, resepsi.date, "Minggu, 30 Maret 2027")));
+    setText(root, ".elementor-element-54cfaa68 p", formatEventTime(streaming.time, resepsi.time || "09:00 WIB"));
+    setLink(root, ".elementor-element-25605cc7 a", pickText(streaming.url, "https://instagram.com"));
+    setText(root, ".elementor-element-25605cc7 .elementor-button-text", pickText(streaming.label, "Join Streaming"));
 
     setLink(root, ".elementor-element-7b8e92f5 a", toInstagramUrl(groom.instagram));
     setLink(root, ".elementor-element-6d3c705d a", toInstagramUrl(bride.instagram));
 
-    setText(root, ".elementor-element-6e0c2eb1 p", bank1.accountNumber || "1234 5678 90");
-    setText(root, ".elementor-element-27297eef p", bank1.accountHolder || groom.nickName || "Habib");
-    setText(root, ".elementor-element-66771dda p", bank2.accountNumber || bank1.accountNumber || "1234 5678 90");
-    setText(root, ".elementor-element-4c9c9600 p", bank2.accountHolder || bank1.accountHolder || groom.nickName || "Habib");
+    const loveStorySelectors = [
+      {
+        container: ".elementor-element-2dd8f818",
+        date: ".elementor-element-7754a066 p",
+        text: ".elementor-element-7bfb3209 p",
+      },
+      {
+        container: ".elementor-element-3a58553b",
+        date: ".elementor-element-769e8559 p",
+        text: ".elementor-element-29ed6468 p",
+      },
+      {
+        container: ".elementor-element-157e312e",
+        date: ".elementor-element-20686e1e p",
+        text: ".elementor-element-5b0dceb4 p",
+      },
+    ];
+
+    loveStorySelectors.forEach((selectors, index) => {
+      const story = loveStoryItems[index];
+      setDisplay(root, selectors.container, Boolean(story));
+      if (!story) return;
+      setText(root, selectors.date, story.date || "");
+      setText(root, selectors.text, story.text || "");
+    });
+
+    setText(root, ".elementor-element-6e0c2eb1 p", pickText(bank1.accountNumber, "1234 5678 90"));
+    setText(root, ".elementor-element-27297eef p", pickText(bank1.accountHolder, groom.nickName, "Habib"));
+    setText(root, ".elementor-element-66771dda p", pickText(bank2.accountNumber, bank1.accountNumber, "1234 5678 90"));
+    setText(root, ".elementor-element-4c9c9600 p", pickText(bank2.accountHolder, bank1.accountHolder, groom.nickName, "Habib"));
 
     const logo1 = root.querySelector(".elementor-element-3deecddf img");
     if (logo1 && bank1.logo) logo1.setAttribute("src", resolveAssetUrl(bank1.logo));
     const chip = root.querySelector(".elementor-element-6c76d365 img");
-    if (chip && bank1.chip) chip.setAttribute("src", resolveAssetUrl(bank1.chip));
+    if (chip) {
+      if (bank1.chip) {
+        chip.style.display = "";
+        chip.setAttribute("src", resolveAssetUrl(bank1.chip));
+      } else {
+        chip.style.display = "none";
+      }
+    }
     const logo2 = root.querySelector(".elementor-element-378cbbc0 img");
     if (logo2 && bank2.logo) logo2.setAttribute("src", resolveAssetUrl(bank2.logo));
 
     const copyContents = Array.from(root.querySelectorAll(".elementor-widget-weddingpress-copy-text .copy-content"));
-    if (copyContents[0]) copyContents[0].innerHTML = bank1.accountNumber || "1234 5678 90";
-    if (copyContents[1]) copyContents[1].innerHTML = bank2.accountNumber || bank1.accountNumber || "1234 5678 90";
+    if (copyContents[0]) copyContents[0].innerHTML = pickText(bank1.accountNumber, "1234 5678 90");
+    if (copyContents[1]) copyContents[1].innerHTML = pickText(bank2.accountNumber, bank1.accountNumber, "1234 5678 90");
 
-    setHtml(root, ".elementor-element-1863debf .elementor-widget-container", formatShipping(giftInfo.shipping));
+    setHtml(
+      root,
+      ".elementor-element-1863debf .elementor-widget-container",
+      formatShipping({
+        recipient: pickText(shipping.recipient, groom.fullName),
+        phone: pickText(shipping.phone, "-"),
+        address: pickText(shipping.address, "-"),
+      })
+    );
     setText(root, ".elementor-element-57e5bff0 p", `${groom.nickName} & ${bride.nickName}`);
 
     const countdownNode = root.querySelector("#wpkoi-elements-countdown-5720b7ed");
@@ -569,7 +921,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       const authorInput = target.querySelector("#author");
       const commentInput = target.querySelector("#cui-textarea-5856");
       const attendanceInput = target.querySelector("#konfirmasi");
-      const submitBtn = target.querySelector("input[type='submit']");
+      const submitBtn = target.querySelector("[data-wishes-submit]");
 
       const author = normalizeText(authorInput?.value);
       const comment = normalizeText(commentInput?.value);
@@ -577,46 +929,58 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       if (!author || !comment) return;
 
       // --- Start Loading ---
+      const loadingStartedAt = Date.now();
+      const nextWish = {
+        author,
+        comment,
+        attendance,
+        createdAt: new Date().toISOString(),
+      };
       target.classList.add("is-submitting");
+      setIsSubmittingWish(true);
       const formElements = target.querySelectorAll("input, textarea, select, button");
       formElements.forEach((el) => {
         el.disabled = true;
       });
 
-      let originalSubmitValue = "";
-      if (submitBtn) {
-        originalSubmitValue = submitBtn.value;
-        submitBtn.value = "Mengirim...";
-      }
-
       try {
-        await postInvitationWish("velvet-burgundy", {
-          author,
-          comment,
-          attendance,
+        await new Promise((resolve, reject) => {
+          const timeoutId = window.setTimeout(() => reject(new Error("WISH_SUBMIT_TIMEOUT")), 5000);
+
+          postInvitationWish(invitationSlug || "velvet-burgundy", {
+            invitationSlug,
+            orderId: mergedData?.orderId,
+            author,
+            comment,
+            attendance,
+          })
+            .then((result) => {
+              window.clearTimeout(timeoutId);
+              resolve(result);
+            })
+            .catch((error) => {
+              window.clearTimeout(timeoutId);
+              reject(error);
+            });
         });
       } catch {
         // Keep optimistic local render
       } finally {
+        const elapsed = Date.now() - loadingStartedAt;
+        if (elapsed < 450) {
+          await new Promise((resolve) => window.setTimeout(resolve, 450 - elapsed));
+        }
+
         // --- Stop Loading ---
         target.classList.remove("is-submitting");
+        setIsSubmittingWish(false);
         formElements.forEach((el) => {
           el.disabled = false;
         });
-        if (submitBtn) {
-          submitBtn.value = originalSubmitValue;
-        }
+        if (submitBtn) submitBtn.disabled = false;
       }
 
-      setWishes((prev) => [
-        {
-          author,
-          comment,
-          attendance,
-          createdAt: new Date().toISOString(),
-        },
-        ...prev,
-      ]);
+      setWishes((prev) => [nextWish, ...prev]);
 
       target.reset();
     };
@@ -663,7 +1027,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       }
       document.body.classList.remove("vb-lock-scroll");
     };
-  }, [mergedData, opened, scrollUnlocked]);
+  }, [invitationSlug, mergedData, opened, scrollUnlocked]);
 
   useEffect(() => {
     return () => {
@@ -1230,66 +1594,68 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
         </div>
         <div className="elementor-element elementor-element-1bbaa257 e-flex e-con-boxed e-con e-parent" data-id="1bbaa257" data-element_type="container">
           <div className="e-con-inner">
-            <div className="elementor-element elementor-element-5f314a0c e-con-full e-flex e-con e-child" data-id="5f314a0c" data-element_type="container" data-settings='{"background_background":"classic"}'>
-              <div className="elementor-element elementor-element-662e8646 elementor-widget elementor-widget-spacer" data-id="662e8646" data-element_type="widget" data-widget_type="spacer.default">
-                <div className="elementor-widget-container">
-                  <div className="elementor-spacer">
-                    <div className="elementor-spacer-inner"></div>
+            {livestreamEnabledInRender ? (
+              <div className="elementor-element elementor-element-5f314a0c e-con-full e-flex e-con e-child" data-id="5f314a0c" data-element_type="container" data-settings='{"background_background":"classic"}'>
+                <div className="elementor-element elementor-element-662e8646 elementor-widget elementor-widget-spacer" data-id="662e8646" data-element_type="widget" data-widget_type="spacer.default">
+                  <div className="elementor-widget-container">
+                    <div className="elementor-spacer">
+                      <div className="elementor-spacer-inner"></div>
+                    </div>
                   </div>
                 </div>
-              </div>
-              <div className="elementor-element elementor-element-706b558a reveal elementor-widget elementor-widget-text-editor" data-id="706b558a" data-element_type="widget" data-widget_type="text-editor.default">
-                <div className="elementor-widget-container">
-                  <p>
-                    Live Streaming
-                  </p>
+                <div className="elementor-element elementor-element-706b558a reveal elementor-widget elementor-widget-text-editor" data-id="706b558a" data-element_type="widget" data-widget_type="text-editor.default">
+                  <div className="elementor-widget-container">
+                    <p>
+                      Live Streaming
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="elementor-element elementor-element-4b5b73ea reveal elementor-widget elementor-widget-text-editor" data-id="4b5b73ea" data-element_type="widget" data-widget_type="text-editor.default">
-                <div className="elementor-widget-container">
-                  <p>
-                    Kami juga berencana untuk mempublikasikan pernikahan kami secara virtual melalui live streaming instagram yang bisa anda ikuti melalui link berikut:
-                  </p>
+                <div className="elementor-element elementor-element-4b5b73ea reveal elementor-widget elementor-widget-text-editor" data-id="4b5b73ea" data-element_type="widget" data-widget_type="text-editor.default">
+                  <div className="elementor-widget-container">
+                    <p>
+                      Kami juga berencana untuk mempublikasikan pernikahan kami secara virtual melalui live streaming instagram yang bisa anda ikuti melalui link berikut:
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="elementor-element elementor-element-29e3c153 reveal elementor-widget elementor-widget-text-editor" data-id="29e3c153" data-element_type="widget" data-widget_type="text-editor.default">
-                <div className="elementor-widget-container">
-                  <p>
-                    Minggu, 30 Maret 2025
-                  </p>
+                <div className="elementor-element elementor-element-29e3c153 reveal elementor-widget elementor-widget-text-editor" data-id="29e3c153" data-element_type="widget" data-widget_type="text-editor.default">
+                  <div className="elementor-widget-container">
+                    <p>
+                      Minggu, 30 Maret 2025
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="elementor-element elementor-element-54cfaa68 reveal elementor-widget elementor-widget-text-editor" data-id="54cfaa68" data-element_type="widget" data-widget_type="text-editor.default">
-                <div className="elementor-widget-container">
-                  <p>
-                    Pukul : 09:00 WIB
-                  </p>
+                <div className="elementor-element elementor-element-54cfaa68 reveal elementor-widget elementor-widget-text-editor" data-id="54cfaa68" data-element_type="widget" data-widget_type="text-editor.default">
+                  <div className="elementor-widget-container">
+                    <p>
+                      Pukul : 09:00 WIB
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="elementor-element elementor-element-25605cc7 elementor-align-center reveal elementor-widget elementor-widget-button" data-id="25605cc7" data-element_type="widget" data-widget_type="button.default">
-                <div className="elementor-widget-container">
-                  <div className="elementor-button-wrapper">
-                    <a className="elementor-button elementor-button-link elementor-size-sm" href="https://instagram.com/wekita.id" target="_blank">
-                      <span className="elementor-button-content-wrapper">
-                        <span className="elementor-button-icon">
-                          <i aria-hidden="true" className="fas fa-long-arrow-alt-right"></i>
+                <div className="elementor-element elementor-element-25605cc7 elementor-align-center reveal elementor-widget elementor-widget-button" data-id="25605cc7" data-element_type="widget" data-widget_type="button.default">
+                  <div className="elementor-widget-container">
+                    <div className="elementor-button-wrapper">
+                      <a className="elementor-button elementor-button-link elementor-size-sm" href="https://instagram.com/wekita.id" target="_blank">
+                        <span className="elementor-button-content-wrapper">
+                          <span className="elementor-button-icon">
+                            <i aria-hidden="true" className="fas fa-long-arrow-alt-right"></i>
+                          </span>
+                          <span className="elementor-button-text">
+                            Klik Disini
+                          </span>
                         </span>
-                        <span className="elementor-button-text">
-                          Klik Disini
-                        </span>
-                      </span>
-                    </a>
+                      </a>
+                    </div>
+                  </div>
+                </div>
+                <div className="elementor-element elementor-element-1eebb4d9 elementor-widget elementor-widget-spacer" data-id="1eebb4d9" data-element_type="widget" data-widget_type="spacer.default">
+                  <div className="elementor-widget-container">
+                    <div className="elementor-spacer">
+                      <div className="elementor-spacer-inner"></div>
+                    </div>
                   </div>
                 </div>
               </div>
-              <div className="elementor-element elementor-element-1eebb4d9 elementor-widget elementor-widget-spacer" data-id="1eebb4d9" data-element_type="widget" data-widget_type="spacer.default">
-                <div className="elementor-widget-container">
-                  <div className="elementor-spacer">
-                    <div className="elementor-spacer-inner"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            ) : null}
             <div className="elementor-element elementor-element-714a115e e-con-full e-flex e-con e-child" data-id="714a115e" data-element_type="container" data-settings='{"background_background":"classic"}'>
               <div className="elementor-element elementor-element-6a7cba90 elementor-widget elementor-widget-spacer" data-id="6a7cba90" data-element_type="widget" data-widget_type="spacer.default">
                 <div className="elementor-widget-container">
@@ -1709,7 +2075,23 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
                                       <input type="text" className="cui-hide" name="nombre" value="" readOnly />
                                       <input type="text" className="cui-hide" name="form-cui" value="" readOnly />
                                       <input type="button" className="cui-form-btn cui-cancel-btn" value="Cancel" />
-                                      <input name="submit" id="submit-5856" value="Kirim" type="submit" />
+                                      <button
+                                        name="submit"
+                                        id="submit-5856"
+                                        type="submit"
+                                        className="vb-wishes-submit"
+                                        data-wishes-submit=""
+                                        disabled={isSubmittingWish}
+                                      >
+                                        {isSubmittingWish ? (
+                                          <>
+                                            <i aria-hidden="true" className="fas fa-spinner fa-spin" />
+                                            <span>Mengirim...</span>
+                                          </>
+                                        ) : (
+                                          <span>Kirim</span>
+                                        )}
+                                      </button>
                                     </p>
                                   </div>
                                 </form>
