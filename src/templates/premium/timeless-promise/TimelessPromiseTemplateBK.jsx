@@ -27,14 +27,6 @@ const BODY_CLASSES = [
 const APP_BASE_URL = import.meta.env.BASE_URL || "/";
 const normalizedBaseUrl = APP_BASE_URL.endsWith("/") ? APP_BASE_URL : `${APP_BASE_URL}/`;
 const PUBLIC_ASSET_PREFIX = `${normalizedBaseUrl}templates/premium/timeless-promise/assets/`;
-const TEMPLATE_PHOTO_FALLBACKS = {
-    frontCoverPhoto: "assets/image/couple/fres-1-e1721182684426-1.jpg",
-    heroPhoto: "assets/image/ornament/5-FILEminimizer-e1703737895919-1.jpg",
-    bridePhoto: "assets/image/couple/fres-WANITA-1.jpg",
-    groomPhoto: "assets/image/couple/fres-PRIA-1.jpg",
-    loveStoryPhoto: "assets/image/ornament/ls-1-1--2.jpg",
-    closingBackgroundPhoto: "assets/image/ornament/5-FILEminimizer-e1703737895919-1.jpg",
-};
 
 function normalizeText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
@@ -172,14 +164,6 @@ function textToHtmlWithBreaks(value) {
     return escapeHtml(value).replace(/\n/g, "<br>");
 }
 
-function buildQuoteMarkup(quoteText, quoteSource) {
-    const cleanQuote = String(quoteText || "").trim().replace(/^[“"\s-]+|[”"\s-]+$/g, "");
-    const cleanSource = String(quoteSource || "").trim().replace(/^[-\s(]+|[-\s)]+$/g, "");
-    if (!cleanQuote && !cleanSource) return "";
-    if (!cleanSource) return `&ldquo;${escapeHtml(cleanQuote)}&rdquo;`;
-    return `&ldquo;${escapeHtml(cleanQuote)}&rdquo;<br><br>- ${escapeHtml(cleanSource)} -`;
-}
-
 function toInstagramUrl(handle) {
     if (!handle) return "https://instagram.com";
     return `https://instagram.com/${String(handle).replace(/^@/, "")}`;
@@ -207,209 +191,6 @@ function formatCountdown(targetInput) {
         minutes: String(minutes).padStart(2, "0"),
         seconds: String(seconds).padStart(2, "0"),
         ended: false,
-    };
-}
-
-function formatEventDate(dateText) {
-    if (!dateText) return "";
-
-    const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
-    const monthNames = [
-        "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-        "Juli", "Agustus", "September", "Oktober", "November", "Desember",
-    ];
-
-    const parsed = new Date(dateText);
-    if (!Number.isNaN(parsed.getTime())) {
-        const dayName = dayNames[parsed.getDay()];
-        const day = parsed.getDate();
-        const month = monthNames[parsed.getMonth()];
-        const year = parsed.getFullYear();
-        return `${dayName}, ${day} ${month} ${year}`;
-    }
-
-    return dateText;
-}
-
-function formatEventTimeLabel(value) {
-    const normalized = normalizeText(value);
-    if (!normalized) return "";
-    return /^pukul\b/i.test(normalized) ? normalized : `Pukul ${normalized}`;
-}
-
-function buildLocationText(detail) {
-    if (!detail) return "";
-    const venueName = normalizeText(detail?.venueName);
-    const address = normalizeText(detail?.address);
-    return [venueName, address].filter(Boolean).join(", ");
-}
-
-function normalizeGalleryItemUrl(item) {
-    if (!item) return "";
-    if (typeof item === "string") return item;
-    return item.src || item.url || item.photo || item.image || "";
-}
-
-function buildCalendarDateString(date) {
-    const pad = (value) => String(value).padStart(2, "0");
-    return [
-        date.getUTCFullYear(),
-        pad(date.getUTCMonth() + 1),
-        pad(date.getUTCDate()),
-        "T",
-        pad(date.getUTCHours()),
-        pad(date.getUTCMinutes()),
-        pad(date.getUTCSeconds()),
-        "Z",
-    ].join("");
-}
-
-function buildCalendarEndDate(startInput, timeText) {
-    const start = new Date(startInput);
-    if (Number.isNaN(start.getTime())) return null;
-
-    const normalized = normalizeText(timeText);
-    const rangeMatch = normalized.match(/(\d{1,2})[.:](\d{2})\s*[-–]\s*(\d{1,2})[.:](\d{2})/);
-    if (rangeMatch) {
-        const end = new Date(start);
-        end.setHours(Number(rangeMatch[3]), Number(rangeMatch[4]), 0, 0);
-        if (end <= start) {
-            end.setDate(end.getDate() + 1);
-        }
-        return end;
-    }
-
-    const end = new Date(start);
-    end.setHours(end.getHours() + 2);
-    return end;
-}
-
-function buildGoogleCalendarUrl({ title, startInput, endInput, details, location }) {
-    const start = new Date(startInput);
-    const end = new Date(endInput);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return "";
-
-    const params = new URLSearchParams({
-        action: "TEMPLATE",
-        text: title || "Undangan Pernikahan",
-        dates: `${buildCalendarDateString(start)}/${buildCalendarDateString(end)}`,
-        details: details || "",
-        location: location || "",
-    });
-
-    return `https://calendar.google.com/calendar/render?${params.toString()}`;
-}
-
-function formatIcsDateLocal(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    return `${year}${month}${day}T${hours}${minutes}${seconds}`;
-}
-
-function escapeIcsText(value) {
-    return String(value || "")
-        .replace(/\\/g, "\\\\")
-        .replace(/\n/g, "\\n")
-        .replace(/,/g, "\\,")
-        .replace(/;/g, "\\;");
-}
-
-function downloadCalendarIcs({ title, startInput, endInput, details, location }) {
-    const startDate = new Date(startInput);
-    const endDate = new Date(endInput);
-    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
-
-    const safeTitle = title || "Undangan Pernikahan";
-    const icsContent = [
-        "BEGIN:VCALENDAR",
-        "VERSION:2.0",
-        "PRODID:-//Ikatan Cinta//Timeless Promise//EN",
-        "CALSCALE:GREGORIAN",
-        "BEGIN:VEVENT",
-        `UID:${startDate.getTime()}-timeless-promise@ikatancinta`,
-        `DTSTAMP:${formatIcsDateLocal(new Date())}`,
-        `SUMMARY:${escapeIcsText(safeTitle)}`,
-        `DTSTART:${formatIcsDateLocal(startDate)}`,
-        `DTEND:${formatIcsDateLocal(endDate)}`,
-        `DESCRIPTION:${escapeIcsText(details || "")}`,
-        `LOCATION:${escapeIcsText(location || "")}`,
-        "BEGIN:VALARM",
-        "TRIGGER:-P1D",
-        "ACTION:DISPLAY",
-        `DESCRIPTION:${escapeIcsText(`Pengingat ${safeTitle}`)}`,
-        "END:VALARM",
-        "END:VEVENT",
-        "END:VCALENDAR",
-    ].join("\r\n");
-
-    const blob = new Blob([icsContent], { type: "text/calendar;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "save-the-date.ics";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
-}
-
-function shouldUseIcsCalendar() {
-    const userAgent = navigator.userAgent || "";
-    const platform = navigator.platform || "";
-    const isAppleTouchDevice = platform === "MacIntel" && navigator.maxTouchPoints > 1;
-    return /iPhone|iPad|iPod/i.test(userAgent) || isAppleTouchDevice;
-}
-
-function isDemoPlaceholderPhoto(path) {
-    return /images\.unsplash\.com/i.test(String(path || ""));
-}
-
-function resolveSectionPhoto(path, fallbackAsset, options = {}) {
-    const normalized = normalizeText(path);
-    if (options.forceTemplateFallback) {
-        if (!normalized || isDemoPlaceholderPhoto(normalized)) {
-            return fallbackAsset || "";
-        }
-    }
-    return normalized || "";
-}
-
-function buildBankLogoDataUrl(label, options = {}) {
-    const safeLabel = escapeHtml(label || "BANK");
-    const background = options.background || "#ffffff";
-    const foreground = options.foreground || "#1f2937";
-    const svg = `
-      <svg xmlns="http://www.w3.org/2000/svg" width="320" height="112" viewBox="0 0 320 112">
-        <rect width="320" height="112" rx="18" fill="${background}"/>
-        <text x="160" y="68" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="${foreground}">
-          ${safeLabel}
-        </text>
-      </svg>
-    `;
-    return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-}
-
-function resolveBankLogo(bankName) {
-    const normalized = normalizeText(bankName).toLowerCase();
-    if (normalized.includes("dana")) {
-        return {
-            src: "assets/image/brand/1200px-Logo_dana_blue.svg-1-1-1-1-1.png",
-            hideChip: true,
-        };
-    }
-    if (normalized.includes("bca")) {
-        return {
-            src: "assets/image/brand/BCA_logo_Bank_Central_Asia-1-3-5-1-1.png",
-            hideChip: false,
-        };
-    }
-    return {
-        src: buildBankLogoDataUrl(bankName || "BANK"),
-        hideChip: !/(bri|bni|mandiri|cimb|permata|btn)/i.test(normalized),
     };
 }
 
@@ -505,98 +286,20 @@ function mergeInvitationData(baseSchema, incomingData) {
             digitalEnvelopeInfo: {
                 ...baseSchema.features.digitalEnvelopeInfo,
                 ...(incomingData.features?.digitalEnvelopeInfo || {}),
-                // Pastikan bankList selalu array dan tidak ter-overwrite dengan undefined
-                bankList: Array.isArray(incomingData.features?.digitalEnvelopeInfo?.bankList)
-                    ? incomingData.features.digitalEnvelopeInfo.bankList
-                    : (baseSchema.features.digitalEnvelopeInfo?.bankList || []),
-            },
-            shippingInfo: {
-                ...(baseSchema.features?.shippingInfo || {}),
-                ...(incomingData.features?.shippingInfo || {}),
             },
         },
         lovestory: Array.isArray(incomingData.lovestory) ? incomingData.lovestory : baseSchema.lovestory,
         gallery: Array.isArray(incomingData.gallery) ? incomingData.gallery : baseSchema.gallery,
-        // ── Audio: deep-merge sumber musik ───────────────────────────────
-        audio: {
-            ...(baseSchema.audio || {}),
-            ...(incomingData.audio || {}),
-        },
-        // ── Wishes: pastikan array initial ter-override dengan benar ──────
-        wishes: {
-            ...(baseSchema.wishes || {}),
-            ...(incomingData.wishes || {}),
-            initial: Array.isArray(incomingData.wishes?.initial)
-                ? incomingData.wishes.initial
-                : Array.isArray(baseSchema.wishes?.initial)
-                    ? baseSchema.wishes.initial
-                    : [],
-        },
-        // ── Behavior: semua sub-konfigurasi di-merge secara individual ────
-        behavior: {
-            ...(baseSchema.behavior || {}),
-            ...(incomingData.behavior || {}),
-            audio: {
-                ...(baseSchema.behavior?.audio || {}),
-                ...(incomingData.behavior?.audio || {}),
-            },
-            cover: {
-                ...(baseSchema.behavior?.cover || {}),
-                ...(incomingData.behavior?.cover || {}),
-            },
-            gift: {
-                ...(baseSchema.behavior?.gift || {}),
-                ...(incomingData.behavior?.gift || {}),
-            },
-            countdown: {
-                ...(baseSchema.behavior?.countdown || {}),
-                ...(incomingData.behavior?.countdown || {}),
-            },
-            lightbox: {
-                ...(baseSchema.behavior?.lightbox || {}),
-                ...(incomingData.behavior?.lightbox || {}),
-            },
-            motionText: {
-                ...(baseSchema.behavior?.motionText || {}),
-                ...(incomingData.behavior?.motionText || {}),
-            },
-            viewportVh: {
-                ...(baseSchema.behavior?.viewportVh || {}),
-                ...(incomingData.behavior?.viewportVh || {}),
-            },
-            wishes: {
-                ...(baseSchema.behavior?.wishes || {}),
-                ...(incomingData.behavior?.wishes || {}),
-            },
-            copy: {
-                ...(baseSchema.behavior?.copy || {}),
-                ...(incomingData.behavior?.copy || {}),
-            },
-        },
     };
 }
 
-function applyInvitationData(root, invitationData, options = {}) {
+function applyInvitationData(root, invitationData) {
     const guestName = invitationData?.guest?.name || defaultSchema.guest.name;
     const greetingLabel = invitationData?.guest?.greetingLabel || defaultSchema.guest.greetingLabel;
-    const forceTemplateFallback = options.mode === "demo";
 
     const bride = invitationData?.couple?.bride || defaultSchema.couple.bride;
     const groom = invitationData?.couple?.groom || defaultSchema.couple.groom;
     const event = invitationData?.event || defaultSchema.event;
-    const features = invitationData?.features || defaultSchema.features;
-    const frontCoverPhoto = resolveSectionPhoto(
-        invitationData?.couple?.frontCoverPhoto,
-        TEMPLATE_PHOTO_FALLBACKS.frontCoverPhoto,
-        { forceTemplateFallback }
-    );
-    const heroPhoto = resolveSectionPhoto(
-        invitationData?.couple?.heroPhoto,
-        TEMPLATE_PHOTO_FALLBACKS.heroPhoto,
-        { forceTemplateFallback }
-    );
-    const bridePhoto = resolveSectionPhoto(bride.photo, TEMPLATE_PHOTO_FALLBACKS.bridePhoto, { forceTemplateFallback });
-    const groomPhoto = resolveSectionPhoto(groom.photo, TEMPLATE_PHOTO_FALLBACKS.groomPhoto, { forceTemplateFallback });
 
     const replaceExactText = (selector, fromText, toText) => {
         const fromNormalized = normalizeText(fromText);
@@ -606,61 +309,6 @@ function applyInvitationData(root, invitationData, options = {}) {
             }
         });
     };
-
-    const setTextContent = (selector, value) => {
-        if (!value) return;
-        root.querySelectorAll(selector).forEach((node) => {
-            node.textContent = value;
-        });
-    };
-
-    const setParagraphContent = (selector, value) => {
-        if (!value) return;
-        root.querySelectorAll(selector).forEach((node) => {
-            node.innerHTML = `<p>${escapeHtml(value)}</p>`;
-        });
-    };
-
-    const setDisplay = (selector, isVisible) => {
-        root.querySelectorAll(selector).forEach((node) => {
-            node.style.display = isVisible ? "" : "none";
-        });
-    };
-
-    const formattedAkadDate = formatEventDate(event?.akad?.date || defaultSchema.event.akad.date);
-    const formattedResepsiDate = formatEventDate(
-        event?.resepsi?.date || event?.akad?.date || defaultSchema.event.resepsi.date
-    );
-    const formattedLivestreamDate = formatEventDate(
-        event?.livestream?.date || event?.akad?.date || event?.dateISO || defaultSchema.event.livestream.date
-    );
-    const formattedSaveTheDate = formatEventDate(event?.akad?.date || event?.dateISO || defaultSchema.event.akad.date);
-    const akadTimeText = pickNonEmptyText(event?.akad?.time, defaultSchema.event.akad.time);
-    const resepsiTimeText = pickNonEmptyText(event?.resepsi?.time, event?.akad?.time, defaultSchema.event.resepsi.time);
-    const livestreamTimeText = pickNonEmptyText(
-        event?.livestream?.time,
-        event?.akad?.time,
-        defaultSchema.event.livestream.time
-    );
-    const livestreamEnabled = features?.livestreamEnabled === true;
-    const akadLocationText = pickNonEmptyText(buildLocationText(event?.akad), defaultSchema.event.akad.address);
-    const resepsiLocationText = pickNonEmptyText(
-        buildLocationText(event?.resepsi),
-        buildLocationText(event?.akad),
-        defaultSchema.event.resepsi.address
-    );
-    const calendarTitle = `${pickNonEmptyText(groom.nickName, groom.nameFull)} & ${pickNonEmptyText(bride.nickName, bride.nameFull)} - The Wedding`;
-    const calendarDetails = pickNonEmptyText(invitationData?.copy?.openingText, invitationData?.copy?.closingText);
-    const calendarStartInput = event?.dateISO || defaultSchema.event.dateISO;
-    const calendarEndDate = buildCalendarEndDate(calendarStartInput, event?.akad?.time || defaultSchema.event.akad.time);
-    const calendarEndInput = calendarEndDate?.toISOString() || "";
-    const calendarUrl = buildGoogleCalendarUrl({
-        title: calendarTitle,
-        startInput: event?.dateISO || defaultSchema.event.dateISO,
-        endInput: calendarEndDate,
-        details: calendarDetails,
-        location: akadLocationText,
-    });
 
     replaceExactText(".elementor-widget-container p, .elementor-heading-title", "Nama Tamu", guestName);
     replaceExactText(".elementor-widget-container p, .elementor-heading-title", "Kepada Bapak/Ibu/Saudara/i", greetingLabel);
@@ -676,87 +324,18 @@ function applyInvitationData(root, invitationData, options = {}) {
     replaceExactText(
         ".elementor-widget-container p, .elementor-heading-title",
         "Minggu, 30 Maret 2025",
-        formattedAkadDate
+        event?.akad?.date || defaultSchema.event.akad.date
     );
     replaceExactText(
         ".elementor-widget-container p, .elementor-heading-title",
         "10.00 WIB",
-        akadTimeText
+        event?.akad?.time || defaultSchema.event.akad.time
     );
     replaceExactText(
         ".elementor-widget-container p, .elementor-heading-title",
         "Ds Pagu Kec. Wates Kab. Kediri",
         event?.akad?.address || defaultSchema.event.akad.address
     );
-
-    // ── Resepsi: inject data tanggal, waktu, dan lokasi ──────────────────
-    if (event?.resepsi) {
-        const resepsi = event.resepsi;
-        if (resepsi.date) {
-            replaceExactText(".elementor-widget-container p, .elementor-heading-title",
-                defaultSchema.event.resepsi.date, formattedResepsiDate);
-        }
-        if (resepsi.time) {
-            replaceExactText(".elementor-widget-container p, .elementor-heading-title",
-                defaultSchema.event.resepsi.time, resepsiTimeText);
-        }
-        if (resepsi.address) {
-            replaceExactText(".elementor-widget-container p, .elementor-heading-title",
-                defaultSchema.event.resepsi.address, resepsi.address);
-        }
-        // VenueName: inject ke semua node yang mengandung nama venue default
-        if (resepsi.venueName) {
-            replaceExactText(".elementor-widget-container p, .elementor-heading-title",
-                defaultSchema.event.resepsi.venueName, resepsi.venueName);
-        }
-    }
-
-    setTextContent(".elementor-element-7fd69d2c .elementor-widget-container p", formattedSaveTheDate);
-    setTextContent(".elementor-element-37c49564 .elementor-widget-container p", formattedLivestreamDate);
-    setTextContent(".elementor-element-3569c2b1 .elementor-widget-container p", formattedAkadDate);
-    setTextContent(".elementor-element-32468ae5 .elementor-widget-container p", formattedResepsiDate);
-    setTextContent(".elementor-element-7267c6a8 .elementor-widget-container p", akadLocationText);
-    setTextContent(".elementor-element-7dc33c79 .elementor-widget-container p", resepsiLocationText);
-
-    setParagraphContent(".elementor-element-4fabcb74 .elementor-widget-container", formatEventTimeLabel(livestreamTimeText));
-    setParagraphContent(".elementor-element-33c048d1 .elementor-widget-container", formatEventTimeLabel(akadTimeText));
-    setParagraphContent(".elementor-element-5fea0c7b .elementor-widget-container", formatEventTimeLabel(resepsiTimeText));
-    setDisplay(".elementor-element-12749ae4", livestreamEnabled);
-
-    if (calendarUrl) {
-        root.querySelectorAll(".elementor-element-4a19cf25 a, .elementor-social-icon-calendar-alt").forEach((node) => {
-            node.setAttribute("href", calendarUrl);
-            node.setAttribute("target", "_blank");
-            node.setAttribute("rel", "noreferrer");
-            node.setAttribute("data-calendar-url", calendarUrl);
-            node.setAttribute("data-calendar-title", calendarTitle);
-            node.setAttribute("data-calendar-start", calendarStartInput);
-            node.setAttribute("data-calendar-end", calendarEndInput);
-            node.setAttribute("data-calendar-details", calendarDetails);
-            node.setAttribute("data-calendar-location", akadLocationText);
-        });
-    }
-
-    // ── Maps URL: pasang link Google Maps pada tombol akad & resepsi ──────
-    const mapsButtons = root.querySelectorAll("a[href*='maps.google'], a[href*='goo.gl/maps'], a[href*='maps.app']");
-    if (event?.akad?.mapsUrl && mapsButtons[0]) {
-        mapsButtons[0].setAttribute("href", event.akad.mapsUrl);
-    }
-    if (event?.resepsi?.mapsUrl && mapsButtons[1]) {
-        mapsButtons[1].setAttribute("href", event.resepsi.mapsUrl);
-    }
-
-    // ── Kode tamu (guest.code) ────────────────────────────────────────────
-    // Inject kode unik tamu jika tersedia — biasanya ditampilkan di cover undangan
-    const guestCode = invitationData?.guest?.code;
-    if (guestCode) {
-        root.querySelectorAll(".elementor-widget-container p, .elementor-heading-title").forEach((node) => {
-            const text = normalizeText(node.textContent);
-            if (text === "KODE-TAMU" || text === "Kode Tamu") {
-                node.textContent = guestCode;
-            }
-        });
-    }
 
     const openingTextNode = Array.from(root.querySelectorAll(".elementor-widget-container p")).find((node) =>
         normalizeText(node.textContent).startsWith("Tanpa mengurangi rasa hormat")
@@ -788,41 +367,12 @@ function applyInvitationData(root, invitationData, options = {}) {
     if (instagramNodes[0]) instagramNodes[0].setAttribute("href", toInstagramUrl(bride.instagram));
     if (instagramNodes[1]) instagramNodes[1].setAttribute("href", toInstagramUrl(groom.instagram));
 
-    // ── Quote ayat / hadist ───────────────────────────────────────────────
-    // Inject copy.quote dan copy.quoteSource ke node yang memuat teks default
-    const quoteText = invitationData?.copy?.quote;
-    const quoteSource = invitationData?.copy?.quoteSource;
-    if (!forceTemplateFallback && (quoteText || quoteSource)) {
-        const quoteMarkup = buildQuoteMarkup(
-            pickNonEmptyText(quoteText, defaultSchema.copy.quote),
-            pickNonEmptyText(quoteSource, defaultSchema.copy.quoteSource)
-        );
-        const quoteNode = Array.from(root.querySelectorAll(".elementor-widget-container p, blockquote p")).find((node) => {
-            const text = normalizeText(node.textContent);
-            return text.includes("Dan di antara tanda-tanda") || text.includes("Qs. Ar-Rum") || text.includes("QS. Ar-Rum");
-        });
-        if (quoteNode && quoteMarkup) {
-            quoteNode.innerHTML = quoteMarkup;
-        }
-    }
-
-    // ── Bank / amplop digital ────────────────────────────────────────────
-    // Sumber tunggal: features.digitalEnvelopeInfo.bankList (sesuai schema asli)
-    const rawBankList = invitationData?.features?.digitalEnvelopeEnabled
-        ? (invitationData?.gift?.bankList || invitationData?.features?.digitalEnvelopeInfo?.bankList || [])
-        : [];
+    const rawBankList = invitationData?.features?.digitalEnvelopeEnabled ? (invitationData?.gift?.bankList || invitationData?.features?.digitalEnvelopeInfo?.bankList || []) : [];
     const bankList = rawBankList.map((item) => ({
         bank: item.bank || "",
         account: item.account || item.accountNumber || "",
         name: item.name || item.accountName || "",
     }));
-    // Fallback ke contentDefaults jika bankList kosong
-    const fallbackBankList = (contentDefaults.features?.digitalEnvelopeInfo?.bankList || []).map((item) => ({
-        bank: item.bank || "",
-        account: item.account || item.accountNumber || "",
-        name: item.name || item.accountName || "",
-    }));
-
     const accountTitles = Array.from(root.querySelectorAll("#amplop .elementor-heading-title"));
     const numberNodes = accountTitles.filter((node) => /\d/.test(node.textContent || ""));
     const nameNodes = accountTitles.filter((node) => {
@@ -831,78 +381,37 @@ function applyInvitationData(root, invitationData, options = {}) {
     });
 
     if (numberNodes[0]) {
+        const current = numberNodes[0].textContent;
         numberNodes[0].textContent = pickNonEmptyText(
             bankList[0]?.account,
-            fallbackBankList[0]?.account,
-            numberNodes[0].textContent
+            contentDefaults.gift?.bankList?.[0]?.account,
+            current
         );
     }
     if (nameNodes[0]) {
-        nameNodes[0].textContent = pickNonEmptyText(
-            bankList[0]?.name,
-            fallbackBankList[0]?.name,
-            nameNodes[0].textContent
-        );
+        const current = nameNodes[0].textContent;
+        nameNodes[0].textContent = pickNonEmptyText(bankList[0]?.name, contentDefaults.gift?.bankList?.[0]?.name, current);
     }
+
     if (numberNodes[1]) {
+        const current = numberNodes[1].textContent;
         numberNodes[1].textContent = pickNonEmptyText(
             bankList[1]?.account,
-            fallbackBankList[1]?.account,
-            numberNodes[1].textContent
+            contentDefaults.gift?.bankList?.[1]?.account,
+            current
         );
     }
     if (nameNodes[1]) {
-        nameNodes[1].textContent = pickNonEmptyText(
-            bankList[1]?.name,
-            fallbackBankList[1]?.name,
-            nameNodes[1].textContent
-        );
+        const current = nameNodes[1].textContent;
+        nameNodes[1].textContent = pickNonEmptyText(bankList[1]?.name, contentDefaults.gift?.bankList?.[1]?.name, current);
     }
 
-    [
-        [".elementor-element-36c9c7d5 .copy-content", bankList[0]?.account || fallbackBankList[0]?.account || ""],
-        [".elementor-element-50422f75 .copy-content", bankList[1]?.account || fallbackBankList[1]?.account || ""],
-    ].forEach(([selector, value]) => {
-        root.querySelectorAll(selector).forEach((node) => {
-            node.innerHTML = escapeHtml(value);
-        });
-    });
-
-    const bankLogoConfigs = [
-        {
-            imageSelector: ".elementor-element-294af0e7 img",
-            chipSelector: ".elementor-element-6667f1da",
-            bank: bankList[0]?.bank || fallbackBankList[0]?.bank || "BANK",
-        },
-        {
-            imageSelector: ".elementor-element-6bd49e9f img",
-            chipSelector: ".elementor-element-ee56a25",
-            bank: bankList[1]?.bank || fallbackBankList[1]?.bank || "BANK",
-        },
-    ];
-
-    bankLogoConfigs.forEach(({ imageSelector, chipSelector, bank }) => {
-        const logo = resolveBankLogo(bank);
-        const imageNode = root.querySelector(imageSelector);
-        if (imageNode && logo?.src) {
-            const resolvedLogo = resolveAssetUrl(logo.src);
-            imageNode.setAttribute("src", resolvedLogo);
-            imageNode.setAttribute("srcset", "");
-            imageNode.setAttribute("alt", bank || "Logo bank");
-        }
-        if (chipSelector) {
-            const chipNode = root.querySelector(chipSelector);
-            if (chipNode) chipNode.style.display = logo?.hideChip ? "none" : "";
-        }
-    });
-
-    // ── Pengiriman hadiah fisik ───────────────────────────────────────────
-    // Sumber: features.shippingInfo (sesuai schema asli)
     const shippingParagraph = Array.from(root.querySelectorAll("#amplop .elementor-widget-text-editor p")).find((node) =>
         normalizeText(node.textContent).startsWith("Nama Penerima")
     );
+
     if (shippingParagraph) {
-        const shipping = invitationData?.features?.shippingInfo || defaultSchema.features.shippingInfo;
+        const shipping = invitationData?.gift?.shipping || contentDefaults.gift.shipping;
         const recipient = shipping.recipient || groom.nameFull;
         const phone = shipping.phone || (bankList[0]?.account || "-");
         const address = shipping.address || event?.akad?.address || "-";
@@ -913,6 +422,7 @@ function applyInvitationData(root, invitationData, options = {}) {
     }
 
     // Dynamic Photos
+    const frontCoverPhoto = invitationData?.couple?.frontCoverPhoto;
     if (frontCoverPhoto) {
         const coverNode = root.querySelector(".elementor-element-26797a73 .elementor-widget-container img, #sec .elementor-image img");
         if (coverNode) {
@@ -921,6 +431,7 @@ function applyInvitationData(root, invitationData, options = {}) {
         }
     }
 
+    const heroPhoto = invitationData?.couple?.heroPhoto;
     if (heroPhoto) {
         const heroNode = root.querySelector(".elementor-element-ac20593 .elementor-widget-container img, #hero .elementor-image img");
         if (heroNode) {
@@ -929,27 +440,27 @@ function applyInvitationData(root, invitationData, options = {}) {
         }
     }
 
-    if (bridePhoto) {
+    if (bride.photo) {
         const bridePhotoNode = root.querySelector(".elementor-element-2a734d13 .elementor-widget-container img");
         if (bridePhotoNode) {
-            bridePhotoNode.setAttribute("src", resolveAssetUrl(bridePhoto));
+            bridePhotoNode.setAttribute("src", resolveAssetUrl(bride.photo));
             bridePhotoNode.setAttribute("srcset", "");
         } else {
             // Background fallback if img not found
             const brideBgNode = root.querySelector(".elementor-element-2a734d13");
-            if (brideBgNode) brideBgNode.style.backgroundImage = `url("${resolveAssetUrl(bridePhoto)}")`;
+            if (brideBgNode) brideBgNode.style.backgroundImage = `url("${resolveAssetUrl(bride.photo)}")`;
         }
     }
 
-    if (groomPhoto) {
+    if (groom.photo) {
         const groomPhotoNode = root.querySelector(".elementor-element-1be20715 .elementor-widget-container img");
         if (groomPhotoNode) {
-            groomPhotoNode.setAttribute("src", resolveAssetUrl(groomPhoto));
+            groomPhotoNode.setAttribute("src", resolveAssetUrl(groom.photo));
             groomPhotoNode.setAttribute("srcset", "");
         } else {
             // Background fallback if img not found
             const groomBgNode = root.querySelector(".elementor-element-1be20715");
-            if (groomBgNode) groomBgNode.style.backgroundImage = `url("${resolveAssetUrl(groomPhoto)}")`;
+            if (groomBgNode) groomBgNode.style.backgroundImage = `url("${resolveAssetUrl(groom.photo)}")`;
         }
     }
 
@@ -964,37 +475,26 @@ function applyInvitationData(root, invitationData, options = {}) {
                 return;
             }
             const imgNode = node.querySelector(".e-gallery-image");
-            const resolved = resolveAssetUrl(normalizeGalleryItemUrl(item));
+            const resolved = resolveAssetUrl(item.src || item.url || "");
             if (imgNode && resolved) {
                 imgNode.style.backgroundImage = `url("${resolved}")`;
                 imgNode.setAttribute("data-thumbnail", resolved);
             }
-            if (resolved) {
-                node.setAttribute("href", resolved);
+            const anchorNode = node.querySelector("a[data-elementor-open-lightbox]");
+            if (anchorNode && resolved) {
+                anchorNode.setAttribute("href", resolved);
             }
         });
     }
 
-    const closingBackgroundPhoto = pickNonEmptyText(
-        resolveSectionPhoto(invitationData?.copy?.closingBackgroundPhoto, TEMPLATE_PHOTO_FALLBACKS.closingBackgroundPhoto, { forceTemplateFallback }),
-        resolveSectionPhoto(invitationData?.couple?.closingBackgroundPhoto, TEMPLATE_PHOTO_FALLBACKS.closingBackgroundPhoto, { forceTemplateFallback }),
-        heroPhoto,
-        frontCoverPhoto,
-        forceTemplateFallback ? TEMPLATE_PHOTO_FALLBACKS.closingBackgroundPhoto : ""
-    );
-    const loveStoryBackgroundPhoto = forceTemplateFallback
-        ? TEMPLATE_PHOTO_FALLBACKS.loveStoryPhoto
-        : pickNonEmptyText(frontCoverPhoto, heroPhoto);
-
     // Dynamic Background Photos (FORCE override via Style Injection + DOM)
     const bgPhotos = [
-        [".elementor-element-1506e139", frontCoverPhoto],
-        [".elementor-element-c854208", frontCoverPhoto],
-        [".elementor-element-1151be1e", heroPhoto],
-        [".elementor-element-2a734d13", bridePhoto],
-        [".elementor-element-1be20715", groomPhoto],
-        [".elementor-element-7c389048", loveStoryBackgroundPhoto],
-        [".elementor-element-36d72a88", closingBackgroundPhoto],
+        [".elementor-element-1506e139", invitationData?.couple?.frontCoverPhoto],
+        [".elementor-element-c854208", invitationData?.couple?.frontCoverPhoto],
+        [".elementor-element-1151be1e", invitationData?.couple?.heroPhoto],
+        [".elementor-element-2a734d13", invitationData?.couple?.bride?.photo],
+        [".elementor-element-1be20715", invitationData?.couple?.groom?.photo],
+        [".elementor-element-36d72a88", invitationData?.couple?.closingBackgroundPhoto],
     ];
 
     let forceStyleId = "tp-force-bg-styles";
@@ -1011,8 +511,7 @@ function applyInvitationData(root, invitationData, options = {}) {
         const resolved = resolveAssetUrl(assetPath);
         
         // Strategy A: CSS Injection (Highly persistent)
-        cssRules += `.timeless-promise-template ${selector},
-        .timeless-promise-template ${selector} > .elementor-motion-effects-container > .elementor-motion-effects-layer { 
+        cssRules += `.timeless-promise-template ${selector} { 
             background-image: url("${resolved}") !important; 
             background-position: center center !important; 
             background-size: cover !important; 
@@ -1027,66 +526,6 @@ function applyInvitationData(root, invitationData, options = {}) {
         }
     });
     forceStyle.textContent = cssRules;
-
-    // ── Audio: ganti src lagu jika disediakan via data dinamis ───────────
-    const audioSrc = invitationData?.audio?.src;
-    if (audioSrc) {
-        const songNode = root.querySelector("#song");
-        if (songNode) {
-            const resolvedAudio = resolveAssetUrl(audioSrc);
-            if (resolvedAudio && resolvedAudio !== songNode.getAttribute("src")) {
-                songNode.setAttribute("src", resolvedAudio);
-                if (typeof songNode.load === "function") songNode.load();
-            }
-        }
-    }
-
-    // ── Lovestory: inject teks secara dinamis, foto mengikuti front cover ─
-    const lovestoryData = Array.isArray(invitationData?.lovestory) ? invitationData.lovestory : [];
-    const loveStoryPhoto = forceTemplateFallback
-        ? TEMPLATE_PHOTO_FALLBACKS.loveStoryPhoto
-        : pickNonEmptyText(frontCoverPhoto, heroPhoto);
-    if (lovestoryData.length > 0) {
-        const loveStorySlots = [
-            {
-                visibleSelectors: [".elementor-element-5e4ca619", ".elementor-element-5687b874", ".elementor-element-9a5300d"],
-                titleSelector: ".elementor-element-5e4ca619 .elementor-widget-container p",
-                textSelector: ".elementor-element-9a5300d .elementor-widget-container p",
-                story: lovestoryData[0],
-            },
-            {
-                visibleSelectors: [".elementor-element-2f928cf0", ".elementor-element-6fa20696", ".elementor-element-5e87ec7a"],
-                titleSelector: ".elementor-element-2f928cf0 .elementor-widget-container p",
-                textSelector: ".elementor-element-5e87ec7a .elementor-widget-container p",
-                story: lovestoryData[1],
-            },
-            {
-                visibleSelectors: [".elementor-element-2f85df15", ".elementor-element-25b85e6b", ".elementor-element-1bbeebe6"],
-                titleSelector: ".elementor-element-2f85df15 .elementor-widget-container p",
-                textSelector: ".elementor-element-1bbeebe6 .elementor-widget-container p",
-                story: lovestoryData[2],
-            },
-        ];
-
-        loveStorySlots.forEach(({ visibleSelectors, titleSelector, textSelector, story }) => {
-            const isVisible = Boolean(story?.title || story?.text || story?.date);
-            visibleSelectors.forEach((selector) => setDisplay(selector, isVisible));
-            if (!isVisible) return;
-
-            setTextContent(titleSelector, pickNonEmptyText(story?.title));
-            setTextContent(textSelector, pickNonEmptyText(story?.text));
-        });
-
-        if (loveStoryPhoto) {
-            const resolved = resolveAssetUrl(loveStoryPhoto);
-            const storyCardNode = root.querySelector(".elementor-element-7c389048");
-            if (storyCardNode && resolved) {
-                storyCardNode.style.setProperty("background-image", `url("${resolved}")`, "important");
-                storyCardNode.style.setProperty("background-position", "center center", "important");
-                storyCardNode.style.setProperty("background-size", "cover", "important");
-            }
-        }
-    }
 }
 
 function renderWishList(listElement, wishes) {
@@ -1244,8 +683,6 @@ export default function TimelessPromiseTemplate({
     const audioRef = useRef(null);
     const wasPlayingOnHiddenRef = useRef(false);
     const isInitializedRef = useRef(false);
-    const wishFormStateRef = useRef({ author: "", comment: "", attendance: "" });
-    const submittingWishRef = useRef(false);
 
     const sourceArtifacts = useMemo(() => parseSourceArtifacts(sourceHtml), []);
 
@@ -1261,8 +698,7 @@ export default function TimelessPromiseTemplate({
     const lovestory = mergedData?.lovestory;
     const gallery = mergedData?.gallery;
     const features = mergedData?.features;
-    const audio = mergedData?.audio;
-    const wishes_config = mergedData?.wishes;
+    const gift = mergedData?.gift;
 
     const behavior = useMemo(() => {
         return {
@@ -1280,23 +716,10 @@ export default function TimelessPromiseTemplate({
         };
     }, [mergedData]);
 
-    const initialWishes = useMemo(
-        () => (Array.isArray(mergedData?.wishes?.initial) ? mergedData.wishes.initial : contentDefaults.wishes?.initial || []),
-        [mergedData]
-    );
+    const initialWishes = useMemo(() => (Array.isArray(mergedData?.wishes?.initial) ? mergedData.wishes.initial : contentDefaults.wishes?.initial || []), [mergedData]);
     const [wishes, setWishes] = useState(() => initialWishes);
     const [submittingWish, setSubmittingWish] = useState(false);
     const [wishFormState, setWishFormState] = useState({ author: "", comment: "", attendance: "" });
-
-    wishFormStateRef.current = wishFormState;
-    submittingWishRef.current = submittingWish;
-
-    // Sync wishes state saat data fetch selesai (fetchedData bisa datang async setelah render pertama)
-    useEffect(() => {
-        if (initialWishes.length > 0) {
-            setWishes(initialWishes);
-        }
-    }, [initialWishes]);
 
     useEffect(() => {
         BODY_CLASSES.forEach((className) => document.body.classList.add(className));
@@ -1330,7 +753,7 @@ export default function TimelessPromiseTemplate({
         isInitializedRef.current = true;
 
         // 2. Apply Data
-        applyInvitationData(root, mergedData, { mode });
+        applyInvitationData(root, mergedData);
 
         // 3. Reveal
         root.querySelectorAll(".elementor-invisible").forEach((node) => {
@@ -1343,14 +766,6 @@ export default function TimelessPromiseTemplate({
         // 4. Finalize
         setReady(true);
     }, [sourceArtifacts.markup, mergedData]);
-
-    // Re-apply data dinamis saat mergedData berubah setelah markup sudah di-inject
-    // (contoh: fetchedData tiba async, atau externalData di-update dari parent)
-    useEffect(() => {
-        const root = rootRef.current;
-        if (!root || !isInitializedRef.current) return;
-        applyInvitationData(root, mergedData, { mode });
-    }, [mergedData, mode]);
 
     useEffect(() => {
         const styleNodes = [];
@@ -1675,15 +1090,6 @@ export default function TimelessPromiseTemplate({
         audioRef.current = song || null;
         if (song) {
             song.loop = mergedData?.audio?.loop ?? contentDefaults.audio.loop;
-            // Terapkan src audio dinamis jika ada di data
-            const dynamicAudioSrc = mergedData?.audio?.src;
-            if (dynamicAudioSrc) {
-                const resolvedSrc = resolveAssetUrl(dynamicAudioSrc);
-                if (resolvedSrc && resolvedSrc !== song.getAttribute("src")) {
-                    song.setAttribute("src", resolvedSrc);
-                    if (typeof song.load === "function") song.load();
-                }
-            }
         }
 
         const muteSound = root.querySelector("#mute-sound");
@@ -1821,29 +1227,6 @@ export default function TimelessPromiseTemplate({
 
             anchor.addEventListener("click", handleNavClick);
             addCleanup(() => anchor.removeEventListener("click", handleNavClick));
-        });
-
-        const calendarButtons = root.querySelectorAll(".elementor-element-4a19cf25 a, .elementor-social-icon-calendar-alt");
-        calendarButtons.forEach((button) => {
-            const handleCalendarClick = (event) => {
-                if (!shouldUseIcsCalendar()) return;
-
-                const startInput = button.getAttribute("data-calendar-start");
-                const endInput = button.getAttribute("data-calendar-end");
-                if (!startInput || !endInput) return;
-
-                event.preventDefault();
-                downloadCalendarIcs({
-                    title: button.getAttribute("data-calendar-title") || "",
-                    startInput,
-                    endInput,
-                    details: button.getAttribute("data-calendar-details") || "",
-                    location: button.getAttribute("data-calendar-location") || "",
-                });
-            };
-
-            button.addEventListener("click", handleCalendarClick);
-            addCleanup(() => button.removeEventListener("click", handleCalendarClick));
         });
 
         const handleVisibilityChange = () => {
@@ -2055,8 +1438,8 @@ export default function TimelessPromiseTemplate({
                 addCleanup(() => wishesLink.removeEventListener("click", focusWishes));
             }
 
-            const initialWishesFromState = Array.isArray(wishes) ? wishes : (contentDefaults.wishes?.initial || []);
-            renderWishList(wishesList, initialWishesFromState);
+            const initialWishes = contentDefaults.wishes?.initial || [];
+            renderWishList(wishesList, initialWishes);
 
             if (typeof onFetchWishes === "function") {
                 Promise.resolve(onFetchWishes())
@@ -2074,17 +1457,6 @@ export default function TimelessPromiseTemplate({
                 const authorInput = wishForm.querySelector("#author");
                 const commentInput = wishForm.querySelector("textarea[name='comment']");
                 const attendanceInput = wishForm.querySelector("select[name='konfirmasi']");
-                const submitInput = wishForm.querySelector("input[type='submit']");
-                let submitButton = wishForm.querySelector("button[type='submit']");
-
-                if (!submitButton && submitInput) {
-                    submitButton = document.createElement("button");
-                    submitButton.type = "submit";
-                    submitButton.id = submitInput.id || "submit-5816";
-                    submitButton.className = "tp-wish-submit";
-                    submitButton.textContent = submitInput.value || "Kirim";
-                    submitInput.replaceWith(submitButton);
-                }
 
                 if (authorInput) {
                     authorInput.removeAttribute("readonly");
@@ -2111,23 +1483,6 @@ export default function TimelessPromiseTemplate({
                         border-top-color: #ffffff; border-radius: 50%; animation: tp-spin 0.6s linear infinite;
                         vertical-align: middle; margin-right: 6px;
                     }
-                    .timeless-promise-template #commentform-5816 .tp-wish-submit {
-                        width: 100%;
-                        min-height: 42px;
-                        border: 0;
-                        border-radius: 6px;
-                        background: #7f4651;
-                        color: #ffffff;
-                        font-size: 15px;
-                        font-weight: 600;
-                        cursor: pointer;
-                        transition: opacity 0.2s ease;
-                    }
-                    .timeless-promise-template #commentform-5816 .tp-wish-submit-content {
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                    }
                     @keyframes tp-spin { to { transform: rotate(360deg); } }
                     .timeless-promise-template #commentform-5816.is-submitting input,
                     .timeless-promise-template #commentform-5816.is-submitting textarea,
@@ -2140,22 +1495,16 @@ export default function TimelessPromiseTemplate({
 
                 const handleWishSubmit = async (event) => {
                     event.preventDefault();
-                    if (submittingWishRef.current) return;
-
-                    const liveAuthor = normalizeText(authorInput?.value || wishFormStateRef.current.author || mergedData?.guest?.name || "Tamu");
-                    const liveComment = normalizeText(commentInput?.value || wishFormStateRef.current.comment || "");
-                    const liveAttendance = normalizeText(attendanceInput?.value || wishFormStateRef.current.attendance || "");
+                    if (submittingWish) return;
 
                     const payload = {
-                        invitationSlug: invitationSlug || mergedData?.invitation?.slug || "timeless-promise",
-                        orderId: mergedData?.invitation?.orderId || mergedData?.orderId || "",
-                        author: liveAuthor || "Tamu",
-                        comment: liveComment,
-                        attendance: liveAttendance || "-",
+                        author: normalizeText(wishFormState.author || mergedData?.guest?.name || "Tamu"),
+                        comment: normalizeText(wishFormState.comment || ""),
+                        attendance: normalizeText(wishFormState.attendance || "-"),
                         createdAt: new Date().toISOString(),
                     };
 
-                    if (!payload.author || !payload.comment || !liveAttendance) return;
+                    if (!payload.comment) return;
 
                     setSubmittingWish(true);
                     wishForm.classList.add("is-submitting");
@@ -2166,26 +1515,18 @@ export default function TimelessPromiseTemplate({
                     let originalBtnContent = "";
                     if (submitBtn) {
                         originalBtnContent = submitBtn.innerHTML || submitBtn.value;
-                        if (submitBtn.tagName === "INPUT") {
-                            submitBtn.value = "Mengirim...";
-                        } else {
-                            submitBtn.innerHTML = '<span class="tp-wish-submit-content"><span class="tp-submit-spinner"></span>Mengirim...</span>';
-                        }
+                        if (submitBtn.tagName === "INPUT") submitBtn.value = "Mengirim...";
+                        else submitBtn.innerHTML = '<span class="tp-submit-spinner"></span> Mengirim...';
                     }
 
                     try {
-                        if (typeof onSubmitWish === "function") {
-                            await onSubmitWish(payload);
-                        } else {
-                            await postInvitationWish(payload.invitationSlug, payload);
-                        }
-                    } catch {
-                        // Keep optimistic local render even if API is unavailable.
-                    } finally {
-                        setWishes((prev) => [payload, ...prev]);
+                        await postInvitationWish("timeless-promise", payload);
+                        setWishes(prev => [payload, ...prev]);
                         setWishFormState({ author: "", comment: "", attendance: "" });
                         wishForm.reset();
                         if (authorInput && mode === "preview") authorInput.value = mergedData?.guest?.name || "";
+                    } catch {
+                    } finally {
                         setSubmittingWish(false);
                         wishForm.classList.remove("is-submitting");
                         formInputs.forEach((el) => { el.disabled = false; });

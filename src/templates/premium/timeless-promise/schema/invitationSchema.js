@@ -6,6 +6,7 @@ export const defaultSchema = {
         code: "",
     },
     couple: {
+        frontCoverPhoto: "",
         groom: {
             nameFull: "Habib Yulianto",
             nickName: "Habib",
@@ -52,6 +53,9 @@ export const defaultSchema = {
         quoteSource: "QS. Ar-Rum (30): 21",
         closingText:
             "Merupakan suatu kehormatan dan kebahagiaan bagi kami, apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya, kami mengucapkan terima kasih.",
+        saveTheDateBackgroundPhoto: "",
+        wishesBackgroundPhoto: "",
+        closingBackgroundPhoto: "",
     },
     lovestory: [
         {
@@ -85,6 +89,6 @@ export const defaultSchema = {
             ],
         },
         rsvpEnabled: true,
-        livestreamEnabled: true,
+        livestreamEnabled: false,
     },
 };
