@@ -25,8 +25,8 @@ const INITIAL_SESSIONS = [
   { id: 2, start: "11:30", end: "12:30" },
 ];
 const INITIAL_STORIES = [
-  { id: 1, title: "Pertama Bertemu", description: "Kami bertemu pertama kali di acara kampus dan mulai saling mengenal.", date: "2019" },
-  { id: 2, title: "Menjalin Asmara", description: "Setelah berteman lama, kami memutuskan melangkah lebih serius.", date: "2021" },
+  { id: 1, title: "Pertama Bertemu", description: "Kami bertemu pertama kali di acara kampus dan mulai saling mengenal.", date: "2019", photo: null },
+  { id: 2, title: "Menjalin Asmara", description: "Setelah berteman lama, kami memutuskan melangkah lebih serius.", date: "2021", photo: null },
 ];
 
 function StepItem({ index, label, currentStep }) {
@@ -188,6 +188,7 @@ async function prepareOrderAssetsForSubmission({
   wishesBackgroundImage,
   closingBackgroundImage,
   galleryImages,
+  stories,
   musicMode,
   uploadedMusicFile,
 }) {
@@ -215,6 +216,18 @@ async function prepareOrderAssetsForSubmission({
     );
   }
 
+  const uploadedStories = [];
+  for (const [index, story] of Array.from(stories || []).entries()) {
+    const uploadedPhoto = story?.photo
+      ? await uploadOptionalImageAsset(orderId, story.photo, `love-story-photo-${index + 1}`)
+      : null;
+
+    uploadedStories.push({
+      ...story,
+      photo: uploadedPhoto,
+    });
+  }
+
   const uploadedMusic =
     musicMode === "upload" && uploadedMusicFile
       ? await uploadOrderAsset({
@@ -238,6 +251,7 @@ async function prepareOrderAssetsForSubmission({
     uploadedWishesBackground,
     uploadedClosingBackground,
     uploadedGallery,
+    uploadedStories,
     uploadedMusic,
   };
 }
@@ -683,6 +697,7 @@ function StepTwoAcara({
 }
 
 function ImageUploadCard({
+  id,
   title,
   description,
   image,
@@ -716,6 +731,7 @@ function ImageUploadCard({
 
   return (
     <article
+      id={id}
       className={`rounded-2xl border bg-white p-4 shadow-sm transition-colors dark:bg-slate-900/40 ${isDragOver ? "border-primary ring-2 ring-primary/20 dark:border-primary" : "border-slate-200 dark:border-slate-700"}`}
       onDragEnter={handleDragOver}
       onDragOver={handleDragOver}
@@ -805,6 +821,10 @@ function StepThreeFoto({
   onRemoveWishesBackground,
   onUploadClosingBackground,
   onRemoveClosingBackground,
+  onUploadLoveStoryPhotoOne,
+  onRemoveLoveStoryPhotoOne,
+  onUploadLoveStoryPhotoTwo,
+  onRemoveLoveStoryPhotoTwo,
   onRemoveCover,
   onRemoveFrontCover,
   onUploadGallery,
@@ -821,6 +841,7 @@ function StepThreeFoto({
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
   const uploadFields = uploadConfig || {};
+  const canShowLoveStoryPhotos = canUseLoveStory && (uploadFields.loveStoryPhotoOne?.visible || uploadFields.loveStoryPhotoTwo?.visible);
   const singleCoverFlow = usesSingleCoverFlow(uploadFields);
   const frontCoverTitle = singleCoverFlow ? "Foto Cover Utama" : "Foto Cover Depan";
   const frontCoverUploadText = singleCoverFlow ? "Upload atau Drop Foto Cover Utama" : "Upload atau Drop Foto Cover Depan";
@@ -957,7 +978,7 @@ function StepThreeFoto({
       <section className="mb-8 space-y-4">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Ayat / Quote</h3>
-          <span className="text-xs font-medium text-slate-500">Dinamis di tema BASIC</span>
+          <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
           <div className="space-y-4">
@@ -985,6 +1006,7 @@ function StepThreeFoto({
             <div>
               <label className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Isi Ayat / Quote</label>
               <textarea
+                id="quote_text"
                 rows={4}
                 value={quote}
                 onChange={(event) => {
@@ -998,6 +1020,7 @@ function StepThreeFoto({
             <div>
               <label className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Sumber Ayat / Quote</label>
               <input
+                id="quote_source"
                 type="text"
                 value={quoteSource}
                 onChange={(event) => {
@@ -1021,20 +1044,24 @@ function StepThreeFoto({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {uploadFields.bridePhoto?.visible && (
               <ImageUploadCard
+                id="bride_photo_upload_section"
                 title="Foto Mempelai Wanita"
                 description={uploadFields.bridePhoto?.description}
                 image={bridePhoto}
                 onUpload={onUploadBridePhoto}
                 onRemove={onRemoveBridePhoto}
+                badge={uploadFields.bridePhoto?.required ? "Wajib" : "Opsional"}
               />
             )}
             {uploadFields.groomPhoto?.visible && (
               <ImageUploadCard
+                id="groom_photo_upload_section"
                 title="Foto Mempelai Pria"
                 description={uploadFields.groomPhoto?.description}
                 image={groomPhoto}
                 onUpload={onUploadGroomPhoto}
                 onRemove={onRemoveGroomPhoto}
+                badge={uploadFields.groomPhoto?.required ? "Wajib" : "Opsional"}
               />
             )}
           </div>
@@ -1050,22 +1077,26 @@ function StepThreeFoto({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {uploadFields.akadCover?.visible && (
               <ImageUploadCard
+                id="akad_cover_upload_section"
                 title="Cover Akad"
                 description={uploadFields.akadCover?.description}
                 image={akadCoverImage}
                 onUpload={onUploadAkadCover}
                 onRemove={onRemoveAkadCover}
                 aspectClass="aspect-video"
+                badge={uploadFields.akadCover?.required ? "Wajib" : "Opsional"}
               />
             )}
             {isReceptionEnabled && uploadFields.resepsiCover?.visible ? (
               <ImageUploadCard
+                id="resepsi_cover_upload_section"
                 title="Cover Resepsi"
                 description={uploadFields.resepsiCover?.description}
                 image={resepsiCoverImage}
                 onUpload={onUploadResepsiCover}
                 onRemove={onRemoveResepsiCover}
                 aspectClass="aspect-video"
+                badge={uploadFields.resepsiCover?.required ? "Wajib" : "Opsional"}
               />
             ) : uploadFields.resepsiCover?.visible ? (
               <article className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/20 dark:text-slate-400">
@@ -1080,16 +1111,53 @@ function StepThreeFoto({
         <section className="mb-8 space-y-4">
           <div className="flex items-baseline justify-between px-1">
             <h3 className="text-lg font-bold">Background Penutup</h3>
-            <span className="text-xs font-medium text-slate-500">Section ucapan terima kasih</span>
+            <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
           <ImageUploadCard
+            id="closing_background_upload_section"
             title="Foto Background Pasangan"
             description={uploadFields.closingBackground?.description}
             image={closingBackgroundImage}
             onUpload={onUploadClosingBackground}
             onRemove={onRemoveClosingBackground}
             aspectClass="aspect-video"
+            badge={uploadFields.closingBackground?.required ? "Wajib" : "Opsional"}
           />
+        </section>
+      )}
+
+      {canShowLoveStoryPhotos && (
+        <section className="mb-8 space-y-4">
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Thumbnail Love Story</h3>
+            <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {uploadFields.loveStoryPhotoOne?.visible && (
+              <ImageUploadCard
+                id="love_story_photo_one_upload_section"
+                title="Thumbnail Love Story 1"
+                description={uploadFields.loveStoryPhotoOne?.description}
+                image={stories[0]?.photo || null}
+                onUpload={onUploadLoveStoryPhotoOne}
+                onRemove={onRemoveLoveStoryPhotoOne}
+                aspectClass="aspect-video"
+                badge={uploadFields.loveStoryPhotoOne?.required ? "Wajib" : "Opsional"}
+              />
+            )}
+            {uploadFields.loveStoryPhotoTwo?.visible && (
+              <ImageUploadCard
+                id="love_story_photo_two_upload_section"
+                title="Thumbnail Love Story 2"
+                description={uploadFields.loveStoryPhotoTwo?.description}
+                image={stories[1]?.photo || null}
+                onUpload={onUploadLoveStoryPhotoTwo}
+                onRemove={onRemoveLoveStoryPhotoTwo}
+                aspectClass="aspect-video"
+                badge={uploadFields.loveStoryPhotoTwo?.required ? "Wajib" : "Opsional"}
+              />
+            )}
+          </div>
         </section>
       )}
 
@@ -1097,37 +1165,41 @@ function StepThreeFoto({
         <section className="mb-8 space-y-4">
           <div className="flex items-baseline justify-between px-1">
             <h3 className="text-lg font-bold">Background Tambahan Tema</h3>
-            <span className="text-xs font-medium text-slate-500">Section khusus template</span>
+            <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {uploadFields.saveTheDateBackground?.visible && (
               <ImageUploadCard
+                id="save_the_date_background_upload_section"
                 title="Background Save The Date"
                 description={uploadFields.saveTheDateBackground?.description}
                 image={saveTheDateBackgroundImage}
                 onUpload={onUploadSaveTheDateBackground}
                 onRemove={onRemoveSaveTheDateBackground}
                 aspectClass="aspect-video"
+                badge={uploadFields.saveTheDateBackground?.required ? "Wajib" : "Opsional"}
               />
             )}
             {uploadFields.wishesBackground?.visible && (
               <ImageUploadCard
+                id="wishes_background_upload_section"
                 title="Background Wishes / Ucapan"
                 description={uploadFields.wishesBackground?.description}
                 image={wishesBackgroundImage}
                 onUpload={onUploadWishesBackground}
                 onRemove={onRemoveWishesBackground}
                 aspectClass="aspect-video"
+                badge={uploadFields.wishesBackground?.required ? "Wajib" : "Opsional"}
               />
             )}
           </div>
         </section>
       )}
 
-      <section className="space-y-4 mb-8">
+      <section id="gallery_upload_section" className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Galeri Prewedding</h3>
-          <span className="text-xs font-medium text-slate-500">{galleryImages.length}/{galleryLimit} Terupload</span>
+          <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -1281,7 +1353,7 @@ function StepThreeFoto({
       <section className="space-y-4 mb-8">
         <div className="flex items-baseline justify-between px-1">
           <h3 className="text-lg font-bold">Love Story</h3>
-          <span className="text-xs font-semibold text-slate-500">Sesuai paket</span>
+          <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
         </div>
 
         {!canUseLoveStory && (
@@ -1312,6 +1384,7 @@ function StepThreeFoto({
                         Momen {index === 0 ? "Pertama" : `Ke-${index + 1}`}
                       </label>
                       <input
+                        data-story-title={story.id}
                         className="w-full bg-transparent border-b border-gray-200 dark:border-gray-700 pb-2 text-slate-900 dark:text-slate-100 text-sm font-semibold focus:border-primary focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none transition-colors"
                         placeholder={index === 0 ? "Contoh: Pertama Bertemu" : "Contoh: Menjalin Asmara"}
                         value={story.title}
@@ -1322,6 +1395,7 @@ function StepThreeFoto({
                     </div>
                     <div className="space-y-1">
                       <textarea
+                        data-story-description={story.id}
                         className="w-full bg-transparent border-none p-0 text-slate-900 dark:text-slate-100 text-sm resize-none focus:ring-0 placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none"
                         placeholder={index === 0 ? "Ceritakan bagaimana momen itu terjadi..." : "Ceritakan proses kedekatan kalian..."}
                         rows={3}
@@ -1335,14 +1409,15 @@ function StepThreeFoto({
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-gray-800 gap-2">
                       <input
+                        data-story-date={story.id}
                         className="text-xs bg-transparent border-none p-0 text-primary font-medium w-full focus:ring-0 placeholder:text-primary/60"
-                        placeholder="Tahun / Tanggal (Opsional)"
+                        placeholder="Tahun / Tanggal"
                         value={story.date}
                         onChange={(e) =>
                           setStories((prev) => prev.map((item) => (item.id === story.id ? { ...item, date: e.target.value } : item)))
                         }
                       />
-                      {index > 0 && (
+                      {(canShowLoveStoryPhotos ? index > 1 : index > 0) && (
                         <button
                           type="button"
                           className="text-red-500 hover:text-red-600"
@@ -1363,7 +1438,7 @@ function StepThreeFoto({
                 onClick={() =>
                   setStories((prev) => [
                     ...prev,
-                    { id: Date.now(), title: "", description: "", date: "" },
+                    { id: Date.now(), title: "", description: "", date: "", photo: null },
                   ])
                 }
                 className="w-full py-3 border-2 border-dashed border-primary/30 rounded-xl flex items-center justify-center gap-2 text-primary text-sm font-semibold hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all"
@@ -1491,43 +1566,43 @@ function StepFourReview({
             {uploadFields.bridePhoto?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Foto Mempelai Wanita</p>
-                <p className="text-sm font-medium">{bride.photo?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{bride.photo?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.groomPhoto?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Foto Mempelai Pria</p>
-                <p className="text-sm font-medium">{groom.photo?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{groom.photo?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.akadCover?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Cover Akad</p>
-                <p className="text-sm font-medium">{akad.coverImage?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{akad.coverImage?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.resepsiCover?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Cover Resepsi</p>
-                <p className="text-sm font-medium">{resepsi.coverImage?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{resepsi.coverImage?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.closingBackground?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Background Penutup</p>
-                <p className="text-sm font-medium">{closingBackgroundImage?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{closingBackgroundImage?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.saveTheDateBackground?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Background Save The Date</p>
-                <p className="text-sm font-medium">{saveTheDateBackgroundImage?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{saveTheDateBackgroundImage?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.wishesBackground?.visible && (
               <div className="pt-3">
                 <p className="text-xs text-slate-500 mb-2">Background Wishes / Ucapan</p>
-                <p className="text-sm font-medium">{wishesBackgroundImage?.name || "Menggunakan cover utama"}</p>
+                <p className="text-sm font-medium">{wishesBackgroundImage?.name || "Belum upload"}</p>
               </div>
             )}
             <div className="pt-3">
@@ -1545,6 +1620,18 @@ function StepFourReview({
                 {selectedPackage?.capabilities?.loveStory ? `${effectiveStoriesCount} momen` : "Tidak aktif di paket ini"}
               </p>
             </div>
+            {uploadFields.loveStoryPhotoOne?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Thumbnail Love Story 1</p>
+                <p className="text-sm font-medium">{stories[0]?.photo?.name || "Belum upload"}</p>
+              </div>
+            )}
+            {uploadFields.loveStoryPhotoTwo?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Thumbnail Love Story 2</p>
+                <p className="text-sm font-medium">{stories[1]?.photo?.name || "Belum upload"}</p>
+              </div>
+            )}
             <div className="pt-3">
               <p className="text-xs text-slate-500 mb-2">Musik</p>
               <p className="text-sm font-medium">
@@ -1669,7 +1756,6 @@ export default function CreateInvitationFormPage() {
   const [selectedTheme, setSelectedTheme] = useState(null);
   const selectedPackage = useMemo(() => getPackageConfig(selectedTheme?.packageTier), [selectedTheme?.packageTier]);
   const uploadConfig = useMemo(() => getThemeUploadConfig(selectedTheme, selectedPackage), [selectedTheme, selectedPackage]);
-  const isBasicTier = selectedPackage?.tier === "BASIC";
   const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
   const selectedMusicTrack = useMemo(
     () => MUSIC_TRACKS.find((track) => track.id === selectedMusicTrackId) || MUSIC_TRACKS[0],
@@ -1718,7 +1804,7 @@ export default function CreateInvitationFormPage() {
       quote ||
       quoteSource ||
       galleryImages.length > 0 ||
-      stories.some((story) => story.title || story.description || story.date)
+      stories.some((story) => story.title || story.description || story.date || story.photo)
     );
     const hasGift = canUseDigitalEnvelope && hasGiftContent(giftBankList, giftShipping);
     const hasMusic = Boolean(musicMode === "upload" || uploadedMusicFile || selectedMusicTrackId !== MUSIC_TRACKS[0].id);
@@ -1789,6 +1875,9 @@ export default function CreateInvitationFormPage() {
     if (!uploadConfig.saveTheDateBackground?.visible) setSaveTheDateBackgroundImage(null);
     if (!uploadConfig.wishesBackground?.visible) setWishesBackgroundImage(null);
     if (!uploadConfig.closingBackground?.visible) setClosingBackgroundImage(null);
+    if (!uploadConfig.loveStoryPhotoOne?.visible && !uploadConfig.loveStoryPhotoTwo?.visible) {
+      setStories((prev) => prev.map((story) => (story.photo ? { ...story, photo: null } : story)));
+    }
   }, [uploadConfig]);
 
   useEffect(() => {
@@ -1960,6 +2049,32 @@ export default function CreateInvitationFormPage() {
     if (asset) {
       setWishesBackgroundImage(asset);
     }
+  };
+
+  const handleUploadStoryPhoto = (storyIndex, label) => async (event) => {
+    const asset = await readSingleImageFromInput(event, label);
+    if (!asset) return;
+
+    setStories((prev) => {
+      const next = [...prev];
+      while (next.length <= storyIndex) {
+        next.push({
+          id: Date.now() + next.length,
+          title: "",
+          description: "",
+          date: "",
+          photo: null,
+        });
+      }
+      next[storyIndex] = { ...next[storyIndex], photo: asset };
+      return next;
+    });
+  };
+
+  const handleRemoveStoryPhoto = (storyIndex) => {
+    setStories((prev) =>
+      prev.map((story, index) => (index === storyIndex && story?.photo ? { ...story, photo: null } : story)),
+    );
   };
 
   const handleSelectQuotePreset = (presetId, options = {}) => {
@@ -2229,6 +2344,118 @@ export default function CreateInvitationFormPage() {
           shouldFocus: false,
         };
       }
+      if (!quote.trim()) {
+        return {
+          message: "Ayat atau quote pada Step 3 wajib diisi.",
+          selector: "#quote_text",
+        };
+      }
+      if (!quoteSource.trim()) {
+        return {
+          message: "Sumber ayat atau quote pada Step 3 wajib diisi.",
+          selector: "#quote_source",
+        };
+      }
+
+      const uploadValidationChecks = [
+        {
+          visible: uploadConfig.bridePhoto?.required,
+          value: bride.photo,
+          message: "Mohon upload foto mempelai wanita terlebih dahulu.",
+          selector: "#bride_photo_upload_section",
+        },
+        {
+          visible: uploadConfig.groomPhoto?.required,
+          value: groom.photo,
+          message: "Mohon upload foto mempelai pria terlebih dahulu.",
+          selector: "#groom_photo_upload_section",
+        },
+        {
+          visible: uploadConfig.akadCover?.required,
+          value: akad.coverImage,
+          message: "Mohon upload cover akad terlebih dahulu.",
+          selector: "#akad_cover_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: isReceptionEnabled && uploadConfig.resepsiCover?.required,
+          value: resepsi.coverImage,
+          message: "Mohon upload cover resepsi terlebih dahulu.",
+          selector: "#resepsi_cover_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: uploadConfig.closingBackground?.required,
+          value: closingBackgroundImage,
+          message: "Mohon upload background penutup terlebih dahulu.",
+          selector: "#closing_background_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: uploadConfig.saveTheDateBackground?.required,
+          value: saveTheDateBackgroundImage,
+          message: "Mohon upload background Save The Date terlebih dahulu.",
+          selector: "#save_the_date_background_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: uploadConfig.wishesBackground?.required,
+          value: wishesBackgroundImage,
+          message: "Mohon upload background Wishes / Ucapan terlebih dahulu.",
+          selector: "#wishes_background_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: uploadConfig.loveStoryPhotoOne?.required,
+          value: stories[0]?.photo,
+          message: "Mohon upload thumbnail Love Story 1 terlebih dahulu.",
+          selector: "#love_story_photo_one_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: uploadConfig.loveStoryPhotoTwo?.required,
+          value: stories[1]?.photo,
+          message: "Mohon upload thumbnail Love Story 2 terlebih dahulu.",
+          selector: "#love_story_photo_two_upload_section",
+          shouldFocus: false,
+        },
+      ];
+
+      const missingUpload = uploadValidationChecks.find((item) => item.visible && !item.value);
+      if (missingUpload) {
+        return missingUpload;
+      }
+
+      if (galleryImages.length === 0) {
+        return {
+          message: "Galeri prewedding pada Step 3 wajib diisi minimal 1 foto.",
+          selector: "#gallery_upload_section",
+          shouldFocus: false,
+        };
+      }
+
+      if (selectedPackage?.capabilities?.loveStory) {
+        const invalidStory = stories.find((story) => !story.title.trim() || !story.description.trim() || !story.date.trim());
+        if (invalidStory && !invalidStory.title.trim()) {
+          return {
+            message: "Judul setiap Love Story wajib diisi.",
+            selector: `[data-story-title="${invalidStory.id}"]`,
+          };
+        }
+        if (invalidStory && !invalidStory.description.trim()) {
+          return {
+            message: "Deskripsi setiap Love Story wajib diisi.",
+            selector: `[data-story-description="${invalidStory.id}"]`,
+          };
+        }
+        if (invalidStory && !invalidStory.date.trim()) {
+          return {
+            message: "Tanggal atau tahun setiap Love Story wajib diisi.",
+            selector: `[data-story-date="${invalidStory.id}"]`,
+          };
+        }
+      }
+
       if (musicMode === "upload" && !uploadedMusicFile) {
         return {
           message: "Silakan upload file musik MP3 atau pilih mode list musik.",
@@ -2277,6 +2504,7 @@ export default function CreateInvitationFormPage() {
         uploadedWishesBackground,
         uploadedClosingBackground,
         uploadedGallery,
+        uploadedStories,
         uploadedMusic,
       } = await prepareOrderAssetsForSubmission({
         orderId,
@@ -2290,6 +2518,7 @@ export default function CreateInvitationFormPage() {
         wishesBackgroundImage,
         closingBackgroundImage,
         galleryImages,
+        stories: effectiveStories,
         musicMode,
         uploadedMusicFile,
       });
@@ -2324,7 +2553,7 @@ export default function CreateInvitationFormPage() {
         quote,
         quoteSource,
         galleryImages: uploadedGallery,
-        stories: effectiveStories,
+        stories: uploadedStories,
         music: musicMode === "list"
           ? {
             mode: "list",
@@ -2528,6 +2757,10 @@ export default function CreateInvitationFormPage() {
                 onRemoveWishesBackground={() => setWishesBackgroundImage(null)}
                 onUploadClosingBackground={handleUploadClosingBackground}
                 onRemoveClosingBackground={() => setClosingBackgroundImage(null)}
+                onUploadLoveStoryPhotoOne={handleUploadStoryPhoto(0, "thumbnail love story pertama")}
+                onRemoveLoveStoryPhotoOne={() => handleRemoveStoryPhoto(0)}
+                onUploadLoveStoryPhotoTwo={handleUploadStoryPhoto(1, "thumbnail love story kedua")}
+                onRemoveLoveStoryPhotoTwo={() => handleRemoveStoryPhoto(1)}
                 onRemoveCover={() => setCoverImage(null)}
                 onRemoveFrontCover={() => setFrontCoverImage(null)}
                 onUploadGallery={handleUploadGallery}

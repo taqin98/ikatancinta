@@ -67,6 +67,64 @@
     transform: scale(1);
 }
 
+.misty-romance-root .misty-location-venue,
+.misty-romance-root .misty-location-address {
+    margin: 0;
+}
+
+.misty-romance-root .misty-location-venue {
+    font-size: 1.04em;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.misty-romance-root .misty-location-address {
+    margin-top: 4px;
+    font-size: 0.94em;
+    line-height: 1.6;
+}
+
+.misty-romance-root .misty-calendar-action {
+    margin-top: 18px;
+    text-align: center;
+}
+
+.misty-romance-root .misty-calendar-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: min(100%, 260px);
+    min-height: 44px;
+    padding: 12px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(5px);
+    cursor: pointer;
+    transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+
+.misty-romance-root .misty-calendar-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.95);
+    transform: translateY(-1px);
+}
+
+.misty-romance-root .misty-calendar-button__icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+.misty-romance-root .misty-calendar-button__label {
+    line-height: 1;
+}
+
 .misty-romance-root #mute-sound .elementor-icon {
     animation: mr-rotating 12s linear infinite;
 }

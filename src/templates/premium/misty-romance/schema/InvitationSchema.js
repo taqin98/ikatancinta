@@ -1,5 +1,9 @@
 /** @type {import('../../blue-nature/schema/invitationSchema').defaultSchema} */
 export const defaultSchema = {
+    invitation: {
+        slug: "misty-romance",
+        orderId: "",
+    },
     guest: {
         name: "Nama Tamu",
         greetingLabel: "Kepada Yth,",
@@ -10,31 +14,36 @@ export const defaultSchema = {
             nameFull: "Habib Yulianto",
             nickName: "Habib",
             instagram: "habibyulianto",
-            photo: "",
+            photo: "assets/images/couple/groom.jpg",
             parentInfo: "Putra Ketiga dari Bapak Putra & Ibu Putri",
         },
         bride: {
             nameFull: "Adiba Putri Syakila",
             nickName: "Adiba",
             instagram: "adibaputris",
-            photo: "",
+            photo: "assets/images/couple/bride.jpg",
             parentInfo: "Putri Ketiga dari Bapak Putra & Ibu Putri",
         },
-        heroPhoto: "",
+        frontCoverPhoto: "assets/images/cover/fres-948-3-1.jpg",
+        heroPhoto: "assets/images/gallery/gallery-03.jpg",
     },
     event: {
         dateISO: "2026-05-01T10:00:00+07:00",
         akad: {
             date: "Minggu, 29 Desember 2024",
             time: "09.00 WIB",
+            venueName: "Kediaman Mempelai Wanita",
             address: "Ds Pagu Kec. Wates Kab. Kediri, Jawa Timur",
             mapsUrl: "https://maps.app.goo.gl/wNyFkeGRv7bmDs8t8?g_st=ic",
+            coverPhoto: "assets/images/cover/hitam-5-1.webp",
         },
         resepsi: {
             date: "Minggu, 29 Desember 2024",
             time: "12.00 WIB - Selesai",
+            venueName: "Kediaman Mempelai Wanita",
             address: "Ds Pagu Kec. Wates Kab. Kediri, Jawa Timur",
             mapsUrl: "https://maps.app.goo.gl/wNyFkeGRv7bmDs8t8?g_st=ic",
+            coverPhoto: "assets/images/cover/hitam-5-1.webp",
         },
         livestream: {
             date: "Minggu, 29 Desember 2024",
@@ -50,8 +59,13 @@ export const defaultSchema = {
         quote:
             "Dan di antara tanda-tanda (kebesaran)-Nya ialah Dia menciptakan pasangan-pasangan untukmu dari jenismu sendiri, agar kamu cenderung dan merasa tenteram kepadanya, dan Dia menjadikan di antaramu rasa kasih dan sayang.",
         quoteSource: "QS Ar-Rum 21",
+        giftTitle: "Wedding Gift",
+        giftIntro:
+            "Doa restu Anda merupakan karunia yang sangat berarti bagi kami, dan jika memberi adalah ungkapan tanda kasih, Anda dapat memberi kado secara cashless.",
         closingText:
             "Merupakan suatu kehormatan dan kebahagiaan bagi kami, apabila Bapak/Ibu/Saudara/i berkenan hadir dan memberikan doa restu. Atas kehadiran dan doa restunya, kami mengucapkan terima kasih.",
+        closingLabel: "Kami yang berbahagia,",
+        closingBackgroundPhoto: "assets/images/cover/akhir-ed-1.webp",
     },
     lovestory: [
         {
@@ -125,8 +139,27 @@ export const defaultSchema = {
                 { bank: "BCA", account: "1234567890", name: "Habib" },
                 { bank: "DANA", account: "1234567890", name: "Habib" },
             ],
+            shipping: {
+                recipient: "Habib Yulianto",
+                phone: "0896343433",
+                address: "Ds Pagu Kec.Wates Kab. Kediri",
+            },
         },
         rsvpEnabled: true,
-        livestreamEnabled: true,
+        livestreamEnabled: false,
+    },
+    gift: {
+        bankList: [
+            { bank: "BCA", account: "1234567890", name: "Habib" },
+            { bank: "DANA", account: "1234567890", name: "Habib" },
+        ],
+        shipping: {
+            recipient: "Habib Yulianto",
+            phone: "0896343433",
+            address: "Ds Pagu Kec.Wates Kab. Kediri",
+        },
+    },
+    audio: {
+        src: "assets/audio/Percy-Faith-His-Orchestra-A-Summer-Place-1959__Wd3dlEvodk-1.mp3",
     },
 };

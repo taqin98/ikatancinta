@@ -36,6 +36,16 @@ const BASE_UPLOAD_FIELDS = {
     required: false,
     description: "Dipakai sebagai background section penutup atau ucapan terima kasih.",
   },
+  loveStoryPhotoOne: {
+    visible: false,
+    required: false,
+    description: "Dipakai sebagai thumbnail foto untuk momen love story pertama.",
+  },
+  loveStoryPhotoTwo: {
+    visible: false,
+    required: false,
+    description: "Dipakai sebagai thumbnail foto untuk momen love story kedua.",
+  },
   saveTheDateBackground: {
     visible: false,
     required: false,
@@ -134,6 +144,45 @@ const THEME_UPLOAD_OVERRIDES = {
       description: "Dipakai sebagai background foto section resepsi pada Velvet Burgundy. Jika kosong, akan mengikuti cover utama atau foto akad. Saran ukuran ideal portrait 4:5 atau landscape yang fokus ke subjek.",
     },
   },
+  "misty-romance": {
+    frontCover: {
+      description: "Dipakai khusus untuk background cover depan sebelum tamu menekan tombol buka undangan pada Misty Romance.",
+    },
+    cover: {
+      visible: true,
+      required: true,
+      description: "Dipakai untuk foto thumbnail pasangan setelah undangan dibuka pada Misty Romance.",
+    },
+    bridePhoto: {
+      description: "Dipakai pada section profil wanita. Jika kosong, sistem pakai foto bawaan template Misty Romance.",
+    },
+    groomPhoto: {
+      description: "Dipakai pada section profil pria. Jika kosong, sistem pakai foto bawaan template Misty Romance.",
+    },
+    akadCover: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Misty Romance.",
+    },
+    resepsiCover: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Misty Romance.",
+    },
+    loveStoryPhotoOne: {
+      visible: true,
+      description: "Dipakai sebagai thumbnail foto untuk momen love story pertama pada Misty Romance.",
+    },
+    loveStoryPhotoTwo: {
+      visible: true,
+      description: "Dipakai sebagai thumbnail foto untuk momen love story kedua pada Misty Romance.",
+    },
+    closingBackground: {
+      visible: true,
+      required: false,
+      description: "Dipakai sebagai background section penutup pada Misty Romance.",
+    },
+  },
 };
 
 export function getThemeUploadConfig(theme, packageConfig) {
@@ -142,13 +191,20 @@ export function getThemeUploadConfig(theme, packageConfig) {
   const themeOverrides = THEME_UPLOAD_OVERRIDES[theme?.slug] || {};
 
   return Object.fromEntries(
-    Object.entries(BASE_UPLOAD_FIELDS).map(([slotKey, baseConfig]) => [
-      slotKey,
-      {
+    Object.entries(BASE_UPLOAD_FIELDS).map(([slotKey, baseConfig]) => {
+      const mergedConfig = {
         ...baseConfig,
         ...(tierOverrides[slotKey] || {}),
         ...(themeOverrides[slotKey] || {}),
-      },
-    ]),
+      };
+
+      return [
+        slotKey,
+        {
+          ...mergedConfig,
+          required: Boolean(mergedConfig.visible),
+        },
+      ];
+    }),
   );
 }

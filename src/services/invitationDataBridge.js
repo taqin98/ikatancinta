@@ -49,7 +49,7 @@ export function clearInvitationDraft() {
  * @param {object|null} params.frontCoverImage — { url, name }
  * @param {object|null} params.coverImage  — { url, name }
  * @param {object[]} params.galleryImages  — [{ url }]
- * @param {object[]} params.stories        — [{ title, description, date }]
+ * @param {object[]} params.stories        — [{ title, description, date, photo }]
  * @param {string} params.quote
  * @param {string} params.quoteSource
  * @param {object|null} params.giftInfo
@@ -139,7 +139,7 @@ export function mapFormToInvitationSchema({
             title: s.title || "Cerita Kita",
             text: s.description || "",
             date: s.date || "",
-            photo: "",
+            photo: s.photo?.url || s.photo || "",
         }))
         : defaultSchema.lovestory;
 

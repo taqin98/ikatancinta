@@ -3,6 +3,47 @@ import { findThemeBySlug } from "./data/themes.seed.js";
 
 const PUBLIC_INVITATION_STATUSES = new Set(["published", "done"]);
 
+function normalizeAssetPayload(asset, fallbackKind = "file") {
+  if (!asset) return null;
+
+  if (typeof asset === "string") {
+    return {
+      assetId: null,
+      kind: fallbackKind,
+      name: "asset",
+      mimeType: "",
+      size: null,
+      url: asset,
+    };
+  }
+
+  if (typeof asset !== "object") return null;
+  const assetId = typeof asset.assetId === "string" ? asset.assetId : null;
+  const url = typeof asset.url === "string" ? asset.url : null;
+  if (!assetId && !url) return null;
+
+  return {
+    assetId,
+    kind: typeof asset.kind === "string" ? asset.kind : fallbackKind,
+    name: typeof asset.name === "string" ? asset.name : "asset",
+    mimeType: typeof asset.mimeType === "string" ? asset.mimeType : "",
+    size: Number.isFinite(asset.size) ? asset.size : asset.size ? Number(asset.size) : null,
+    url,
+  };
+}
+
+function normalizeStoryPayload(story, fallbackPhoto) {
+  if (!story || typeof story !== "object") return null;
+  const photo = normalizeAssetPayload(story?.photo, "love-story") || normalizeAssetPayload(fallbackPhoto, "love-story");
+  return {
+    title: story?.title || "",
+    description: story?.description || story?.text || story?.story || "",
+    text: story?.text || story?.description || story?.story || "",
+    date: story?.date || "",
+    photo,
+  };
+}
+
 export function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -16,13 +57,33 @@ export function buildOrderId() {
   return `IKC-${yy}${mm}${dd}-${random}`;
 }
 
-export function buildInvitationSchemaFromTheme(slug) {
+export function buildInvitationSchemaFromTheme(slug, order = null) {
   const theme = findThemeBySlug(slug);
   const packageConfig = getPackageConfig(theme?.packageTier);
   const coupleParts = (theme?.couple || "Habib & Adiba").split("&").map((part) => part.trim());
   const groomName = coupleParts[0] || "Habib";
   const brideName = coupleParts[1] || "Adiba";
-  const heroPhoto = theme?.thumbnail || theme?.image || "";
+  const payload = order?.payload || {};
+  const frontCoverPhoto = payload?.frontCoverImage?.url || payload?.coverImage?.url || theme?.thumbnail || theme?.image || "";
+  const heroPhoto = payload?.coverImage?.url || theme?.thumbnail || theme?.image || "";
+  const bridePhoto = payload?.bride?.photo?.url || heroPhoto;
+  const groomPhoto = payload?.groom?.photo?.url || heroPhoto;
+  const loveStories = Array.isArray(payload?.stories)
+    ? payload.stories
+        .map((story) => ({
+          title: story?.title || "",
+          text: story?.description || "",
+          date: story?.date || "",
+          photo: story?.photo?.url || heroPhoto,
+        }))
+        .filter((story) => story.title || story.text || story.date)
+    : [];
+  const rawStories = Array.isArray(payload?.stories)
+    ? payload.stories.map((story) => normalizeStoryPayload(story, heroPhoto)).filter(Boolean)
+    : [];
+  const rawGalleryImages = Array.isArray(payload?.galleryImages)
+    ? payload.galleryImages.map((image) => normalizeAssetPayload(image, "gallery")).filter(Boolean)
+    : [];
   const status = "published";
   const isPublished = PUBLIC_INVITATION_STATUSES.has(status);
   const publishedAt = new Date().toISOString();
@@ -30,6 +91,8 @@ export function buildInvitationSchemaFromTheme(slug) {
   return {
     status,
     orderStatus: status,
+    orderId: order?.id || null,
+    invitationSlug: slug,
     isPublished,
     publishedAt,
     completedAt: null,
@@ -46,34 +109,66 @@ export function buildInvitationSchemaFromTheme(slug) {
       greetingLabel: "Kepada Bapak/Ibu/Saudara/i",
       code: "",
     },
+    customer: payload?.customer || null,
+    theme: {
+      slug: theme?.slug || "",
+      name: theme?.name || "",
+      title: theme?.title || "",
+      packageTier: packageConfig?.tier || theme?.packageTier || "",
+    },
+    selectedTheme: payload?.selectedTheme || {
+      slug: theme?.slug || "",
+      name: theme?.name || "",
+      packageTier: packageConfig?.tier || theme?.packageTier || "",
+    },
+    selectedPackage: payload?.selectedPackage || packageConfig,
+    groom: {
+      fullname: payload?.groom?.fullname || `${groomName} Yulianto`,
+      nickname: payload?.groom?.nickname || groomName,
+      instagram: payload?.groom?.instagram || "ikatancinta.in",
+      parents: payload?.groom?.parents || "Putra dari Bapak Putra & Ibu Putri",
+      photo: normalizeAssetPayload(payload?.groom?.photo, "groom") || normalizeAssetPayload(groomPhoto, "groom"),
+    },
+    bride: {
+      fullname: payload?.bride?.fullname || `${brideName} Putri`,
+      nickname: payload?.bride?.nickname || brideName,
+      instagram: payload?.bride?.instagram || "ikatancinta.in",
+      parents: payload?.bride?.parents || "Putri dari Bapak Putra & Ibu Putri",
+      photo: normalizeAssetPayload(payload?.bride?.photo, "bride") || normalizeAssetPayload(bridePhoto, "bride"),
+    },
     couple: {
       groom: {
         nameFull: `${groomName} Yulianto`,
         nickName: groomName,
         instagram: "ikatancinta.in",
-        photo: heroPhoto,
+        photo: groomPhoto,
         parentInfo: "Putra dari Bapak Putra & Ibu Putri",
       },
       bride: {
         nameFull: `${brideName} Putri`,
         nickName: brideName,
         instagram: "ikatancinta.in",
-        photo: heroPhoto,
+        photo: bridePhoto,
         parentInfo: "Putri dari Bapak Putra & Ibu Putri",
       },
+      frontCoverPhoto,
       heroPhoto,
     },
+    frontCoverImage: normalizeAssetPayload(payload?.frontCoverImage, "front-cover") || normalizeAssetPayload(frontCoverPhoto, "front-cover"),
+    coverImage: normalizeAssetPayload(payload?.coverImage, "cover") || normalizeAssetPayload(heroPhoto, "cover"),
     event: {
       dateISO: "2026-03-30T10:00:00+07:00",
       akad: {
         date: "Senin, 30 Maret 2026",
         time: "09.00 - 10.00 WIB",
+        venueName: payload?.akad?.venue || "",
         address: "Simpang Lima Gumul, Kediri",
         mapsUrl: "https://maps.google.com",
       },
       resepsi: {
         date: "Senin, 30 Maret 2026",
         time: "11.00 - 14.00 WIB",
+        venueName: payload?.resepsi?.venue || "",
         address: "Simpang Lima Gumul, Kediri",
         mapsUrl: "https://maps.google.com",
       },
@@ -84,6 +179,26 @@ export function buildInvitationSchemaFromTheme(slug) {
         url: "https://youtube.com",
       },
     },
+    akad: {
+      date: payload?.akad?.date || "",
+      startTime: payload?.akad?.startTime || "",
+      endTime: payload?.akad?.endTime || "",
+      time: payload?.akad?.startTime ? `${String(payload.akad.startTime).replace(":", ".")} - ${String(payload?.akad?.endTime || "10:00").replace(":", ".")} WIB` : "",
+      venue: payload?.akad?.venue || "",
+      address: payload?.akad?.address || "Simpang Lima Gumul, Kediri",
+      mapsLink: payload?.akad?.mapsLink || "https://maps.google.com",
+      coverImage: normalizeAssetPayload(payload?.akad?.coverImage, "akad-cover"),
+    },
+    resepsi: {
+      date: payload?.resepsi?.date || "",
+      startTime: payload?.resepsi?.startTime || "",
+      endTime: payload?.resepsi?.endTime || "",
+      time: payload?.resepsi?.startTime ? `${String(payload.resepsi.startTime).replace(":", ".")} - ${String(payload?.resepsi?.endTime || "10:00").replace(":", ".")} WIB` : "",
+      venue: payload?.resepsi?.venue || "",
+      address: payload?.resepsi?.address || "Simpang Lima Gumul, Kediri",
+      mapsLink: payload?.resepsi?.mapsLink || "https://maps.google.com",
+      coverImage: normalizeAssetPayload(payload?.resepsi?.coverImage, "resepsi-cover"),
+    },
     copy: {
       openingGreeting: theme?.title || "The Wedding Of",
       openingText: "Tanpa mengurangi rasa hormat, kami mengundang Anda untuk menghadiri acara pernikahan kami.",
@@ -91,13 +206,20 @@ export function buildInvitationSchemaFromTheme(slug) {
       quoteSource: "",
       closingText: "Merupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir.",
     },
+    quote: payload?.quote || "",
+    quoteSource: payload?.quoteSource || "",
+    closingBackgroundImage: normalizeAssetPayload(payload?.closingBackgroundImage, "closing-bg"),
     lovestory: packageConfig.capabilities.loveStory
-      ? [
-        { title: "Pertama Bertemu", text: "Kami pertama kali bertemu dalam sebuah acara kampus.", date: "2019", photo: heroPhoto },
-        { title: "Menjalin Asmara", text: "Hubungan kami tumbuh menjadi komitmen yang lebih serius.", date: "2021", photo: heroPhoto },
-      ]
+      ? (loveStories.length > 0
+        ? loveStories
+        : [
+          { title: "Pertama Bertemu", text: "Kami pertama kali bertemu dalam sebuah acara kampus.", date: "2019", photo: heroPhoto },
+          { title: "Menjalin Asmara", text: "Hubungan kami tumbuh menjadi komitmen yang lebih serius.", date: "2021", photo: heroPhoto },
+        ])
       : [],
+    stories: packageConfig.capabilities.loveStory ? rawStories : [],
     gallery: Array.from({ length: Math.min(packageConfig.limits.galleryMax, 4) }, () => heroPhoto).filter(Boolean),
+    galleryImages: rawGalleryImages,
     features: {
       countdownEnabled: true,
       saveTheDateEnabled: true,
@@ -110,6 +232,11 @@ export function buildInvitationSchemaFromTheme(slug) {
       rsvpEnabled: packageConfig.capabilities.rsvp,
       livestreamEnabled: packageConfig.capabilities.livestream,
     },
+    gift: {
+      bankList: Array.isArray(payload?.gift?.bankList) ? payload.gift.bankList : [],
+      shipping: payload?.gift?.shipping || {},
+    },
+    music: payload?.music || null,
     audio: {
       src: "",
       autoplay: false,
@@ -201,7 +328,12 @@ export function sanitizeOrderPayload(payload) {
     : [];
 
   const stories = packageConfig.capabilities.loveStory
-    ? Array.isArray(payload?.stories) ? payload.stories : []
+    ? Array.isArray(payload?.stories)
+      ? payload.stories.map((story) => ({
+          ...story,
+          photo: sanitizeAssetReference(story?.photo, "love-story"),
+        }))
+      : []
     : [];
 
   const music = normalizeMusicPayload(payload?.music, packageConfig);

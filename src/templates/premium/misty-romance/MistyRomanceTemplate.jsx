@@ -39,6 +39,10 @@ const LOCAL_GALLERY_MODULES = import.meta.glob("./assets/images/gallery/*.{jpg,j
 });
 
 const FALLBACKS = {
+    innerBackground: "assets/images/cover/ART-BNW-FX-2-JPG-2.webp",
+    akadBackground: "assets/images/cover/hitam-5-1.webp",
+    resepsiBackground: "assets/images/cover/hitam-5-1.webp",
+    closingBackground: "assets/images/cover/akhir-ed-1.webp",
     heroPhoto: "assets/images/gallery/gallery-03.jpg",
     groomPhoto: "assets/images/couple/groom.jpg",
     bridePhoto: "assets/images/couple/bride.jpg",
@@ -97,6 +101,299 @@ function normalizeText(value) {
     return String(value || "").replace(/\s+/g, " ").trim();
 }
 
+function normalizeAssetReference(value) {
+    return String(value || "")
+        .replace(/\\\//g, "/")
+        .replace(/[?#].*$/, "")
+        .trim();
+}
+
+function isSameAsset(candidate, reference) {
+    const normalizedCandidate = normalizeAssetReference(candidate);
+    const normalizedReference = normalizeAssetReference(reference);
+    return Boolean(normalizedCandidate && normalizedReference && normalizedCandidate === normalizedReference);
+}
+
+function isTemplateAssetReference(value) {
+    const normalized = normalizeAssetReference(value);
+    if (!normalized) return false;
+
+    return (
+        normalized.startsWith("assets/") ||
+        normalized.startsWith("/assets/") ||
+        normalized.includes("/templates/premium/misty-romance/assets/")
+    );
+}
+
+function resolveSectionPhoto(path, fallbackAsset, options = {}) {
+    const normalized = normalizeText(path);
+    if (!normalized) return fallbackAsset || "";
+
+    if (options.requireTemplateAsset && !isTemplateAssetReference(normalized)) {
+        return fallbackAsset || "";
+    }
+
+    const rejectedAssets = Array.isArray(options.rejectSameAs) ? options.rejectSameAs : [];
+    if (rejectedAssets.some((item) => isSameAsset(normalized, item))) {
+        return fallbackAsset || "";
+    }
+
+    return normalized;
+}
+
+function pickText(...values) {
+    for (const value of values) {
+        const text = normalizeText(value);
+        if (text) return text;
+    }
+    return "";
+}
+
+function pickAsset(...values) {
+    for (const value of values) {
+        if (typeof value === "string") {
+            const text = pickText(value);
+            if (text) return text;
+            continue;
+        }
+
+        if (value && typeof value === "object") {
+            const text = pickText(value.url, value.src, value.photo, value.image, value.imageUrl, value.fileUrl, value.dataUrl);
+            if (text) return text;
+        }
+    }
+    return "";
+}
+
+function formatDateID(value, fallback = "") {
+    const text = pickText(value);
+    if (!text) return fallback;
+
+    const candidate = new Date(text);
+    if (!Number.isFinite(candidate.getTime())) {
+        return text;
+    }
+
+    try {
+        return new Intl.DateTimeFormat("id-ID", {
+            weekday: "long",
+            day: "2-digit",
+            month: "long",
+            year: "numeric",
+        }).format(candidate);
+    } catch {
+        return text;
+    }
+}
+
+function formatTimeRange(start, end, fallback = "") {
+    const startText = pickText(start);
+    const endText = pickText(end);
+    if (!startText) return fallback;
+    if (!endText) return `${startText.replace(":", ".")} WIB`;
+    return `${startText.replace(":", ".")} - ${endText.replace(":", ".")} WIB`;
+}
+
+function buildLiveDateISO(dateValue, timeValue, fallbackValue) {
+    const sourceDate = pickText(dateValue);
+    if (!sourceDate) return fallbackValue || defaultSchema.event.dateISO;
+
+    const timeMatch = pickText(timeValue).match(/(\d{1,2})[:.](\d{2})/);
+    const hours = timeMatch ? timeMatch[1].padStart(2, "0") : "09";
+    const minutes = timeMatch ? timeMatch[2] : "00";
+    const candidate = new Date(`${sourceDate}T${hours}:${minutes}:00`);
+    if (!Number.isFinite(candidate.getTime())) {
+        return fallbackValue || defaultSchema.event.dateISO;
+    }
+    return candidate.toISOString();
+}
+
+function normalizeLoveStoryItem(item) {
+    if (!item || typeof item !== "object") return null;
+    const title = pickText(item.title, item.label, item.heading, item.name);
+    const date = pickText(item.date, item.year);
+    const text = pickText(item.text, item.description, item.story, item.content);
+    const photo = pickAsset(item.photo, item.image);
+    if (!title && !date && !text && !photo) return null;
+    return { title, date, text, photo };
+}
+
+const BANK_LOGO_FALLBACKS = {
+    bca: "assets/images/payment/bca/bca-logo.png",
+    dana: "assets/images/payment/dana/dana-logo.png",
+};
+
+function resolveBankLogo(bankName, explicitLogo) {
+    const logo = pickAsset(explicitLogo);
+    if (logo) return logo;
+
+    const normalizedBank = pickText(bankName).toLowerCase();
+    if (normalizedBank.includes("bca")) return BANK_LOGO_FALLBACKS.bca;
+    if (normalizedBank.includes("dana")) return BANK_LOGO_FALLBACKS.dana;
+    return "";
+}
+
+function normalizeBankAccount(item) {
+    const bank = pickText(item?.bankName, item?.bank, item?.provider, item?.title);
+    const account = pickText(item?.account, item?.accountNumber, item?.number);
+    const name = pickText(item?.name, item?.accountName, item?.accountHolder);
+    const logo = resolveBankLogo(bank, item?.logo || item?.logoUrl || item?.image);
+    return { bank, account, name, logo };
+}
+
+function formatShippingMarkup(shipping, fallbackAddress) {
+    const recipient = pickText(shipping?.recipient, defaultSchema.gift?.shipping?.recipient, defaultSchema.couple.groom.nameFull);
+    const phone = pickText(shipping?.phone, defaultSchema.gift?.shipping?.phone, "-");
+    const address = pickText(shipping?.address, fallbackAddress, defaultSchema.gift?.shipping?.address, defaultSchema.event.akad.address);
+    return `<p>Nama Penerima : ${escapeHtml(recipient)}</p><p>No. HP : ${escapeHtml(phone || "-")}</p><p>${escapeHtml(address)}</p>`;
+}
+
+function formatLocationMarkup(detail, fallbackDetail = {}) {
+    const venueName = pickText(detail?.venueName, detail?.venue, detail?.locationName, fallbackDetail?.venueName, fallbackDetail?.venue);
+    const address = pickText(detail?.address, fallbackDetail?.address);
+
+    if (venueName && address) {
+        return `<p class="misty-location-venue">${escapeHtml(venueName)}</p><p class="misty-location-address">${escapeHtml(address)}</p>`;
+    }
+
+    if (venueName) {
+        return `<p class="misty-location-venue">${escapeHtml(venueName)}</p>`;
+    }
+
+    return `<p class="misty-location-address">${escapeHtml(address || "-")}</p>`;
+}
+
+function buildCalendarLocation(detail, fallbackDetail = {}) {
+    const venueName = pickText(detail?.venueName, detail?.venue, detail?.locationName, fallbackDetail?.venueName, fallbackDetail?.venue);
+    const address = pickText(detail?.address, fallbackDetail?.address);
+    return [venueName, address].filter(Boolean).join(", ");
+}
+
+function formatIcsDateLocal(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
+function escapeIcsText(value) {
+    return String(value || "")
+        .replace(/\\/g, "\\\\")
+        .replace(/\n/g, "\\n")
+        .replace(/,/g, "\\,")
+        .replace(/;/g, "\\;");
+}
+
+function formatGoogleCalendarDate(date) {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(date.getUTCDate()).padStart(2, "0");
+    const hours = String(date.getUTCHours()).padStart(2, "0");
+    const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+    const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+}
+
+function buildCalendarEventMeta(invitationData) {
+    const startDate = new Date(invitationData?.event?.dateISO || "");
+    if (!(startDate instanceof Date) || Number.isNaN(startDate.getTime())) return null;
+
+    const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+    const title = `${pickText(invitationData?.couple?.groom?.nickName, invitationData?.couple?.groom?.nameFull)} & ${pickText(invitationData?.couple?.bride?.nickName, invitationData?.couple?.bride?.nameFull)}`.trim();
+    const summary = title ? `Pernikahan ${title}` : "Save The Date";
+    const location = buildCalendarLocation(invitationData?.event?.akad, defaultSchema.event.akad);
+    const description = pickText(invitationData?.copy?.openingText, invitationData?.copy?.quote, defaultSchema.copy.openingText);
+
+    return {
+        startDate,
+        endDate,
+        summary,
+        location,
+        description,
+    };
+}
+
+function openGoogleCalendar(invitationData) {
+    const eventMeta = buildCalendarEventMeta(invitationData);
+    if (!eventMeta) return;
+
+    const params = new URLSearchParams({
+        action: "TEMPLATE",
+        text: eventMeta.summary,
+        dates: `${formatGoogleCalendarDate(eventMeta.startDate)}/${formatGoogleCalendarDate(eventMeta.endDate)}`,
+        details: eventMeta.description,
+        location: eventMeta.location,
+    });
+
+    window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
+}
+
+function shouldUseIcsCalendar() {
+    if (typeof navigator === "undefined") return false;
+    const userAgent = String(navigator.userAgent || navigator.vendor || "").toLowerCase();
+    return /iphone|ipad|ipod|macintosh/.test(userAgent);
+}
+
+function downloadCalendarFile(invitationData, invitationSlug = "misty-romance") {
+    const eventMeta = buildCalendarEventMeta(invitationData);
+    if (!eventMeta) return;
+
+    const icsContent = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Ikatan Cinta//Misty Romance//EN",
+        "CALSCALE:GREGORIAN",
+        "BEGIN:VEVENT",
+        `UID:${eventMeta.startDate.getTime()}-misty-romance@ikatancinta`,
+        `DTSTAMP:${formatIcsDateLocal(new Date())}`,
+        `SUMMARY:${escapeIcsText(eventMeta.summary)}`,
+        `DTSTART:${formatIcsDateLocal(eventMeta.startDate)}`,
+        `DTEND:${formatIcsDateLocal(eventMeta.endDate)}`,
+        `DESCRIPTION:${escapeIcsText(eventMeta.description)}`,
+        `LOCATION:${escapeIcsText(eventMeta.location)}`,
+        "BEGIN:VALARM",
+        "TRIGGER:-P1D",
+        "ACTION:DISPLAY",
+        `DESCRIPTION:${escapeIcsText(eventMeta.summary)}`,
+        "END:VALARM",
+        "END:VEVENT",
+        "END:VCALENDAR",
+    ].join("\r\n");
+
+    const blob = new Blob([icsContent], { type: "text/calendar" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${String(invitationSlug || "save-the-date").replace(/[^a-z0-9-]+/gi, "-").toLowerCase() || "save-the-date"}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function setBackgroundImage(root, selector, image, options = {}) {
+    if (!root || !selector || !image) return;
+    const resolved = resolveAssetUrl(image);
+    if (!resolved || resolved === SKIP_ASSET) return;
+
+    const {
+        position = "center center",
+        size = "cover",
+        repeat = "no-repeat",
+    } = options;
+
+    const selectors = `${selector}, ${selector} > .elementor-motion-effects-container > .elementor-motion-effects-layer`;
+    root.querySelectorAll(selectors).forEach((node) => {
+        node.style.backgroundImage = `url("${resolved}")`;
+        node.style.backgroundPosition = position;
+        node.style.backgroundSize = size;
+        node.style.backgroundRepeat = repeat;
+    });
+}
+
 function formatWishRelativeTime(value) {
     const normalized = normalizeText(value);
     if (!normalized) return "Baru saja";
@@ -151,22 +448,47 @@ function normalizeAttendanceLabel(value) {
 }
 
 function extractInitialWishes(data) {
-    const candidates = [data?.wishes, data?.comments, data?.guestbook, data?.rsvp?.wishes, data?.features?.wishes];
-    const firstNonEmpty = candidates.find((item) => Array.isArray(item) && item.length > 0);
-    const raw = firstNonEmpty || defaultSchema.wishes || [];
+    const candidates = [
+        data?.wishes,
+        data?.wishes?.initial,
+        data?.wishes?.data,
+        data?.wishes?.items,
+        data?.comments,
+        data?.comments?.data,
+        data?.comments?.items,
+        data?.guestbook,
+        data?.guestbook?.data,
+        data?.guestbook?.items,
+        data?.rsvp?.wishes,
+        data?.features?.wishes,
+        data?.invitation?.wishes,
+        data?.invitation?.comments,
+        data?.invitation?.guestbook,
+        data?.data?.wishes,
+        data?.data?.comments,
+        data?.data?.guestbook,
+        data?.order?.wishes,
+        data?.order?.comments,
+    ];
+    const firstArray = candidates.find((item) => Array.isArray(item));
+    const raw = firstArray ?? (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : defaultSchema.wishes?.initial || []);
     if (!Array.isArray(raw)) return [];
 
     return raw
         .map((item) => {
-            const author = normalizeText(item?.author || item?.name || item?.guest || item?.from || "");
-            const comment = normalizeText(item?.comment || item?.message || item?.text || item?.wish || "");
+            const author = normalizeText(item?.author || item?.name || item?.guest || item?.guestName || item?.from || "");
+            const comment = normalizeText(item?.comment || item?.message || item?.text || item?.wish || item?.content || "");
             if (!author || !comment) return null;
 
             return {
                 author,
                 comment,
-                attendance: normalizeAttendanceLabel(item?.attendance || item?.status || item?.confirmation || item?.konfirmasi || ""),
-                createdAt: normalizeText(item?.createdAt || item?.date || item?.time || "Baru saja"),
+                attendance: normalizeAttendanceLabel(
+                    item?.attendance || item?.status || item?.confirmation || item?.konfirmasi || item?.attendStatus || ""
+                ),
+                createdAt: normalizeText(
+                    item?.createdAt || item?.created_at || item?.timestamp || item?.date || item?.time || "Baru saja"
+                ),
             };
         })
         .filter(Boolean);
@@ -215,7 +537,7 @@ function rewriteSrcsetValue(srcset) {
 function rewriteInlineStyleValue(styleValue) {
     if (!styleValue) return styleValue;
 
-    return styleValue.replace(/url\((['"]?)(\/??assets\/[^'"\)]+)\1\)/g, (_, quote, assetPath) => {
+    return styleValue.replace(/url\((['"]?)(\/??assets\/[^'")]+)\1\)/g, (_, quote, assetPath) => {
         const safeQuote = quote || '"';
         const next = resolveAssetUrl(assetPath);
         return `url(${safeQuote}${next}${safeQuote})`;
@@ -244,9 +566,8 @@ function buildGalleryUrls(galleryInput, total = 0) {
 
     const source = dynamicUrls.length > 0 ? dynamicUrls : fallbackUrls;
     if (source.length === 0) return [];
-
-    const length = Math.max(total, source.length);
-    return Array.from({ length }, (_, index) => source[index % source.length]);
+    if (total > 0) return source.slice(0, total);
+    return source;
 }
 
 function toFiniteNumber(value, fallback = 0) {
@@ -280,8 +601,16 @@ function applyJustifiedGalleryLayout(widget) {
     const container = widget.querySelector(".elementor-gallery__container");
     if (!container) return;
 
-    const items = Array.from(container.querySelectorAll(".e-gallery-item"));
-    if (items.length === 0) return;
+    const items = Array.from(container.querySelectorAll(".e-gallery-item")).filter((item) => {
+        if (item.getAttribute("aria-hidden") === "true") return false;
+        return window.getComputedStyle(item).display !== "none";
+    });
+    if (items.length === 0) {
+        container.style.removeProperty("height");
+        container.style.removeProperty("padding-bottom");
+        container.style.setProperty("--container-aspect-ratio", "0");
+        return;
+    }
 
     let settings = {};
     try {
@@ -390,14 +719,17 @@ function applyJustifiedGalleryLayout(widget) {
     }
 
     if (rowMeta.length === 0) {
+        container.style.removeProperty("height");
         container.style.removeProperty("padding-bottom");
+        container.style.setProperty("--container-aspect-ratio", "0");
         return;
     }
 
     const totalHeight = rowMeta.reduce((sum, row) => sum + row.height, 0) + Math.max(0, rowMeta.length - 1) * verticalGap;
     const containerRatio = totalHeight / containerWidth;
     container.style.setProperty("--container-aspect-ratio", String(containerRatio));
-    container.style.setProperty("padding-bottom", `calc(${containerRatio} * 100%)`);
+    container.style.removeProperty("padding-bottom");
+    container.style.setProperty("height", `${Math.ceil(totalHeight)}px`);
 
     const rowHeightsPercent = rowMeta.map((row) => (row.height / totalHeight) * 100);
     let topOffset = 0;
@@ -443,12 +775,26 @@ function parseSourceArtifacts(rawHtml) {
     };
 }
 
+function buildTemplateMarkup(rawMarkup, invitationData) {
+    if (!rawMarkup) return "";
+
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<body>${rawMarkup}</body>`, "text/html");
+    const features = invitationData?.features || {};
+
+    if (features.livestreamEnabled === false) {
+        doc.querySelector(".elementor-element-7229000a")?.remove();
+    }
+
+    return doc.body.innerHTML;
+}
+
 function escapeHtml(value) {
     return String(value || "")
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;")
-        .replace(/\"/g, "&quot;")
+        .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
 }
 
@@ -562,46 +908,280 @@ function formatAccount(account) {
     return raw.replace(/(\d{4})(?=\d)/g, "$1 ");
 }
 
+function buildRuntimeInvitationData(incomingData, baseSchema) {
+    if (!incomingData || typeof incomingData !== "object") return {};
+    const orderPayload = incomingData.order?.payload || incomingData.payload || incomingData.data?.payload || incomingData.orderPayload || {};
+
+    const hasRawPayload = Boolean(
+        incomingData.groom ||
+        incomingData.bride ||
+        incomingData.akad ||
+        incomingData.resepsi ||
+        incomingData.frontCoverImage ||
+        incomingData.coverImage ||
+        incomingData.closingBackgroundImage ||
+        Array.isArray(incomingData.stories) ||
+        Array.isArray(incomingData.galleryImages) ||
+        Array.isArray(incomingData.gallery) ||
+        orderPayload.groom ||
+        orderPayload.bride ||
+        orderPayload.akad ||
+        orderPayload.resepsi ||
+        orderPayload.frontCoverImage ||
+        orderPayload.coverImage ||
+        orderPayload.closingBackgroundImage ||
+        Array.isArray(orderPayload.stories) ||
+        Array.isArray(orderPayload.galleryImages) ||
+        Array.isArray(orderPayload.gallery)
+    );
+    if (!hasRawPayload) return {};
+
+    const groom = orderPayload.groom || incomingData.groom || {};
+    const bride = orderPayload.bride || incomingData.bride || {};
+    const akad = orderPayload.akad || incomingData.akad || {};
+    const resepsi = orderPayload.resepsi || incomingData.resepsi || {};
+    const rawGift = orderPayload.gift || incomingData.gift || {};
+    const rawGiftBankList = Array.isArray(rawGift.bankList)
+        ? rawGift.bankList.filter((item) => item?.bank || item?.account || item?.name)
+        : [];
+    const rawGiftShipping = rawGift.shipping || {};
+    const capabilities = orderPayload.selectedPackage?.capabilities || incomingData.selectedPackage?.capabilities || {};
+    const hasGiftData =
+        rawGiftBankList.length > 0 ||
+        Boolean(rawGiftShipping.recipient || rawGiftShipping.phone || rawGiftShipping.address);
+    const liveStoriesSource = [
+        orderPayload.stories,
+        orderPayload.loveStory,
+        incomingData.stories,
+        incomingData.data?.stories,
+        orderPayload.lovestory,
+        incomingData.loveStory,
+        incomingData.lovestory,
+        incomingData.data?.lovestory,
+    ].find((items) => Array.isArray(items) && items.length > 0);
+    const liveStories = Array.isArray(liveStoriesSource)
+        ? liveStoriesSource.map((item) => normalizeLoveStoryItem(item)).filter(Boolean)
+        : [];
+    const liveGallerySource = [
+        orderPayload.galleryImages,
+        incomingData.galleryImages,
+        orderPayload.gallery,
+        incomingData.gallery,
+        incomingData.data?.galleryImages,
+        incomingData.data?.gallery,
+    ].find((items) => Array.isArray(items) && items.length > 0);
+    const liveGallery = Array.isArray(liveGallerySource)
+        ? liveGallerySource.map((item) => normalizeGalleryItem(item)).filter(Boolean)
+        : [];
+    const liveMusic = orderPayload.music || incomingData.music || {};
+    const runtimeInvitationSlug = pickText(
+        incomingData.invitation?.slug,
+        incomingData.invitationSlug,
+        incomingData.invitation_slug,
+        incomingData.slug,
+        baseSchema.invitation?.slug
+    );
+    const runtimeOrderId = pickText(
+        incomingData.invitation?.orderId,
+        incomingData.invitation?.id,
+        incomingData.orderId,
+        incomingData.order_id,
+        incomingData.order?.orderId,
+        incomingData.order?.id,
+        baseSchema.invitation?.orderId
+    );
+
+    return {
+        invitation: {
+            slug: runtimeInvitationSlug,
+            orderId: runtimeOrderId,
+        },
+        orderId: runtimeOrderId,
+        guest: {
+            ...baseSchema.guest,
+            ...(orderPayload.guest || incomingData.guest || {}),
+        },
+        couple: {
+            groom: {
+                nameFull: pickText(groom.fullname, groom.nameFull, baseSchema.couple.groom.nameFull),
+                nickName: pickText(groom.nickname, groom.nickName, groom.fullname?.split(" ")[0], baseSchema.couple.groom.nickName),
+                instagram: pickText(groom.instagram, baseSchema.couple.groom.instagram),
+                photo: pickAsset(groom.photo, baseSchema.couple.groom.photo),
+                parentInfo: pickText(groom.parents, groom.parentInfo, baseSchema.couple.groom.parentInfo),
+            },
+            bride: {
+                nameFull: pickText(bride.fullname, bride.nameFull, baseSchema.couple.bride.nameFull),
+                nickName: pickText(bride.nickname, bride.nickName, bride.fullname?.split(" ")[0], baseSchema.couple.bride.nickName),
+                instagram: pickText(bride.instagram, baseSchema.couple.bride.instagram),
+                photo: pickAsset(bride.photo, baseSchema.couple.bride.photo),
+                parentInfo: pickText(bride.parents, bride.parentInfo, baseSchema.couple.bride.parentInfo),
+            },
+            frontCoverPhoto: pickAsset(
+                orderPayload.frontCoverImage,
+                incomingData.frontCoverImage,
+                orderPayload.couple?.frontCoverPhoto,
+                incomingData.couple?.frontCoverPhoto,
+                baseSchema.couple.frontCoverPhoto,
+                baseSchema.couple.heroPhoto
+            ),
+            heroPhoto: pickAsset(
+                orderPayload.coverImage,
+                incomingData.coverImage,
+                orderPayload.couple?.heroPhoto,
+                incomingData.couple?.heroPhoto,
+                baseSchema.couple.heroPhoto
+            ),
+        },
+        event: {
+            dateISO: buildLiveDateISO(akad.date, akad.startTime, baseSchema.event.dateISO),
+            akad: {
+                date: pickText(formatDateID(akad.date), akad.date, baseSchema.event.akad.date),
+                time: pickText(akad.time, formatTimeRange(akad.startTime, akad.endTime), baseSchema.event.akad.time),
+                venueName: pickText(akad.venue, akad.venueName, baseSchema.event.akad.venueName),
+                address: pickText(akad.address, baseSchema.event.akad.address),
+                mapsUrl: pickText(akad.mapsLink, akad.mapsUrl, baseSchema.event.akad.mapsUrl),
+                coverPhoto: pickAsset(akad.coverImage, akad.coverPhoto, baseSchema.event.akad.coverPhoto),
+            },
+            resepsi: {
+                date: pickText(formatDateID(resepsi.date), resepsi.date, baseSchema.event.resepsi.date),
+                time: pickText(resepsi.time, formatTimeRange(resepsi.startTime, resepsi.endTime), baseSchema.event.resepsi.time),
+                venueName: pickText(resepsi.venue, resepsi.venueName, baseSchema.event.resepsi.venueName),
+                address: pickText(resepsi.address, baseSchema.event.resepsi.address),
+                mapsUrl: pickText(resepsi.mapsLink, resepsi.mapsUrl, baseSchema.event.resepsi.mapsUrl),
+                coverPhoto: pickAsset(resepsi.coverImage, resepsi.coverPhoto, akad.coverImage, baseSchema.event.resepsi.coverPhoto),
+            },
+            livestream: {
+                ...baseSchema.event.livestream,
+                ...(incomingData.event?.livestream || {}),
+            },
+        },
+        copy: {
+            quote: pickText(orderPayload.quote, incomingData.quote, incomingData.copy?.quote, baseSchema.copy.quote),
+            quoteSource: pickText(orderPayload.quoteSource, incomingData.quoteSource, baseSchema.copy.quoteSource),
+            giftTitle: pickText(orderPayload.copy?.giftTitle, incomingData.copy?.giftTitle, baseSchema.copy.giftTitle),
+            giftIntro: pickText(orderPayload.copy?.giftIntro, incomingData.copy?.giftIntro, baseSchema.copy.giftIntro),
+            openingGreeting: pickText(orderPayload.copy?.openingGreeting, incomingData.copy?.openingGreeting, baseSchema.copy.openingGreeting),
+            openingText: pickText(orderPayload.copy?.openingText, incomingData.copy?.openingText, baseSchema.copy.openingText),
+            closingText: pickText(orderPayload.copy?.closingText, incomingData.copy?.closingText, baseSchema.copy.closingText),
+            closingLabel: pickText(orderPayload.copy?.closingLabel, incomingData.copy?.closingLabel, baseSchema.copy.closingLabel),
+            closingBackgroundPhoto: pickAsset(
+                orderPayload.closingBackgroundImage,
+                incomingData.closingBackgroundImage,
+                orderPayload.copy?.closingBackgroundPhoto,
+                incomingData.copy?.closingBackgroundPhoto,
+                baseSchema.copy.closingBackgroundPhoto
+            ),
+        },
+        lovestory: liveStories.length > 0 ? liveStories : baseSchema.lovestory,
+        gallery: liveGallery.length > 0 ? liveGallery : baseSchema.gallery,
+        gift: {
+            bankList: hasGiftData ? rawGiftBankList : [],
+            shipping: hasGiftData ? rawGiftShipping : {},
+        },
+        features: {
+            countdownEnabled: capabilities.countdown ?? capabilities.saveTheDate ?? baseSchema.features.countdownEnabled,
+            saveTheDateEnabled: capabilities.saveTheDate ?? baseSchema.features.saveTheDateEnabled,
+            digitalEnvelopeEnabled: capabilities.digitalEnvelope ?? hasGiftData,
+            rsvpEnabled: capabilities.rsvp ?? baseSchema.features.rsvpEnabled,
+            livestreamEnabled: false,
+            digitalEnvelopeInfo: {
+                bankList: hasGiftData ? rawGiftBankList : [],
+                shipping: hasGiftData ? rawGiftShipping : {},
+            },
+        },
+        audio: {
+            src: pickAsset(
+                incomingData.audio?.src,
+                liveMusic?.file?.url,
+                liveMusic?.file?.src,
+                liveMusic?.file?.dataUrl,
+                liveMusic?.previewUrl,
+                baseSchema.audio?.src,
+                FALLBACKS.backgroundAudio
+            ),
+        },
+    };
+}
+
 function mergeInvitationData(baseSchema, incomingData) {
     if (!incomingData) return baseSchema;
+
+    const runtimeData = buildRuntimeInvitationData(incomingData, baseSchema);
 
     return {
         ...baseSchema,
         ...incomingData,
-        guest: { ...baseSchema.guest, ...(incomingData.guest || {}) },
+        ...runtimeData,
+        orderId: runtimeData.orderId || incomingData.orderId || incomingData.order_id || incomingData.order?.orderId || baseSchema.orderId,
+        invitation: {
+            ...(baseSchema.invitation || {}),
+            ...(incomingData.invitation || {}),
+            ...(runtimeData.invitation || {}),
+        },
+        guest: { ...baseSchema.guest, ...(incomingData.guest || {}), ...(runtimeData.guest || {}) },
         couple: {
             ...baseSchema.couple,
             ...(incomingData.couple || {}),
+            ...(runtimeData.couple || {}),
             groom: {
                 ...baseSchema.couple.groom,
                 ...(incomingData.couple?.groom || {}),
+                ...(runtimeData.couple?.groom || {}),
             },
             bride: {
                 ...baseSchema.couple.bride,
                 ...(incomingData.couple?.bride || {}),
+                ...(runtimeData.couple?.bride || {}),
             },
         },
         event: {
             ...baseSchema.event,
             ...(incomingData.event || {}),
-            akad: { ...baseSchema.event.akad, ...(incomingData.event?.akad || {}) },
-            resepsi: { ...baseSchema.event.resepsi, ...(incomingData.event?.resepsi || {}) },
-            livestream: { ...baseSchema.event.livestream, ...(incomingData.event?.livestream || {}) },
+            ...(runtimeData.event || {}),
+            akad: { ...baseSchema.event.akad, ...(incomingData.event?.akad || {}), ...(runtimeData.event?.akad || {}) },
+            resepsi: { ...baseSchema.event.resepsi, ...(incomingData.event?.resepsi || {}), ...(runtimeData.event?.resepsi || {}) },
+            livestream: { ...baseSchema.event.livestream, ...(incomingData.event?.livestream || {}), ...(runtimeData.event?.livestream || {}) },
         },
         copy: {
             ...baseSchema.copy,
             ...(incomingData.copy || {}),
+            ...(runtimeData.copy || {}),
         },
         features: {
             ...baseSchema.features,
             ...(incomingData.features || {}),
+            ...(runtimeData.features || {}),
             digitalEnvelopeInfo: {
                 ...baseSchema.features.digitalEnvelopeInfo,
                 ...(incomingData.features?.digitalEnvelopeInfo || {}),
+                ...(runtimeData.features?.digitalEnvelopeInfo || {}),
             },
         },
-        lovestory: Array.isArray(incomingData.lovestory) ? incomingData.lovestory : baseSchema.lovestory,
-        gallery: Array.isArray(incomingData.gallery) ? incomingData.gallery : baseSchema.gallery,
+        gift: {
+            ...(baseSchema.gift || {}),
+            ...(incomingData.gift || {}),
+            ...(runtimeData.gift || {}),
+            shipping: {
+                ...(baseSchema.gift?.shipping || {}),
+                ...(incomingData.gift?.shipping || {}),
+                ...(runtimeData.gift?.shipping || {}),
+            },
+        },
+        audio: {
+            ...(baseSchema.audio || {}),
+            ...(incomingData.audio || {}),
+            ...(runtimeData.audio || {}),
+        },
+        lovestory: Array.isArray(runtimeData.lovestory) && runtimeData.lovestory.length > 0
+            ? runtimeData.lovestory
+            : Array.isArray(incomingData.lovestory)
+                ? incomingData.lovestory
+                : baseSchema.lovestory,
+        gallery: Array.isArray(runtimeData.gallery) && runtimeData.gallery.length > 0
+            ? runtimeData.gallery
+            : Array.isArray(incomingData.gallery)
+                ? incomingData.gallery
+                : baseSchema.gallery,
     };
 }
 
@@ -643,8 +1223,10 @@ function applyInvitationData(root, invitationData) {
     const copy = invitationData?.copy || {};
     const features = invitationData?.features || {};
     const gift = invitationData?.gift || {};
-
-    const coupleNames = `${groom.nickName || groom.nameFull || "Mempelai Pria"} & ${bride.nickName || bride.nameFull || "Mempelai Wanita"}`;
+    const digitalEnvelopeInfo = features?.digitalEnvelopeInfo || {};
+    const groomDisplayName = pickText(groom.nickName, groom.nameFull, defaultSchema.couple.groom.nickName);
+    const brideDisplayName = pickText(bride.nickName, bride.nameFull, defaultSchema.couple.bride.nickName);
+    const coupleNames = `${groomDisplayName || "Mempelai Pria"} & ${brideDisplayName || "Mempelai Wanita"}`;
 
     const setText = (selector, value) => {
         const node = root.querySelector(selector);
@@ -667,18 +1249,42 @@ function applyInvitationData(root, invitationData) {
     const setImage = (selector, src, alt = "") => {
         const node = root.querySelector(selector);
         if (!node || !src) return;
-        node.setAttribute("src", src);
+        node.setAttribute("src", resolveAssetUrl(src));
         node.setAttribute("alt", alt);
         node.removeAttribute("srcset");
         node.removeAttribute("sizes");
     };
 
-    const heroPhoto = resolveAssetUrl(couple.heroPhoto || FALLBACKS.heroPhoto);
-    const groomPhoto = resolveAssetUrl(groom.photo || FALLBACKS.groomPhoto);
-    const bridePhoto = resolveAssetUrl(bride.photo || FALLBACKS.bridePhoto);
+    const frontCoverPhoto = resolveAssetUrl(
+        resolveSectionPhoto(
+            pickAsset(couple.frontCoverPhoto, couple.heroPhoto),
+            defaultSchema.couple.frontCoverPhoto || defaultSchema.couple.heroPhoto || FALLBACKS.heroPhoto
+        )
+    );
+    const heroPhoto = resolveAssetUrl(resolveSectionPhoto(couple.heroPhoto, defaultSchema.couple.heroPhoto || FALLBACKS.heroPhoto));
+    const groomPhoto = resolveAssetUrl(
+        resolveSectionPhoto(groom.photo, defaultSchema.couple.groom.photo || FALLBACKS.groomPhoto, {
+            rejectSameAs: [couple.heroPhoto, couple.frontCoverPhoto],
+        })
+    );
+    const bridePhoto = resolveAssetUrl(
+        resolveSectionPhoto(bride.photo, defaultSchema.couple.bride.photo || FALLBACKS.bridePhoto, {
+            rejectSameAs: [couple.heroPhoto, couple.frontCoverPhoto],
+        })
+    );
+    const closingThumbnailPhoto = resolveSectionPhoto(
+        copy.closingBackgroundPhoto,
+        defaultSchema.couple.heroPhoto || FALLBACKS.heroPhoto,
+        {
+            rejectSameAs: [
+                defaultSchema.copy.closingBackgroundPhoto,
+                FALLBACKS.closingBackground,
+            ],
+        }
+    );
 
-    setText(".elementor-element-baf17c3 .elementor-heading-title", copy.openingGreeting || "The Wedding Of");
-    setText(".elementor-element-6992be1d .elementor-heading-title", copy.openingGreeting || "The Wedding Of");
+    setText(".elementor-element-baf17c3 .elementor-heading-title", copy.openingGreeting || defaultSchema.copy.openingGreeting || "The Wedding Of");
+    setText(".elementor-element-6992be1d .elementor-heading-title", defaultSchema.copy.openingGreeting || "The Wedding Of");
 
     setText(".elementor-element-3c39178 .elementor-heading-title", coupleNames);
     setText(".elementor-element-39cd1298 .elementor-heading-title", coupleNames);
@@ -706,7 +1312,10 @@ function applyInvitationData(root, invitationData) {
         ".elementor-element-7dbd32cd .elementor-heading-title",
         `Pukul : ${event.akad?.time || defaultSchema.event.akad.time}`
     );
-    setHtml(".elementor-element-6ee50e57 .elementor-widget-container", `<p>${escapeHtml(event.akad?.address || defaultSchema.event.akad.address)}</p>`);
+    setHtml(
+        ".elementor-element-6ee50e57 .elementor-widget-container",
+        formatLocationMarkup(event.akad, defaultSchema.event.akad)
+    );
     setLink(".elementor-element-78af535d a", event.akad?.mapsUrl || defaultSchema.event.akad.mapsUrl);
 
     setText(".elementor-element-33751c04 .elementor-heading-title", event.resepsi?.date || defaultSchema.event.resepsi.date);
@@ -714,7 +1323,10 @@ function applyInvitationData(root, invitationData) {
         ".elementor-element-5985d32a .elementor-heading-title",
         `Pukul : ${event.resepsi?.time || defaultSchema.event.resepsi.time}`
     );
-    setHtml(".elementor-element-74d5e6e8 .elementor-widget-container", `<p>${escapeHtml(event.resepsi?.address || defaultSchema.event.resepsi.address)}</p>`);
+    setHtml(
+        ".elementor-element-74d5e6e8 .elementor-widget-container",
+        formatLocationMarkup(event.resepsi, defaultSchema.event.resepsi)
+    );
     setLink(".elementor-element-17e003ad a", event.resepsi?.mapsUrl || defaultSchema.event.resepsi.mapsUrl);
 
     const liveDate = event.livestream?.date || defaultSchema.event.livestream.date;
@@ -723,24 +1335,56 @@ function applyInvitationData(root, invitationData) {
     setText(".elementor-element-61516101 .elementor-heading-title", `Pukul : ${liveTime}`);
     setLink(".elementor-element-86fc076 a", event.livestream?.url || defaultSchema.event.livestream.url);
 
-    const stories = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length > 0 ? invitationData.lovestory : defaultSchema.lovestory;
+    const stories = Array.isArray(invitationData?.lovestory) && invitationData.lovestory.length > 0
+        ? invitationData.lovestory.map((item) => normalizeLoveStoryItem(item)).filter(Boolean)
+        : defaultSchema.lovestory.map((item) => normalizeLoveStoryItem(item)).filter(Boolean);
     const storySelectors = [
         [".elementor-element-6fc29ce0 .elementor-widget-container", ".elementor-element-2405a23a .elementor-widget-container"],
         [".elementor-element-5fcbcdb2 .elementor-widget-container", ".elementor-element-7a6af8d5 .elementor-widget-container"],
         [".elementor-element-46830ca3 .elementor-widget-container", ".elementor-element-3078cddc .elementor-widget-container"],
     ];
+    const storyImageWrappers = [
+        ".elementor-element-611e824a",
+        ".elementor-element-61875e89",
+    ];
 
     storySelectors.forEach(([dateSelector, textSelector], index) => {
-        const item = stories[index] || stories[stories.length - 1] || {};
+        const item = stories[index] || null;
+        const dateElement = root.querySelector(dateSelector)?.closest(".elementor-element");
+        const textElement = root.querySelector(textSelector)?.closest(".elementor-element");
+
+        if (!item) {
+            if (dateElement) dateElement.style.display = "none";
+            if (textElement) textElement.style.display = "none";
+            return;
+        }
+
+        if (dateElement) dateElement.style.display = "";
+        if (textElement) textElement.style.display = "";
         setHtml(dateSelector, `<p>${escapeHtml(item.date || "-")}</p>`);
         setHtml(textSelector, `<p>${escapeHtml(item.text || "-")}</p>`);
     });
 
+    storyImageWrappers.forEach((selector, index) => {
+        const wrapper = root.querySelector(selector);
+        if (!wrapper) return;
+        wrapper.style.display = stories[index] ? "" : "none";
+    });
+    setBackgroundImage(root, ".elementor-element-733088fb", stories[0]?.photo || "", { position: "center center" });
+    setBackgroundImage(root, ".elementor-element-46c78335", stories[1]?.photo || "", { position: "center center" });
+
     const anchors = Array.from(root.querySelectorAll(".elementor-element-118bde3a .e-gallery-item"));
     const galleryUrls = buildGalleryUrls(invitationData?.gallery, anchors.length);
     anchors.forEach((anchor, index) => {
-        const url = galleryUrls[index] || galleryUrls[0];
-        if (!url) return;
+        const url = galleryUrls[index] || "";
+        if (!url) {
+            anchor.style.display = "none";
+            anchor.setAttribute("aria-hidden", "true");
+            return;
+        }
+
+        anchor.style.display = "";
+        anchor.removeAttribute("aria-hidden");
         anchor.setAttribute("href", url);
         anchor.setAttribute("data-misty-gallery-index", String(index));
 
@@ -755,58 +1399,64 @@ function applyInvitationData(root, invitationData) {
         }
     });
 
-    const rawBankList = features?.digitalEnvelopeEnabled ? (gift?.bankList || features?.digitalEnvelopeInfo?.bankList || defaultSchema.features.digitalEnvelopeInfo.bankList || []) : [];
-    const bankList = rawBankList.map((item) => ({
-        bank: item.bank || "",
-        account: item.account || item.accountNumber || "",
-        name: item.name || item.accountName || "",
-    }));
-    const bankA = bankList[0] || { bank: "BCA", account: "1234567890", name: groom.nickName || "Mempelai" };
+    const rawBankList = features?.digitalEnvelopeEnabled
+        ? (gift?.bankList || digitalEnvelopeInfo?.bankList || defaultSchema.gift?.bankList || defaultSchema.features.digitalEnvelopeInfo.bankList || [])
+        : [];
+    const bankList = rawBankList.map((item) => normalizeBankAccount(item)).filter((item) => item.bank || item.account || item.name);
+    const bankA = bankList[0] || normalizeBankAccount(defaultSchema.gift?.bankList?.[0] || { bank: "BCA", account: "1234567890", name: groom.nickName || "Mempelai" });
     const bankB = bankList[1] || bankA;
+
+    setText(".elementor-element-cd714b5 .elementor-heading-title", copy.giftTitle || defaultSchema.copy.giftTitle || "Wedding Gift");
+    setHtml(
+        ".elementor-element-31b44f00 .elementor-widget-container",
+        `<p>${escapeHtml(copy.giftIntro || defaultSchema.copy.giftIntro || "")}</p>`
+    );
 
     setText(".elementor-element-18c43aa0 .elementor-heading-title", formatAccount(bankA.account));
     setText(".elementor-element-6bcd8060 .elementor-heading-title", bankA.name || groom.nickName || "Mempelai");
 
     setText(".elementor-element-7dbf494b .elementor-heading-title", formatAccount(bankB.account));
     setText(".elementor-element-1d4ee940 .elementor-heading-title", bankB.name || groom.nickName || "Mempelai");
+    setImage(".elementor-element-236be77b img", bankA.logo || resolveBankLogo(bankA.bank), bankA.bank || "Bank");
+    setImage(".elementor-element-480f8ff5 img", bankB.logo || resolveBankLogo(bankB.bank), bankB.bank || "Bank");
 
     const copyBtnA = root.querySelector(".elementor-element-465e11a4 a[data-message]");
     const copyBtnB = root.querySelector(".elementor-element-1fadc68f a[data-message]");
     if (copyBtnA) copyBtnA.setAttribute("data-copy-value", String(bankA.account || ""));
     if (copyBtnB) copyBtnB.setAttribute("data-copy-value", String(bankB.account || ""));
 
-    setHtml(
-        ".elementor-element-3682a7a4 .elementor-widget-container",
-        `<p>Nama Penerima : ${escapeHtml(groom.nameFull || defaultSchema.couple.groom.nameFull)}</p><p>No. HP : -</p><p>${escapeHtml(
-            event.akad?.address || defaultSchema.event.akad.address
-        )}</p>`
-    );
-
+    const shippingInfo = gift?.shipping || digitalEnvelopeInfo?.shipping || defaultSchema.gift?.shipping || {};
+    setHtml(".elementor-element-3682a7a4 .elementor-widget-container", formatShippingMarkup(shippingInfo, event.akad?.address));
     setHtml(".elementor-element-21a4cf9b .elementor-widget-container", `<p>${escapeHtml(copy.closingText || defaultSchema.copy.closingText)}</p>`);
+    setText(".elementor-element-168dfa88 .elementor-heading-title", copy.closingLabel || defaultSchema.copy.closingLabel || "Kami yang berbahagia,");
 
     setImage(".elementor-element-21b75889 img", heroPhoto, coupleNames);
     setImage(".elementor-element-33eb40df img", groomPhoto, groom.nameFull || "Groom");
     setImage(".elementor-element-848bff4 img", bridePhoto, bride.nameFull || "Bride");
-    setImage(".elementor-element-78e08e2e img", heroPhoto, coupleNames);
+    setImage(".elementor-element-78e08e2e img", resolveAssetUrl(closingThumbnailPhoto), coupleNames);
+    setBackgroundImage(root, ".elementor-element-11fc743f", frontCoverPhoto, { position: "top center" });
+    setBackgroundImage(root, ".elementor-element-12e00978", FALLBACKS.innerBackground, { position: "center center" });
+    setBackgroundImage(root, ".elementor-element-1a993b64", FALLBACKS.akadBackground, { position: "bottom center" });
+    setBackgroundImage(root, ".elementor-element-8f1740c", FALLBACKS.resepsiBackground, { position: "bottom center" });
+    setBackgroundImage(root, ".elementor-element-693eba44", FALLBACKS.closingBackground, { position: "bottom center" });
 
     const countdownList = root.querySelector("#wpkoi-elements-countdown-32d1474");
     if (countdownList) {
         countdownList.setAttribute("data-date", formatCountdownDateAttr(event.dateISO || defaultSchema.event.dateISO));
     }
+    updateCountdownNode(root, event.dateISO || defaultSchema.event.dateISO);
 
-    const liveSection = root.querySelector(".elementor-element-7229000a");
     const giftSection = root.querySelector(".elementor-element-3e596d7f");
     const wishesSection = root.querySelector(".elementor-element-7e385746");
     const countdownSection = root.querySelector(".elementor-element-709e9c12");
 
-    if (liveSection) liveSection.style.display = features.livestreamEnabled ? "" : "none";
-    if (giftSection) giftSection.style.display = features.digitalEnvelopeEnabled || features.rsvpEnabled ? "" : "none";
+    if (giftSection) giftSection.style.display = features.digitalEnvelopeEnabled ? "" : "none";
     if (wishesSection) wishesSection.style.display = features.rsvpEnabled ? "" : "none";
     if (countdownSection) countdownSection.style.display = features.countdownEnabled || features.saveTheDateEnabled ? "" : "none";
 
     const audioSource = root.querySelector("source[data-audio-key='main_theme']");
     if (audioSource) {
-        audioSource.setAttribute("src", resolveAssetUrl(FALLBACKS.backgroundAudio));
+        audioSource.setAttribute("src", resolveAssetUrl(pickAsset(invitationData?.audio?.src, FALLBACKS.backgroundAudio)));
     }
 
     const bgVideo = root.querySelector("[data-bg-video-key='waterfall_main'] video");
@@ -872,7 +1522,8 @@ function setDynamicVh() {
     document.documentElement.style.setProperty("--vh", `${vh}px`);
 }
 
-export default function MistyRomanceTemplate({ data: propData = null, invitationSlug = "misty-romance" }) {
+export default function MistyRomanceTemplate({ data: propData = null, invitationSlug = "misty-romance", mode = "live" }) {
+    const isDemoMode = mode === "demo";
     const rootRef = useRef(null);
     const audioRef = useRef(null);
     const lottieInstancesRef = useRef([]);
@@ -881,7 +1532,7 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
 
     const { data: fetchedData, loading } = useInvitationData(invitationSlug, {
         fallbackSlug: "misty-romance",
-        skipFetch: Boolean(propData),
+        skipFetch: Boolean(propData) || isDemoMode,
     });
 
     const [opened, setOpened] = useState(false);
@@ -893,10 +1544,11 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
     const lightboxFrameRef = useRef(null);
 
     const sourceArtifacts = useMemo(() => parseSourceArtifacts(sourceHtml), []);
+    const liveData = isDemoMode ? null : propData || fetchedData || null;
 
     const mergedData = useMemo(() => {
-        return mergeInvitationData(defaultSchema, propData || fetchedData || {});
-    }, [fetchedData, propData]);
+        return mergeInvitationData(defaultSchema, liveData || {});
+    }, [liveData]);
 
     const initialWishes = useMemo(() => extractInitialWishes(mergedData), [mergedData]);
 
@@ -988,7 +1640,7 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
         setDynamicVh();
         root.style.fontFamily = tokens.fonts.body;
 
-        root.innerHTML = sourceArtifacts.markup;
+        root.innerHTML = buildTemplateMarkup(sourceArtifacts.markup, mergedData);
 
         root.querySelectorAll("[src], [href], [poster], [data-thumbnail], [srcset], [style]").forEach((node) => {
             ["src", "href", "poster", "data-thumbnail"].forEach((attr) => {
@@ -1167,6 +1819,34 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
         const countdownTimer = window.setInterval(runCountdown, 1000);
         cleanupFns.push(() => window.clearInterval(countdownTimer));
 
+        const countdownWidgetContainer = root.querySelector(".elementor-element-32d1474 .elementor-widget-container");
+        if (countdownWidgetContainer && !countdownWidgetContainer.querySelector("[data-misty-calendar-button='1']")) {
+            const calendarAction = document.createElement("div");
+            calendarAction.className = "misty-calendar-action";
+            calendarAction.setAttribute("data-misty-calendar-button", "1");
+            calendarAction.innerHTML = `
+                <button type="button" class="misty-calendar-button" data-calendar-target="adaptive">
+                    <span class="misty-calendar-button__icon"><i aria-hidden="true" class="far fa-calendar-alt"></i></span>
+                    <span class="misty-calendar-button__label">Simpan ke Kalender</span>
+                </button>
+            `;
+
+            const button = calendarAction.querySelector("[data-calendar-target='adaptive']");
+            const handleCalendarAction = () => {
+                if (shouldUseIcsCalendar()) {
+                    downloadCalendarFile(mergedData, invitationSlug);
+                    return;
+                }
+                openGoogleCalendar(mergedData);
+            };
+            if (button) {
+                button.addEventListener("click", handleCalendarAction);
+                cleanupFns.push(() => button.removeEventListener("click", handleCalendarAction));
+            }
+
+            countdownWidgetContainer.appendChild(calendarAction);
+        }
+
         const commentsWrap = root.querySelector("#cui-wrap-commnent-13455");
         const commentsBox = root.querySelector("#cui-box");
         const commentsList = root.querySelector("#cui-container-comment-13455");
@@ -1261,13 +1941,29 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                 }
 
                 const nextAttendance = normalizeAttendanceLabel(attendanceText || attendanceValue);
+                const activeInvitationSlug =
+                    invitationSlug ||
+                    mergedData?.invitation?.slug ||
+                    mergedData?.invitationSlug ||
+                    "misty-romance";
+                const activeOrderId =
+                    mergedData?.invitation?.orderId ||
+                    mergedData?.orderId ||
+                    mergedData?.order?.orderId ||
+                    "";
+                let nextCreatedAt = new Date().toISOString();
 
                 try {
-                    await postInvitationWish("misty-romance", {
+                    const response = await postInvitationWish(activeInvitationSlug, {
+                        invitationSlug: activeInvitationSlug,
+                        orderId: activeOrderId,
                         author: name,
                         comment: message,
                         attendance: nextAttendance,
                     });
+                    nextCreatedAt = normalizeText(
+                        response?.data?.createdAt || response?.data?.created_at || nextCreatedAt
+                    );
                 } catch {
                     // Keep optimistic local render even if API is unavailable.
                 } finally {
@@ -1286,13 +1982,7 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                         author: name,
                         comment: message,
                         attendance: nextAttendance,
-                        createdAt: new Intl.DateTimeFormat("id-ID", {
-                            day: "numeric",
-                            month: "long",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                        }).format(new Date()),
+                        createdAt: nextCreatedAt,
                     },
                     ...prev,
                 ]);

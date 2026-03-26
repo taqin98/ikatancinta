@@ -72,7 +72,12 @@ app.get("/api/invitations/:slug", (req, res) => {
     return;
   }
 
-  const invitation = buildInvitationSchemaFromTheme(req.params.slug);
+  const matchingOrder = orderStore.find(
+    (entry) =>
+      entry?.payload?.invitationSlug === req.params.slug ||
+      entry?.payload?.invitation_slug === req.params.slug,
+  ) || null;
+  const invitation = buildInvitationSchemaFromTheme(req.params.slug, matchingOrder);
   const storedWishes = wishesStore.get(req.params.slug) || [];
 
   if (Array.isArray(invitation.wishes?.initial)) {
