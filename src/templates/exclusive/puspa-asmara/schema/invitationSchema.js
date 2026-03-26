@@ -1,9 +1,14 @@
 import schemaJson from "./schema.json";
 
 export const defaultSchema = {
+  invitation: {
+    slug: "puspa-asmara",
+    orderId: "",
+  },
   slug: "puspa-asmara",
   guest: {
     name: schemaJson.guest?.name || "Nama Tamu",
+    greetingLabel: schemaJson.guest?.greetingLabel || schemaJson.copy?.coverDear || "Dear",
   },
   groom: {
     ...(schemaJson.groom || {}),
@@ -31,10 +36,20 @@ export const defaultSchema = {
       ...(schemaJson.gifts?.shipping || {}),
     },
   },
+  gift: {
+    bankList: Array.isArray(schemaJson.gifts?.bankAccounts) ? [...schemaJson.gifts.bankAccounts] : [],
+    shipping: {
+      ...(schemaJson.gifts?.shipping || {}),
+    },
+  },
   wishes: Array.isArray(schemaJson.wishes) ? [...schemaJson.wishes] : [],
   loveStory: Array.isArray(schemaJson.loveStory) ? [...schemaJson.loveStory] : [],
   copy: {
     ...(schemaJson.copy || {}),
+    quote: schemaJson.copy?.quote || schemaJson.copy?.quranText || "",
+    quoteSource: schemaJson.copy?.quoteSource || schemaJson.copy?.quranSource || "",
+    saveTheDateBackgroundPhoto: schemaJson.copy?.saveTheDateBackgroundPhoto || "",
+    closingBackgroundPhoto: schemaJson.copy?.closingBackgroundPhoto || "",
   },
   media: {
     ...(schemaJson.media || {}),

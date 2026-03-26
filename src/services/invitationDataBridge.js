@@ -48,6 +48,7 @@ export function clearInvitationDraft() {
  * @param {boolean} params.isReceptionEnabled
  * @param {object|null} params.frontCoverImage — { url, name }
  * @param {object|null} params.coverImage  — { url, name }
+ * @param {object|null} params.openingThumbnailImage — { url, name }
  * @param {object[]} params.galleryImages  — [{ url }]
  * @param {object[]} params.stories        — [{ title, description, date, photo }]
  * @param {string} params.quote
@@ -57,6 +58,7 @@ export function clearInvitationDraft() {
  * @param {object|null} params.wishesBackgroundImage
  * @param {object|null} params.closingBackgroundImage
  * @param {object} params.selectedPackage
+ * @param {object|null} params.selectedTheme
  * @param {string} params.musicMode
  * @param {object} params.selectedMusicTrack
  * @param {object|null} params.uploadedMusicFile
@@ -68,9 +70,11 @@ export function mapFormToInvitationSchema({
     bride,
     akad,
     resepsi,
+    livestream,
     isReceptionEnabled,
     frontCoverImage,
     coverImage,
+    openingThumbnailImage,
     galleryImages,
     stories,
     quote,
@@ -80,6 +84,7 @@ export function mapFormToInvitationSchema({
     wishesBackgroundImage,
     closingBackgroundImage,
     selectedPackage,
+    selectedTheme,
     musicMode,
     selectedMusicTrack,
     uploadedMusicFile,
@@ -116,6 +121,16 @@ export function mapFormToInvitationSchema({
         }
     }
 
+    function inferStreamingLabel(url) {
+        const raw = String(url || "").trim().toLowerCase();
+        if (!raw) return defaultSchema.streaming?.label || "Live Streaming";
+        if (raw.includes("youtube.com") || raw.includes("youtu.be")) return "YouTube Live";
+        if (raw.includes("instagram.com")) return "Instagram Live";
+        if (raw.includes("zoom.us")) return "Zoom Meeting";
+        if (raw.includes("tiktok.com")) return "TikTok Live";
+        return defaultSchema.streaming?.label || "Live Streaming";
+    }
+
     const mappedAkad = {
         date: formatDateID(akad?.date) || defaultSchema.event.akad.date,
         time: formatTimeRange(akad?.startTime, akad?.endTime) || defaultSchema.event.akad.time,
@@ -141,15 +156,15 @@ export function mapFormToInvitationSchema({
             date: s.date || "",
             photo: s.photo?.url || s.photo || "",
         }))
-        : defaultSchema.lovestory;
+        : (defaultSchema.loveStory || defaultSchema.lovestory || []);
 
     const mappedGallery = galleryImages && galleryImages.length > 0
         ? galleryImages.map((img) => img.url)
         : defaultSchema.gallery;
 
     const packageCapabilities = selectedPackage?.capabilities || {};
+    const isPuspaAsmaraTheme = selectedTheme?.slug === "puspa-asmara";
     const galleryLimit = selectedPackage?.limits?.galleryMax || mappedGallery.length;
-    const isBasicTier = selectedPackage?.tier === "BASIC";
     const mappedGiftBankList = Array.isArray(giftInfo?.bankList)
         ? giftInfo.bankList.filter((item) => item?.bank || item?.account || item?.name)
         : [];
@@ -161,6 +176,13 @@ export function mapFormToInvitationSchema({
     const resolvedAudioSrc = musicMode === "upload"
         ? uploadedMusicFile?.dataUrl || defaultSchema.audio?.src || ""
         : selectedMusicTrack?.previewUrl || defaultSchema.audio?.src || "";
+    const mappedStreaming = {
+        ...(defaultSchema.streaming || {}),
+        url: livestream?.url || defaultSchema.streaming?.url || "",
+        label: inferStreamingLabel(livestream?.url),
+        date: mappedAkad.date || defaultSchema.streaming?.date || "",
+        time: mappedAkad.time || defaultSchema.streaming?.time || "",
+    };
 
     return {
         ...defaultSchema,
@@ -171,20 +193,25 @@ export function mapFormToInvitationSchema({
                 nickName: groom?.nickname || (groom?.fullname?.split(" ")[0]) || defaultSchema.couple.groom.nickName,
                 parentInfo: groom?.parents || defaultSchema.couple.groom.parentInfo,
                 instagram: groom?.instagram || defaultSchema.couple.groom.instagram,
-                photo: groom?.photo?.url || coverImage?.url || defaultSchema.couple.groom.photo || "",
+                photo: groom?.photo?.url || openingThumbnailImage?.url || coverImage?.url || defaultSchema.couple.groom.photo || "",
             },
             bride: {
                 nameFull: bride?.fullname || defaultSchema.couple.bride.nameFull,
                 nickName: bride?.nickname || (bride?.fullname?.split(" ")[0]) || defaultSchema.couple.bride.nickName,
                 parentInfo: bride?.parents || defaultSchema.couple.bride.parentInfo,
                 instagram: bride?.instagram || defaultSchema.couple.bride.instagram,
-                photo: bride?.photo?.url || coverImage?.url || defaultSchema.couple.bride.photo || "",
+                photo: bride?.photo?.url || openingThumbnailImage?.url || coverImage?.url || defaultSchema.couple.bride.photo || "",
             },
-            frontCoverPhoto: frontCoverImage?.url || coverImage?.url || defaultSchema.couple.frontCoverPhoto || defaultSchema.couple.heroPhoto || "",
-            heroPhoto: coverImage?.url || defaultSchema.couple.heroPhoto || "",
+            frontCoverPhoto: isPuspaAsmaraTheme
+                ? frontCoverImage?.url || defaultSchema.couple.frontCoverPhoto || defaultSchema.couple.heroPhoto || ""
+                : frontCoverImage?.url || coverImage?.url || defaultSchema.couple.frontCoverPhoto || defaultSchema.couple.heroPhoto || "",
+            heroPhoto: openingThumbnailImage?.url || coverImage?.url || defaultSchema.couple.heroPhoto || "",
         },
+        openingThumbnailImage,
+        loveStory: packageCapabilities.loveStory === false ? [] : mappedLovestory,
         lovestory: packageCapabilities.loveStory === false ? [] : mappedLovestory,
         gallery: mappedGallery.slice(0, galleryLimit),
+        streaming: mappedStreaming,
         gift: {
             ...(defaultSchema.gift || {}),
             bankList: hasGiftData ? mappedGiftBankList : [],
@@ -213,26 +240,19 @@ export function mapFormToInvitationSchema({
         event: {
             ...defaultSchema.event,
             dateISO: buildDateISO(akad?.date, akad?.startTime),
+            livestream: mappedStreaming,
             akad: {
                 ...mappedAkad,
-                ...(isBasicTier
-                    ? {
-                        coverPhoto: akad?.coverImage?.url || coverImage?.url || defaultSchema.event?.akad?.coverPhoto || "",
-                    }
-                    : {}),
+                coverPhoto: akad?.coverImage?.url || coverImage?.url || defaultSchema.event?.akad?.coverPhoto || "",
             },
             resepsi: {
                 ...mappedResepsi,
-                ...(isBasicTier
-                    ? {
-                        coverPhoto:
-                            (isReceptionEnabled ? resepsi?.coverImage?.url : "") ||
-                            akad?.coverImage?.url ||
-                            coverImage?.url ||
-                            defaultSchema.event?.resepsi?.coverPhoto ||
-                            "",
-                    }
-                    : {}),
+                coverPhoto:
+                    (isReceptionEnabled ? resepsi?.coverImage?.url : "") ||
+                    akad?.coverImage?.url ||
+                    coverImage?.url ||
+                    defaultSchema.event?.resepsi?.coverPhoto ||
+                    "",
             },
         },
     };

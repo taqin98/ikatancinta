@@ -43,9 +43,12 @@ const BODY_CLASSES = [
 ];
 
 const STYLE_LINK_ID = "puspa-asmara-style";
-const STYLE_HREF = `${PUBLIC_TEMPLATE_PREFIX}style.css?v=20260311-1`;
+const STYLE_HREF = `${PUBLIC_TEMPLATE_PREFIX}style.css?v=20260326-1`;
 const LOTTIE_HREF = `${PUBLIC_ASSET_PREFIX}js/lottie.min.js`;
 const WISHES_STORAGE_KEY = "premium_02_ucapan_13735";
+const DEMO_DESKTOP_COVER_IMAGE = "assets/images/SUJA-24SK1173-PII-9-1-e1730097922583.jpg";
+const DEMO_MOBILE_COVER_IMAGE = "assets/images/P2G-FALLBACK-PII.webp";
+const DEMO_COUPLE_SECTION_IMAGE = "assets/images/PRE-VINT-02-COUPLE2-PII.webp";
 const DUMMY_WISHES = [
   {
     author: "Ayu",
@@ -85,6 +88,10 @@ function mergeInvitationData(base, ...sources) {
     });
   });
 
+  output.invitation = { ...(base?.invitation || {}), ...(output.invitation || {}) };
+  output.couple = { ...(base?.couple || {}), ...(output.couple || {}) };
+  output.couple.groom = { ...(base?.couple?.groom || {}), ...(output.couple?.groom || {}) };
+  output.couple.bride = { ...(base?.couple?.bride || {}), ...(output.couple?.bride || {}) };
   output.guest = { ...(base?.guest || {}), ...(output.guest || {}) };
   output.groom = { ...(base?.groom || {}), ...(output.groom || {}) };
   output.bride = { ...(base?.bride || {}), ...(output.bride || {}) };
@@ -99,6 +106,285 @@ function mergeInvitationData(base, ...sources) {
   output.features = { ...(base?.features || {}), ...(output.features || {}) };
 
   return output;
+}
+
+function normalizeRuntimeStory(item) {
+  if (!item || typeof item !== "object") return null;
+
+  const title = pickText(
+    item.title,
+    item.storyTitle,
+    item.story_title,
+    item.heading,
+    item.headline,
+    item.judul,
+    item.name,
+    item.label
+  );
+  const text = pickText(
+    item.description,
+    item.text,
+    item.story,
+    item.storyText,
+    item.story_text,
+    item.content,
+    item.body
+  );
+  const date = pickText(item.date, item.year, item.period, item.momentDate, item.moment_date);
+  const photo = pickAsset(item.photo?.url, item.photo, item.image?.url, item.image);
+
+  if (!title && !text && !date && !photo) return null;
+
+  return {
+    title,
+    description: text,
+    text,
+    date,
+    photo,
+  };
+}
+
+function inferStreamingLabel(url, fallback = "") {
+  const raw = String(url || "").trim().toLowerCase();
+  if (!raw) return pickText(fallback, "Live Streaming");
+  if (raw.includes("youtube.com") || raw.includes("youtu.be")) return "YouTube Live";
+  if (raw.includes("instagram.com")) return "Instagram Live";
+  if (raw.includes("zoom.us")) return "Zoom Meeting";
+  if (raw.includes("tiktok.com")) return "TikTok Live";
+  return pickText(fallback, "Live Streaming");
+}
+
+function buildRuntimeInvitationData(incomingData, baseSchema) {
+  if (!incomingData || typeof incomingData !== "object") return {};
+
+  const orderPayload =
+    incomingData.order?.payload ||
+    incomingData.payload ||
+    incomingData.data?.payload ||
+    incomingData.orderPayload ||
+    {};
+
+  const hasRawPayload = Boolean(
+    incomingData.groom ||
+    incomingData.bride ||
+    incomingData.akad ||
+    incomingData.resepsi ||
+    incomingData.coverImage ||
+    incomingData.openingThumbnailImage ||
+    incomingData.frontCoverImage ||
+    incomingData.stories ||
+    incomingData.lovestory ||
+    incomingData.loveStory ||
+    incomingData.streaming ||
+    incomingData.livestream ||
+    incomingData.gift ||
+    incomingData.gifts ||
+    incomingData.giftInfo ||
+    orderPayload.groom ||
+    orderPayload.bride ||
+    orderPayload.akad ||
+    orderPayload.resepsi ||
+    orderPayload.coverImage ||
+    orderPayload.openingThumbnailImage ||
+    orderPayload.frontCoverImage ||
+    orderPayload.stories ||
+    orderPayload.lovestory ||
+    orderPayload.loveStory ||
+    orderPayload.streaming ||
+    orderPayload.livestream ||
+    orderPayload.gift ||
+    orderPayload.gifts ||
+    orderPayload.giftInfo
+  );
+
+  if (!hasRawPayload) return {};
+
+  const groom = orderPayload.groom || incomingData.groom || {};
+  const bride = orderPayload.bride || incomingData.bride || {};
+  const akad = orderPayload.akad || incomingData.akad || {};
+  const resepsi = orderPayload.resepsi || incomingData.resepsi || {};
+  const runtimeInvitationSlug = pickText(
+    incomingData?.invitation?.slug,
+    incomingData?.invitationSlug,
+    incomingData?.invitation_slug,
+    incomingData?.slug,
+    orderPayload?.invitationSlug,
+    orderPayload?.invitation_slug,
+    baseSchema?.invitation?.slug
+  );
+  const runtimeOrderId = pickText(
+    incomingData?.invitation?.orderId,
+    incomingData?.invitation?.id,
+    incomingData?.orderId,
+    incomingData?.order_id,
+    incomingData?.order?.orderId,
+    incomingData?.order?.id,
+    orderPayload?.orderId,
+    orderPayload?.order_id,
+    baseSchema?.invitation?.orderId
+  );
+  const runtimeDate = parseEventDateTime(
+    akad?.date,
+    akad?.startTime || akad?.time,
+    incomingData?.event?.dateISO || baseSchema?.event?.dateISO
+  );
+  const runtimeDateISO = runtimeDate?.toISOString?.() || pickText(incomingData?.event?.dateISO, baseSchema?.event?.dateISO);
+  const runtimeDisplayDate = formatCompactDateInput(
+    akad?.date,
+    incomingData?.event?.displayDate,
+    runtimeDateISO,
+    baseSchema?.event?.displayDate
+  );
+  const rawStories = Array.isArray(orderPayload?.stories)
+    ? orderPayload.stories
+    : Array.isArray(orderPayload?.loveStory)
+      ? orderPayload.loveStory
+      : Array.isArray(orderPayload?.lovestory)
+        ? orderPayload.lovestory
+        : Array.isArray(incomingData?.stories)
+          ? incomingData.stories
+          : Array.isArray(incomingData?.loveStory)
+            ? incomingData.loveStory
+            : Array.isArray(incomingData?.lovestory)
+              ? incomingData.lovestory
+              : [];
+  const runtimeStories = rawStories.map(normalizeRuntimeStory).filter(Boolean);
+  const rawStreaming =
+    orderPayload?.streaming ||
+    orderPayload?.livestream ||
+    incomingData?.streaming ||
+    incomingData?.livestream ||
+    incomingData?.event?.livestream ||
+    {};
+  const runtimeStreamingUrl = pickText(rawStreaming?.url, rawStreaming?.link);
+  const runtimeStreaming = {
+    ...(incomingData?.streaming || {}),
+    url: runtimeStreamingUrl,
+    label: inferStreamingLabel(runtimeStreamingUrl, pickText(rawStreaming?.label, rawStreaming?.platformLabel)),
+    platformLabel: pickText(rawStreaming?.platformLabel, rawStreaming?.label),
+    date: pickText(rawStreaming?.date, akad?.date),
+    time: pickText(rawStreaming?.time, akad?.startTime || akad?.time),
+  };
+  const rawGift =
+    orderPayload?.gift ||
+    orderPayload?.giftInfo ||
+    orderPayload?.gifts ||
+    incomingData?.gift ||
+    incomingData?.giftInfo ||
+    incomingData?.gifts ||
+    {};
+  const runtimeBankList = Array.isArray(rawGift?.bankList)
+    ? rawGift.bankList
+    : Array.isArray(rawGift?.bankAccounts)
+      ? rawGift.bankAccounts
+      : [];
+  const runtimeShipping = {
+    ...(rawGift?.shipping || {}),
+  };
+
+  return {
+    orderId: runtimeOrderId,
+    invitation: {
+      slug: runtimeInvitationSlug,
+      orderId: runtimeOrderId,
+    },
+    guest: {
+      ...(orderPayload.guest || incomingData.guest || {}),
+    },
+    groom: {
+      fullName: pickText(groom.fullname, groom.fullName, groom.nameFull),
+      nickName: pickText(groom.nickname, groom.nickName, groom.fullname?.split(" ")[0]),
+      parentInfo: pickText(groom.parents, groom.parentInfo),
+      instagram: pickText(groom.instagram),
+      image: pickAsset(groom.photo, groom.image),
+      photo: pickAsset(groom.photo, groom.image),
+    },
+    bride: {
+      fullName: pickText(bride.fullname, bride.fullName, bride.nameFull),
+      nickName: pickText(bride.nickname, bride.nickName, bride.fullname?.split(" ")[0]),
+      parentInfo: pickText(bride.parents, bride.parentInfo),
+      instagram: pickText(bride.instagram),
+      image: pickAsset(bride.photo, bride.image),
+      photo: pickAsset(bride.photo, bride.image),
+    },
+    couple: {
+      groom: {
+        nameFull: pickText(groom.fullname, groom.fullName, groom.nameFull),
+        nickName: pickText(groom.nickname, groom.nickName, groom.fullname?.split(" ")[0]),
+        parentInfo: pickText(groom.parents, groom.parentInfo),
+        instagram: pickText(groom.instagram),
+        photo: pickAsset(groom.photo, groom.image),
+      },
+      bride: {
+        nameFull: pickText(bride.fullname, bride.fullName, bride.nameFull),
+        nickName: pickText(bride.nickname, bride.nickName, bride.fullname?.split(" ")[0]),
+        parentInfo: pickText(bride.parents, bride.parentInfo),
+        instagram: pickText(bride.instagram),
+        photo: pickAsset(bride.photo, bride.image),
+      },
+      frontCoverPhoto: pickAsset(
+        orderPayload.frontCoverImage,
+        incomingData.frontCoverImage,
+        orderPayload.couple?.frontCoverPhoto,
+        incomingData.couple?.frontCoverPhoto
+      ),
+      heroPhoto: pickAsset(
+        orderPayload.openingThumbnailImage,
+        incomingData.openingThumbnailImage,
+        orderPayload.couple?.heroPhoto,
+        incomingData.couple?.heroPhoto,
+        orderPayload.coverImage,
+        incomingData.coverImage
+      ),
+    },
+    frontCoverImage: pickAsset(orderPayload.frontCoverImage, incomingData.frontCoverImage),
+    coverImage: pickAsset(orderPayload.coverImage, incomingData.coverImage),
+    openingThumbnailImage: pickAsset(orderPayload.openingThumbnailImage, incomingData.openingThumbnailImage),
+    saveTheDateBackgroundImage: pickAsset(orderPayload.saveTheDateBackgroundImage, incomingData.saveTheDateBackgroundImage),
+    loveStory: runtimeStories,
+    lovestory: runtimeStories,
+    stories: runtimeStories,
+    streaming: runtimeStreaming,
+    gift: {
+      ...(incomingData?.gift || {}),
+      bankList: runtimeBankList,
+      shipping: runtimeShipping,
+    },
+    gifts: {
+      ...(incomingData?.gifts || {}),
+      bankAccounts: runtimeBankList,
+      shipping: runtimeShipping,
+    },
+    event: {
+      ...(incomingData.event || {}),
+      dateISO: runtimeDateISO,
+      displayDate: runtimeDisplayDate,
+      livestream: {
+        ...(incomingData?.event?.livestream || {}),
+        ...runtimeStreaming,
+      },
+      akad: {
+        ...(incomingData.event?.akad || {}),
+        coverImage: pickAsset(akad.coverImage, akad.coverPhoto),
+        coverPhoto: pickAsset(akad.coverImage, akad.coverPhoto),
+      },
+      resepsi: {
+        ...(incomingData.event?.resepsi || {}),
+        coverImage: pickAsset(resepsi.coverImage, resepsi.coverPhoto),
+        coverPhoto: pickAsset(resepsi.coverImage, resepsi.coverPhoto),
+      },
+    },
+    copy: {
+      ...(incomingData.copy || {}),
+      quote: pickText(orderPayload.quote, incomingData.quote, incomingData.copy?.quote),
+      quoteSource: pickText(orderPayload.quoteSource, incomingData.quoteSource, incomingData.copy?.quoteSource),
+      saveTheDateBackgroundPhoto: pickAsset(
+        orderPayload.saveTheDateBackgroundImage,
+        incomingData.saveTheDateBackgroundImage,
+        incomingData.copy?.saveTheDateBackgroundPhoto
+      ),
+    },
+  };
 }
 
 function normalizeWishItem(item) {
@@ -162,6 +448,364 @@ function setLink(root, selector, value) {
   node.setAttribute("href", value);
 }
 
+function setImage(root, selector, value, fallback = "") {
+  const node = root.querySelector(selector);
+  const resolved = resolveAssetUrl(value || fallback);
+  if (!node || !resolved) return;
+  node.setAttribute("src", resolved);
+  node.removeAttribute("srcset");
+  node.removeAttribute("sizes");
+}
+
+function setBackgroundImage(root, selector, value, options = {}) {
+  if (!root || !selector || !value) return;
+  const resolved = resolveAssetUrl(value);
+  if (!resolved) return;
+
+  const {
+    position = "center center",
+    size = "cover",
+    repeat = "no-repeat",
+    overlay,
+  } = options;
+
+  root.querySelectorAll(`${selector}, ${selector} > .elementor-motion-effects-container > .elementor-motion-effects-layer`).forEach((node) => {
+    node.style.backgroundImage = overlay
+      ? `linear-gradient(${overlay}, ${overlay}), url("${resolved}")`
+      : `url("${resolved}")`;
+    node.style.backgroundPosition = position;
+    node.style.backgroundSize = size;
+    node.style.backgroundRepeat = repeat;
+  });
+}
+
+function clearBackgroundImage(root, selector) {
+  if (!root || !selector) return;
+
+  root.querySelectorAll(`${selector}, ${selector} > .elementor-motion-effects-container > .elementor-motion-effects-layer`).forEach((node) => {
+    node.style.removeProperty("background-image");
+    node.style.removeProperty("background-position");
+    node.style.removeProperty("background-size");
+    node.style.removeProperty("background-repeat");
+  });
+}
+
+function setNodeVisible(root, selector, visible) {
+  root.querySelectorAll(selector).forEach((node) => {
+    node.style.display = visible ? "" : "none";
+  });
+}
+
+function pickText(...values) {
+  for (const value of values) {
+    const text = normalizeText(value);
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickAsset(...values) {
+  for (const value of values) {
+    if (typeof value === "string") {
+      const text = pickText(value);
+      if (text) return text;
+      continue;
+    }
+
+    if (value && typeof value === "object") {
+      const text = pickText(value.url, value.src, value.image, value.photo, value.imageUrl, value.fileUrl, value.dataUrl);
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
+function getNameInitial(value, fallback = "") {
+  const text = pickText(value, fallback);
+  return text ? text.charAt(0).toUpperCase() : "";
+}
+
+function formatQuoteHtml(text, source = "") {
+  const normalizedText = pickText(text);
+  const normalizedSource = pickText(source);
+  if (!normalizedText && !normalizedSource) return "<p></p>";
+
+  const paragraphs = [];
+  if (normalizedText) paragraphs.push(`<p>${escapeHtml(normalizedText)}</p>`);
+  if (normalizedSource) paragraphs.push(`<p>${escapeHtml(normalizedSource)}</p>`);
+  return paragraphs.join("");
+}
+
+function normalizeBankAccount(item) {
+  const bankName = pickText(item?.bankName, item?.bank, item?.provider, item?.title);
+  const accountNumber = pickText(item?.accountNumber, item?.account, item?.number);
+  const accountHolder = pickText(item?.accountHolder, item?.accountName, item?.name);
+  const normalizedBankName = bankName.toLowerCase();
+  const logo = pickAsset(
+    item?.logo,
+    item?.logoUrl,
+    item?.image,
+    normalizedBankName.includes("bca") ? "assets/images/BCA_logo_Bank_Central_Asia-1-3-5-2-1-scaled.png" : "",
+    normalizedBankName.includes("dana") ? "assets/images/1200px-Logo_dana_blue.svg-1-1-1-1-1-2.png" : ""
+  );
+  const chip = pickAsset(
+    item?.chip,
+    item?.chipImage,
+    normalizedBankName.includes("bca") ? "assets/images/chip-atm-1-2-4-3.png" : ""
+  );
+
+  if (!bankName && !accountNumber && !accountHolder && !logo && !chip) return null;
+
+  return {
+    bankName,
+    accountNumber,
+    accountHolder,
+    logo,
+    chip,
+  };
+}
+
+function buildLocationText(detail = {}) {
+  const venueName = pickText(detail?.venueName, detail?.venue, detail?.locationName, detail?.addressName);
+  const address = pickText(detail?.address, detail?.locationAddress);
+  return [venueName, address].filter(Boolean).join(", ");
+}
+
+function formatEventAddressHtml(detail = {}) {
+  const venueName = pickText(detail?.addressName, detail?.venueName, detail?.venue, detail?.locationName);
+  const address = pickText(detail?.address, detail?.locationAddress);
+
+  if (venueName && address && venueName !== address) {
+    return `<p><b>${escapeHtml(venueName)}</b></p><p>${escapeHtml(address)}</p>`;
+  }
+
+  return formatAddressHtml(venueName || address);
+}
+
+function parseEventDateTime(dateValue, timeValue, fallbackDateValue = "") {
+  const directDate = new Date(dateValue || fallbackDateValue);
+  if (!Number.isNaN(directDate.getTime())) {
+    return directDate;
+  }
+
+  const text = pickText(dateValue, fallbackDateValue);
+  if (!text) return null;
+
+  const monthMap = {
+    januari: 0,
+    februari: 1,
+    maret: 2,
+    april: 3,
+    mei: 4,
+    juni: 5,
+    juli: 6,
+    agustus: 7,
+    september: 8,
+    oktober: 9,
+    november: 10,
+    desember: 11,
+  };
+
+  const match = text.match(/(?:[A-Za-zÀ-ÿ]+,\s*)?(\d{1,2})\s+([A-Za-zÀ-ÿ]+)\s+(\d{4})/i);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const monthName = String(match[2] || "").trim().toLowerCase();
+  const month = monthMap[monthName];
+  const year = Number(match[3]);
+  if (!Number.isFinite(day) || !Number.isFinite(year) || month === undefined) return null;
+
+  const timeMatch = pickText(timeValue).match(/(\d{1,2})[.:](\d{2})/);
+  const hours = timeMatch ? Number(timeMatch[1]) : 0;
+  const minutes = timeMatch ? Number(timeMatch[2]) : 0;
+
+  return new Date(year, month, day, hours, minutes, 0, 0);
+}
+
+function formatCompactDateInput(...values) {
+  for (const value of values) {
+    const text = pickText(value);
+    if (!text) continue;
+
+    const parsed = new Date(text);
+    if (!Number.isNaN(parsed.getTime())) {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      }).formatToParts(parsed);
+      const day = parts.find((part) => part.type === "day")?.value;
+      const month = parts.find((part) => part.type === "month")?.value;
+      const year = parts.find((part) => part.type === "year")?.value;
+      if (day && month && year) return `${day}. ${month}. ${year}`;
+    }
+
+    const normalized = text.match(/(\d{1,2})[./-](\d{1,2})[./-](\d{4})/);
+    if (normalized) {
+      const [, day, month, year] = normalized;
+      return `${String(day).padStart(2, "0")}. ${String(month).padStart(2, "0")}. ${year}`;
+    }
+  }
+
+  return "";
+}
+
+function formatEventDate(dateValue, timeValue = "", fallbackDateValue = "") {
+  const parsed = parseEventDateTime(dateValue, timeValue, fallbackDateValue);
+  if (!parsed || Number.isNaN(parsed.getTime())) {
+    return pickText(dateValue, fallbackDateValue);
+  }
+
+  const dayNames = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+  const monthNames = [
+    "Januari",
+    "Februari",
+    "Maret",
+    "April",
+    "Mei",
+    "Juni",
+    "Juli",
+    "Agustus",
+    "September",
+    "Oktober",
+    "November",
+    "Desember",
+  ];
+
+  const dayName = dayNames[parsed.getDay()];
+  const day = parsed.getDate();
+  const month = monthNames[parsed.getMonth()];
+  const year = parsed.getFullYear();
+  return `${dayName}, ${day} ${month} ${year}`;
+}
+
+function formatIcsDateLocal(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const hours = String(date.getHours()).padStart(2, "0");
+  const minutes = String(date.getMinutes()).padStart(2, "0");
+  const seconds = String(date.getSeconds()).padStart(2, "0");
+  return `${year}${month}${day}T${hours}${minutes}${seconds}`;
+}
+
+function escapeIcsText(value) {
+  return String(value || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
+}
+
+function formatGoogleCalendarDate(date) {
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+  return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+}
+
+function shouldUseIcsCalendar() {
+  if (typeof navigator === "undefined") return false;
+  const userAgent = String(navigator.userAgent || navigator.vendor || "").toLowerCase();
+  return /iphone|ipad|ipod|macintosh/.test(userAgent);
+}
+
+function buildCalendarEventMeta(invitationData) {
+  const startDate =
+    parseEventDateTime(
+      invitationData?.event?.akad?.date,
+      invitationData?.event?.akad?.time,
+      invitationData?.event?.dateISO
+    ) || new Date(invitationData?.event?.dateISO || "");
+  if (!(startDate instanceof Date) || Number.isNaN(startDate.getTime())) return null;
+
+  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+  const groomName = pickText(
+    invitationData?.groom?.nickName,
+    invitationData?.groom?.fullName,
+    invitationData?.couple?.groom?.nickName,
+    invitationData?.couple?.groom?.nameFull
+  );
+  const brideName = pickText(
+    invitationData?.bride?.nickName,
+    invitationData?.bride?.fullName,
+    invitationData?.couple?.bride?.nickName,
+    invitationData?.couple?.bride?.nameFull
+  );
+  const title = [groomName, brideName].filter(Boolean).join(" & ");
+  const location = buildLocationText(invitationData?.event?.akad || invitationData?.event?.resepsi || {});
+  const description = pickText(
+    invitationData?.copy?.eventIntro,
+    invitationData?.copy?.intro,
+    invitationData?.copy?.closingText,
+    invitationData?.copy?.quranText,
+    invitationData?.copy?.quote
+  );
+
+  return {
+    startDate,
+    endDate,
+    summary: title ? `Pernikahan ${title}` : "Save The Date",
+    location,
+    description,
+  };
+}
+
+function openGoogleCalendar(invitationData) {
+  const eventMeta = buildCalendarEventMeta(invitationData);
+  if (!eventMeta) return;
+
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: eventMeta.summary,
+    dates: `${formatGoogleCalendarDate(eventMeta.startDate)}/${formatGoogleCalendarDate(eventMeta.endDate)}`,
+    details: eventMeta.description,
+    location: eventMeta.location,
+  });
+
+  window.open(`https://calendar.google.com/calendar/render?${params.toString()}`, "_blank", "noopener,noreferrer");
+}
+
+function downloadCalendarFile(invitationData, slug = "puspa-asmara") {
+  const eventMeta = buildCalendarEventMeta(invitationData);
+  if (!eventMeta) return;
+
+  const icsContent = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Ikatan Cinta//Puspa Asmara//EN",
+    "CALSCALE:GREGORIAN",
+    "BEGIN:VEVENT",
+    `UID:${eventMeta.startDate.getTime()}-${slug}@ikatancinta`,
+    `DTSTAMP:${formatIcsDateLocal(new Date())}`,
+    `SUMMARY:${escapeIcsText(eventMeta.summary)}`,
+    `DTSTART:${formatIcsDateLocal(eventMeta.startDate)}`,
+    `DTEND:${formatIcsDateLocal(eventMeta.endDate)}`,
+    `DESCRIPTION:${escapeIcsText(eventMeta.description)}`,
+    `LOCATION:${escapeIcsText(eventMeta.location)}`,
+    "BEGIN:VALARM",
+    "TRIGGER:-P1D",
+    "ACTION:DISPLAY",
+    `DESCRIPTION:${escapeIcsText(eventMeta.summary)}`,
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+
+  const blob = new Blob([icsContent], { type: "text/calendar" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${String(slug || "save-the-date").replace(/[^a-z0-9-]+/gi, "-").toLowerCase() || "save-the-date"}.ics`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function toYouTubeEmbedUrl(url) {
   if (!url) return "";
   const raw = String(url).trim();
@@ -171,12 +815,21 @@ function toYouTubeEmbedUrl(url) {
   return `https://www.youtube.com/embed/${videoId}?autoplay=0&mute=1&playsinline=1&controls=0&rel=0&modestbranding=1&loop=1&playlist=${videoId}`;
 }
 
-export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "puspa-asmara" }) {
+export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "puspa-asmara", mode = "live" }) {
+  const isStaticDemoMode = mode === "demo";
   const { data: fetchedData } = useInvitationData(invitationSlug, {
     fallbackSlug: "puspa-asmara",
-    skipFetch: Boolean(propData),
+    skipFetch: Boolean(propData) || isStaticDemoMode,
   });
-  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
+  const mergedData = useMemo(() => {
+    if (isStaticDemoMode) {
+      return mergeInvitationData(defaultSchema, schemaJson);
+    }
+
+    const fetchedRuntimeData = buildRuntimeInvitationData(fetchedData, defaultSchema);
+    const propRuntimeData = buildRuntimeInvitationData(propData, defaultSchema);
+    return mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
+  }, [fetchedData, isStaticDemoMode, propData]);
   const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
   const fallbackWishes = useMemo(() => {
     const fromSchema = (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : []).map(normalizeWishItem).filter(Boolean);
@@ -192,6 +845,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
   const unlockTimerRef = useRef(null);
   const [lightboxImage, setLightboxImage] = useState("");
   const [wishes, setWishes] = useState(() => fallbackWishes);
+  const [isInvitationOpened, setIsInvitationOpened] = useState(false);
 
   useEffect(() => {
     let styleNode = document.getElementById(STYLE_LINK_ID);
@@ -218,7 +872,16 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
   useEffect(() => {
     const previousBodyClasses = BODY_CLASSES.filter((name) => document.body.classList.contains(name));
     BODY_CLASSES.forEach((name) => document.body.classList.add(name));
-    document.body.classList.add("pa-lock-scroll");
+    if (!isInvitationOpened) {
+      document.body.classList.add("pa-lock-scroll");
+    } else {
+      document.body.classList.remove("pa-lock-scroll");
+      document.body.style.position = "";
+      document.body.style.height = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflowY = "";
+    }
 
     setDynamicVh();
     const onResize = () => setDynamicVh();
@@ -227,10 +890,15 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     return () => {
       window.removeEventListener("resize", onResize);
       document.body.classList.remove("pa-lock-scroll");
+      document.body.style.position = "";
+      document.body.style.height = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflowY = "";
       BODY_CLASSES.forEach((name) => document.body.classList.remove(name));
       previousBodyClasses.forEach((name) => document.body.classList.add(name));
     };
-  }, []);
+  }, [isInvitationOpened]);
 
   useEffect(() => {
     AOS.init({
@@ -243,7 +911,12 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
   }, []);
 
   useEffect(() => {
-    const seeded = Array.isArray(mergedData?.wishes) ? mergedData.wishes.map(normalizeWishItem).filter(Boolean) : [];
+    const wishSeedSource = Array.isArray(mergedData?.wishes)
+      ? mergedData.wishes
+      : Array.isArray(mergedData?.wishes?.initial)
+        ? mergedData.wishes.initial
+        : [];
+    const seeded = wishSeedSource.map(normalizeWishItem).filter(Boolean);
     const fallbackSeed = seeded.length > 0 ? seeded : fallbackWishes;
     const stored = typeof window !== "undefined" ? readStoredWishes() : null;
     if (stored?.length) {
@@ -281,39 +954,140 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     const cleanups = [];
     const registerCleanup = (fn) => cleanups.push(fn);
 
-    const guestName = normalizeText(mergedData?.guest?.name || "Nama Tamu");
+    const copy = mergedData?.copy || {};
+    const guestName = pickText(mergedData?.guest?.name, schemaJson?.guest?.name, "Nama Tamu");
+    const guestGreeting = pickText(
+      mergedData?.guest?.greetingLabel,
+      copy.coverDear,
+      defaultSchema?.guest?.greetingLabel,
+      schemaJson?.copy?.coverDear,
+      "Dear"
+    );
 
     const groom = {
-      nickName: normalizeText(mergedData?.groom?.nickName || mergedData?.couple?.groom?.nickName || "Habib"),
-      fullName: normalizeText(mergedData?.groom?.fullName || mergedData?.couple?.groom?.nameFull || "Habib Yulianto"),
-      parentInfo: normalizeText(
-        mergedData?.groom?.parentInfo || mergedData?.couple?.groom?.parentInfo || "Putra Ketiga dari Bapak Putra & Ibu Putri"
-      ),
-      instagram: normalizeText(mergedData?.groom?.instagram || mergedData?.couple?.groom?.instagram || "https://www.instagram.com/"),
-      image: mergedData?.groom?.image || schemaJson.groom.image,
+      nickName: pickText(mergedData?.groom?.nickName, mergedData?.couple?.groom?.nickName, mergedData?.couple?.groom?.nameFull?.split(" ")[0], "Habib"),
+      fullName: pickText(mergedData?.groom?.fullName, mergedData?.groom?.nameFull, mergedData?.couple?.groom?.nameFull, "Habib Yulianto"),
+      parentInfo: pickText(mergedData?.groom?.parentInfo, mergedData?.couple?.groom?.parentInfo, "Putra dari Bapak Putra & Ibu Putri"),
+      instagram: pickText(mergedData?.groom?.instagram, mergedData?.couple?.groom?.instagram, "https://www.instagram.com/"),
+      image: pickAsset(mergedData?.groom?.image, mergedData?.groom?.photo, mergedData?.couple?.groom?.photo, schemaJson?.groom?.image),
     };
 
     const bride = {
-      nickName: normalizeText(mergedData?.bride?.nickName || mergedData?.couple?.bride?.nickName || "Adiba"),
-      fullName: normalizeText(mergedData?.bride?.fullName || mergedData?.couple?.bride?.nameFull || "Adiba Putri Syakila"),
-      parentInfo: normalizeText(
-        mergedData?.bride?.parentInfo || mergedData?.couple?.bride?.parentInfo || "Putri Ketiga dari Bapak Putra & Ibu Putri"
-      ),
-      instagram: normalizeText(mergedData?.bride?.instagram || mergedData?.couple?.bride?.instagram || "https://www.instagram.com/"),
-      image: mergedData?.bride?.image || schemaJson.bride.image,
+      nickName: pickText(mergedData?.bride?.nickName, mergedData?.couple?.bride?.nickName, mergedData?.couple?.bride?.nameFull?.split(" ")[0], "Adiba"),
+      fullName: pickText(mergedData?.bride?.fullName, mergedData?.bride?.nameFull, mergedData?.couple?.bride?.nameFull, "Adiba Putri Syakila"),
+      parentInfo: pickText(mergedData?.bride?.parentInfo, mergedData?.couple?.bride?.parentInfo, "Putri dari Bapak Putra & Ibu Putri"),
+      instagram: pickText(mergedData?.bride?.instagram, mergedData?.couple?.bride?.instagram, "https://www.instagram.com/"),
+      image: pickAsset(mergedData?.bride?.image, mergedData?.bride?.photo, mergedData?.couple?.bride?.photo, schemaJson?.bride?.image),
     };
 
-    const coupleDisplay = normalizeText(mergedData?.copy?.heroCouple || `${groom.nickName} & ${bride.nickName}`);
-    const eventDateISO = mergedData?.event?.dateISO || "2025-12-28T10:00:00+07:00";
-    const displayDate = normalizeText(mergedData?.event?.displayDate || mergedData?.copy?.heroDate || "28. 12. 2025");
-    const akad = mergedData?.event?.akad || {};
-    const resepsi = mergedData?.event?.resepsi || {};
-    const streaming = mergedData?.streaming || {};
+    const coverPhoto = pickAsset(
+      mergedData?.frontCoverImage,
+      mergedData?.couple?.frontCoverPhoto,
+      mergedData?.frontCoverPhoto,
+      copy.coverBackgroundPhoto
+    );
+    const heroPhoto = pickAsset(
+      mergedData?.openingThumbnailImage,
+      mergedData?.coverImage,
+      mergedData?.couple?.heroPhoto,
+      mergedData?.heroPhoto,
+      mergedData?.couple?.frontCoverPhoto,
+      coverPhoto,
+      "assets/images/SUJA-24SK1173-ALL-PII.webp"
+    );
+    const desktopCoverPhoto = isStaticDemoMode
+      ? DEMO_DESKTOP_COVER_IMAGE
+      : pickAsset(
+        mergedData?.coverImage,
+        mergedData?.saveTheDateBackgroundImage,
+        copy.saveTheDateBackgroundPhoto,
+        DEMO_DESKTOP_COVER_IMAGE
+      );
+    const mobileCoverPhoto = DEMO_MOBILE_COVER_IMAGE;
+    const coupleSectionPhoto = DEMO_COUPLE_SECTION_IMAGE;
 
-    const giftInfo = mergedData?.gifts || {};
-    const bankList = Array.isArray(giftInfo.bankAccounts) ? giftInfo.bankAccounts : [];
-    const bank1 = bankList[0] || {};
-    const bank2 = bankList[1] || {};
+    const dynamicCoupleDisplay = [groom.nickName, bride.nickName].filter(Boolean).join(" & ");
+    const coupleDisplay = pickText(dynamicCoupleDisplay, copy.heroCouple, `${groom.nickName} & ${bride.nickName}`);
+    const akadSource = mergedData?.event?.akad || {};
+    const resepsiSource = mergedData?.event?.resepsi || {};
+    const livestreamSource = mergedData?.streaming || mergedData?.event?.livestream || {};
+    const computedDateIso = parseEventDateTime(akadSource?.date, akadSource?.time, mergedData?.event?.dateISO)?.toISOString();
+    const eventDateISO = pickText(mergedData?.event?.dateISO, computedDateIso, schemaJson?.event?.dateISO);
+    const dynamicDisplayDate = formatCompactDateInput(
+      mergedData?.event?.dateISO,
+      akadSource?.date,
+      resepsiSource?.date
+    );
+    const displayDate = pickText(
+      dynamicDisplayDate,
+      mergedData?.event?.displayDate,
+      akadSource?.date,
+      resepsiSource?.date,
+      copy.heroDate,
+      schemaJson?.event?.displayDate,
+      "28. 12. 2025"
+    );
+    const quoteText = pickText(copy.quote, copy.quranText, schemaJson?.copy?.quranText);
+    const quoteSource = pickText(copy.quoteSource, copy.quranSource, schemaJson?.copy?.quranSource);
+
+    const akad = {
+      title: pickText(akadSource?.title, "Akad Nikah"),
+      date: pickText(
+        formatEventDate(akadSource?.date, akadSource?.time, mergedData?.event?.dateISO),
+        akadSource?.date,
+        "Minggu, 28 Desember 2025"
+      ),
+      time: pickText(akadSource?.time, "Pukul : 09.00 WIB"),
+      addressName: pickText(akadSource?.addressName, akadSource?.venueName, akadSource?.venue, akadSource?.address, "Kediaman Mempelai Wanita"),
+      mapsUrl: pickText(akadSource?.mapsUrl, akadSource?.mapsLink, "https://maps.google.com/"),
+      coverPhoto: pickAsset(akadSource?.coverPhoto, akadSource?.coverImage, mergedData?.akadCover),
+    };
+
+    const resepsi = {
+      title: pickText(resepsiSource?.title, "Resepsi"),
+      date: pickText(
+        formatEventDate(resepsiSource?.date, resepsiSource?.time, akadSource?.date || mergedData?.event?.dateISO),
+        resepsiSource?.date,
+        akad.date,
+        "Minggu, 28 Desember 2025"
+      ),
+      time: pickText(resepsiSource?.time, "Pukul : 09.00 WIB"),
+      addressName: pickText(resepsiSource?.addressName, resepsiSource?.venueName, resepsiSource?.venue, resepsiSource?.address, akad.addressName),
+      mapsUrl: pickText(resepsiSource?.mapsUrl, resepsiSource?.mapsLink, akad.mapsUrl),
+      coverPhoto: pickAsset(resepsiSource?.coverPhoto, resepsiSource?.coverImage, mergedData?.resepsiCover, akad.coverPhoto),
+    };
+
+    const streaming = {
+      label: pickText(livestreamSource?.label, livestreamSource?.platformLabel, "@Instagram"),
+      date: pickText(livestreamSource?.date, akad.date),
+      time: pickText(livestreamSource?.time, akad.time),
+      url: pickText(livestreamSource?.url),
+    };
+    const hasStreaming = (mergedData?.features?.livestreamEnabled ?? true) && Boolean(streaming.url);
+
+    const legacyGift = mergedData?.gifts || {};
+    const genericGift = mergedData?.gift || {};
+    const digitalEnvelopeInfo = mergedData?.features?.digitalEnvelopeInfo || {};
+    const rawBankList = [
+      ...(Array.isArray(legacyGift?.bankAccounts) ? legacyGift.bankAccounts : []),
+      ...(Array.isArray(genericGift?.bankList) ? genericGift.bankList : []),
+      ...(Array.isArray(digitalEnvelopeInfo?.bankList) ? digitalEnvelopeInfo.bankList : []),
+    ];
+    const bankList = rawBankList.map(normalizeBankAccount).filter(Boolean);
+    const bank1 = bankList[0] || null;
+    const bank2 = bankList[1] || null;
+    const rawShipping = {
+      ...(legacyGift?.shipping || {}),
+      ...(genericGift?.shipping || {}),
+      ...(digitalEnvelopeInfo?.shipping || {}),
+    };
+    const hasShippingData = Boolean(pickText(rawShipping?.recipient, rawShipping?.phone, rawShipping?.address));
+    const shipping = {
+      recipient: pickText(rawShipping?.recipient, groom.fullName),
+      phone: pickText(rawShipping?.phone, "-"),
+      address: pickText(rawShipping?.address, akad.addressName, "-"),
+    };
+    const hasGiftSection = (mergedData?.features?.digitalEnvelopeEnabled ?? true) && (bankList.length > 0 || hasShippingData);
 
     root.querySelectorAll("[src]").forEach((node) => {
       const value = node.getAttribute("src") || "";
@@ -344,15 +1118,18 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       if (next && next !== href) node.setAttribute("href", next);
     });
 
-    const copy = mergedData?.copy || {};
-
     setText(root, ".elementor-element-4aed6964 .elementor-heading-title", copy.coverTitle || "The Wedding of");
     setHtml(root, ".elementor-element-7fec0abf .elementor-widget-container", `<p>${escapeHtml(coupleDisplay)}</p>`);
-    setText(root, ".elementor-element-623c7507 .elementor-heading-title", copy.coverDear || "Dear");
+    setText(root, ".elementor-element-623c7507 .elementor-heading-title", guestGreeting);
     setText(root, ".elementor-element-6731e16c .elementor-heading-title", guestName);
     setText(root, ".elementor-element-4bdce91 .elementor-button-text", copy.openButton || "BUKA UNDANGAN");
 
-    setText(root, ".elementor-element-3680e999 .elementor-heading-title", "The Wedding Of");
+    clearBackgroundImage(root, ".elementor-element-d967e9");
+    setBackgroundImage(root, ".elementor-element-4478493a", desktopCoverPhoto, { position: "top center" });
+    setBackgroundImage(root, ".elementor-element-359cf670", mobileCoverPhoto, { position: "bottom center" });
+    setImage(root, ".elementor-element-dfc973f img", heroPhoto, "assets/images/SUJA-24SK1173-ALL-PII.webp");
+
+    setText(root, ".elementor-element-3680e999 .elementor-heading-title", copy.heroTitle || "The Wedding Of");
     setText(root, ".elementor-element-606cba01 .elementor-heading-title", coupleDisplay);
     setText(root, ".elementor-element-63bc46cc .elementor-heading-title", displayDate);
 
@@ -361,7 +1138,11 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setText(root, ".elementor-element-69b16771 .elementor-heading-title", displayDate);
     setText(root, ".elementor-element-1f3c6efb .elementor-button-text", copy.saveTheDate || "Save The Date");
 
-    setText(root, ".elementor-element-29fcde9 .elementor-heading-title", "Kedua Mempelai");
+    setText(root, ".elementor-element-3eb65e48 p", getNameInitial(groom.nickName, "H"));
+    setText(root, ".elementor-element-7989e60c p", getNameInitial(bride.nickName, "A"));
+    setHtml(root, ".elementor-element-32613992 .elementor-widget-container", formatQuoteHtml(quoteText, quoteSource));
+
+    setText(root, ".elementor-element-29fcde9 .elementor-heading-title", copy.coupleTitle || "Kedua Mempelai");
     setHtml(root, ".elementor-element-8dbd8be .elementor-widget-container", `<p>${escapeHtml(bride.nickName)}</p>`);
     setText(root, ".elementor-element-1b389f5a .elementor-heading-title", bride.fullName);
     setHtml(root, ".elementor-element-4dff81de .elementor-widget-container", formatParentInfoHtml(bride.parentInfo));
@@ -373,26 +1154,43 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setLink(root, ".elementor-element-112b21bd a.elementor-social-icon-instagram", toInstagramUrl(bride.instagram));
     setLink(root, ".elementor-element-56372222 a.elementor-social-icon-instagram", toInstagramUrl(groom.instagram));
 
-    const brideImage = resolveAssetUrl(bride.image);
-    const groomImage = resolveAssetUrl(groom.image);
-    const brideImageNode = root.querySelector(".elementor-element-1fdc8774 img");
-    const groomImageNode = root.querySelector(".elementor-element-1c40500 img");
-    if (brideImageNode && brideImage) brideImageNode.setAttribute("src", brideImage);
-    if (groomImageNode && groomImage) groomImageNode.setAttribute("src", groomImage);
+    setBackgroundImage(root, ".elementor-element-6b4db1f2", coupleSectionPhoto, { position: "top center" });
+    setImage(root, ".elementor-element-1fdc8774 img", bride.image, schemaJson?.bride?.image);
+    setImage(root, ".elementor-element-1c40500 img", groom.image, schemaJson?.groom?.image);
 
     setText(root, ".elementor-element-2cbc0e63 .elementor-heading-title", copy.countdownTitle || "MENUJU HARI BAHAGIA");
 
-    setText(root, ".elementor-element-421de45b .elementor-heading-title", normalizeText(akad.title || "Akad Nikah"));
-    setText(root, ".elementor-element-3075ddd1 .elementor-heading-title", normalizeText(akad.date || "Minggu, 28 Desember 2025"));
-    setText(root, ".elementor-element-747dcb9 .elementor-heading-title", normalizeText(akad.time || "Pukul : 09.00 WIB"));
-    setHtml(root, ".elementor-element-6583b60f .elementor-widget-container", formatAddressHtml(akad.addressName || "Kediaman Mempelai Wanita"));
-    setLink(root, ".elementor-element-49e9eabe a.elementor-button", normalizeText(akad.mapsUrl || "https://maps.google.com/"));
+    const akadCard = root.querySelector(".elementor-element-4773c7fd");
+    const resepsiCard = root.querySelector(".elementor-element-40607301");
+    [akadCard, resepsiCard].forEach((node) => {
+      if (!node) return;
+      node.classList.add("pa-section-photo");
+      node.style.minHeight = "unset";
+      node.style.height = "auto";
+    });
+    setBackgroundImage(root, ".elementor-element-4773c7fd", akad.coverPhoto, {
+      position: "center center",
+      overlay: "rgba(0, 0, 0, 0.80)",
+    });
+    setBackgroundImage(root, ".elementor-element-40607301", resepsi.coverPhoto, {
+      position: "center center",
+      overlay: "rgba(0, 0, 0, 0.80)",
+    });
+    setNodeVisible(root, ".elementor-element-4c8dc35b", false);
+    setNodeVisible(root, ".elementor-element-3ca78a72", false);
 
-    setText(root, ".elementor-element-5cc8d2a8 .elementor-heading-title", normalizeText(resepsi.title || "Resepsi"));
-    setText(root, ".elementor-element-25b9dde4 .elementor-heading-title", normalizeText(resepsi.date || "Minggu, 28 Desember 2025"));
-    setText(root, ".elementor-element-7ce43ba6 .elementor-heading-title", normalizeText(resepsi.time || "Pukul : 09.00 WIB"));
-    setHtml(root, ".elementor-element-7a6eb763 .elementor-widget-container", formatAddressHtml(resepsi.addressName || "Kediaman Mempelai Wanita"));
-    setLink(root, ".elementor-element-56cb6222 a.elementor-button", normalizeText(resepsi.mapsUrl || "https://maps.google.com/"));
+    setText(root, ".elementor-element-39c0b7c .elementor-heading-title", copy.eventIntro || schemaJson?.copy?.eventIntro || "");
+    setText(root, ".elementor-element-421de45b .elementor-heading-title", akad.title);
+    setText(root, ".elementor-element-3075ddd1 .elementor-heading-title", akad.date);
+    setText(root, ".elementor-element-747dcb9 .elementor-heading-title", akad.time);
+    setHtml(root, ".elementor-element-6583b60f .elementor-widget-container", formatEventAddressHtml(akadSource));
+    setLink(root, ".elementor-element-49e9eabe a.elementor-button", akad.mapsUrl);
+
+    setText(root, ".elementor-element-5cc8d2a8 .elementor-heading-title", resepsi.title);
+    setText(root, ".elementor-element-25b9dde4 .elementor-heading-title", resepsi.date);
+    setText(root, ".elementor-element-7ce43ba6 .elementor-heading-title", resepsi.time);
+    setHtml(root, ".elementor-element-7a6eb763 .elementor-widget-container", formatEventAddressHtml(resepsiSource));
+    setLink(root, ".elementor-element-56cb6222 a.elementor-button", resepsi.mapsUrl);
 
     setHtml(root, ".elementor-element-26ee4767 .elementor-widget-container", `<p>${escapeHtml(copy.livestreamTitle || "Live Streaming")}</p>`);
     setText(
@@ -401,10 +1199,11 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       copy.livestreamIntro ||
         "Kami mengundang Bapak/Ibu/Saudara/i untuk menyaksikan pernikahan kami secara virtual yang disiarkan langsung melalui media sosial di bawah ini:"
     );
-    setText(root, ".elementor-element-3f9bf4f9 .elementor-heading-title", normalizeText(streaming.date || "Minggu, 28 Desember 2025"));
-    setText(root, ".elementor-element-386e8a79 .elementor-heading-title", normalizeText(streaming.time || "Pukul : 10.00 WIB"));
-    setText(root, ".elementor-element-626a8ac3 .elementor-button-text", normalizeText(streaming.label || "@Instagram"));
-    setLink(root, ".elementor-element-626a8ac3 a.elementor-button", normalizeText(streaming.url || "https://www.instagram.com/"));
+    setText(root, ".elementor-element-3f9bf4f9 .elementor-heading-title", streaming.date);
+    setText(root, ".elementor-element-386e8a79 .elementor-heading-title", streaming.time);
+    setText(root, ".elementor-element-626a8ac3 .elementor-button-text", streaming.label);
+    setLink(root, ".elementor-element-626a8ac3 a.elementor-button", streaming.url);
+    setNodeVisible(root, ".elementor-element-65e24d22", hasStreaming);
 
     setHtml(root, ".elementor-element-6fb79463 .elementor-widget-container", `<p>${escapeHtml(copy.galleryTitle || "Our Gallery")}</p>`);
 
@@ -412,15 +1211,23 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     const galleryNodes = Array.from(root.querySelectorAll(".elementor-element-663c198b .e-gallery-item"));
     const fallbackGallery = root.querySelector(".elementor-element-663c198b .elementor-gallery__container");
     if (fallbackGallery) fallbackGallery.classList.add("pa-gallery-fallback");
+    const activeGalleryItems = isStaticDemoMode
+      ? galleryItems.length > 0
+        ? galleryItems
+        : galleryNodes
+          .map((anchor) => resolveAssetUrl(anchor.getAttribute("href") || ""))
+          .filter(Boolean)
+      : galleryItems;
 
     galleryNodes.forEach((anchor, index) => {
-      const nextImage = galleryItems[index] || resolveAssetUrl(anchor.getAttribute("href") || "");
+      const nextImage = activeGalleryItems[index] || "";
       if (!nextImage) {
         anchor.style.display = "none";
         return;
       }
       anchor.style.display = "block";
       anchor.setAttribute("href", nextImage);
+      anchor.removeAttribute("data-e-action-hash");
       const imageNode = anchor.querySelector(".e-gallery-image");
       if (imageNode) {
         imageNode.setAttribute("data-thumbnail", nextImage);
@@ -428,59 +1235,89 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       }
     });
 
+    setNodeVisible(root, ".elementor-element-663c198b", activeGalleryItems.length > 0 || isStaticDemoMode);
+
     setHtml(root, ".elementor-element-238d1126 .elementor-widget-container", `<p>${escapeHtml(copy.loveStoryTitle || "Love Story")}</p>`);
-    const stories = Array.isArray(mergedData?.loveStory) ? mergedData.loveStory : [];
-    setHtml(root, ".elementor-element-4d91d29d .elementor-widget-container", `<p>${escapeHtml(stories[0]?.title || "Awal Bertemu")}</p>`);
-    setHtml(
-      root,
-      ".elementor-element-2226599f .elementor-widget-container",
-      `<p style="text-align: justify;">${escapeHtml(stories[0]?.description || "")}</p>`
-    );
-    setHtml(root, ".elementor-element-4b922a7d .elementor-widget-container", `<p>${escapeHtml(stories[1]?.title || "Lamaran")}</p>`);
-    setHtml(
-      root,
-      ".elementor-element-27a54e7 .elementor-widget-container",
-      `<p style="text-align: justify;">${escapeHtml(stories[1]?.description || "")}</p>`
-    );
-    setHtml(root, ".elementor-element-696fc2cc .elementor-widget-container", `<p>${escapeHtml(stories[2]?.title || "Pernikahan")}</p>`);
-    setHtml(
-      root,
-      ".elementor-element-7879f7e9 .elementor-widget-container",
-      `<p style="text-align: justify;">${escapeHtml(stories[2]?.description || "")}</p>`
-    );
+    const rawStories = Array.isArray(mergedData?.loveStory)
+      ? mergedData.loveStory
+      : Array.isArray(mergedData?.lovestory)
+        ? mergedData.lovestory
+        : Array.isArray(mergedData?.stories)
+          ? mergedData.stories
+          : [];
+    const stories = rawStories.map(normalizeRuntimeStory).filter(Boolean);
+    const storyBindings = [
+      {
+        titleSelector: ".elementor-element-4d91d29d",
+        bodySelector: ".elementor-element-2226599f",
+      },
+      {
+        titleSelector: ".elementor-element-4b922a7d",
+        bodySelector: ".elementor-element-27a54e7",
+      },
+      {
+        titleSelector: ".elementor-element-696fc2cc",
+        bodySelector: ".elementor-element-7879f7e9",
+      },
+    ];
+
+    storyBindings.forEach(({ titleSelector, bodySelector }, index) => {
+      const story = stories[index];
+      const hasStory = Boolean(story?.title || story?.description || story?.text || story?.date);
+
+      setNodeVisible(root, titleSelector, hasStory);
+      setNodeVisible(root, bodySelector, hasStory);
+
+      if (!hasStory) {
+        setHtml(root, `${titleSelector} .elementor-widget-container`, "");
+        setHtml(root, `${bodySelector} .elementor-widget-container`, "");
+        return;
+      }
+
+      setHtml(root, `${titleSelector} .elementor-widget-container`, `<p>${escapeHtml(story?.title || "")}</p>`);
+      setHtml(
+        root,
+        `${bodySelector} .elementor-widget-container`,
+        `<p style="text-align: justify;">${escapeHtml(story?.description || story?.text || "")}</p>`
+      );
+    });
 
     setText(root, ".elementor-element-15be07d9 .elementor-heading-title", copy.giftTitle || "Wedding Gift");
     setHtml(root, ".elementor-element-141b6a99 .elementor-widget-container", `<p>${escapeHtml(copy.giftIntro || "")}</p>`);
     setText(root, ".elementor-element-4c42a555 .elementor-button-text", copy.giftToggleLabel || "Klik di sini");
+    setNodeVisible(root, ".elementor-element-43104f45", hasGiftSection);
 
-    const bank1LogoNode = root.querySelector(".elementor-element-4e6e1333 img");
-    const bank1ChipNode = root.querySelector(".elementor-element-24f130ef img");
-    const bank2LogoNode = root.querySelector(".elementor-element-1f4e8e34 img");
-    if (bank1LogoNode && bank1.logo) bank1LogoNode.setAttribute("src", resolveAssetUrl(bank1.logo));
-    if (bank1ChipNode && bank1.chip) bank1ChipNode.setAttribute("src", resolveAssetUrl(bank1.chip));
-    if (bank2LogoNode && bank2.logo) bank2LogoNode.setAttribute("src", resolveAssetUrl(bank2.logo));
+    setNodeVisible(root, ".elementor-element-47a1bba0", Boolean(bank1));
+    setNodeVisible(root, ".elementor-element-4d7dbe7d", Boolean(bank2));
+    setNodeVisible(root, ".elementor-element-6efe9a3d", hasShippingData);
+    setNodeVisible(root, ".elementor-element-4e6e1333", Boolean(bank1?.logo));
+    setNodeVisible(root, ".elementor-element-24f130ef", Boolean(bank1?.chip));
+    setNodeVisible(root, ".elementor-element-1f4e8e34", Boolean(bank2?.logo));
 
-    setHtml(root, ".elementor-element-124e0fdb .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1.accountNumber || "-")}</p>`);
-    setHtml(root, ".elementor-element-15e9e282 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1.accountHolder || "-")}</p>`);
-    setHtml(root, ".elementor-element-71a8e014 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2.accountNumber || "-")}</p>`);
-    setHtml(root, ".elementor-element-16681b37 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2.accountHolder || "-")}</p>`);
+    setImage(root, ".elementor-element-4e6e1333 img", bank1?.logo);
+    setImage(root, ".elementor-element-24f130ef img", bank1?.chip);
+    setImage(root, ".elementor-element-1f4e8e34 img", bank2?.logo);
+
+    setHtml(root, ".elementor-element-124e0fdb .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountNumber || "-")}</p>`);
+    setHtml(root, ".elementor-element-15e9e282 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountHolder || "-")}</p>`);
+    setHtml(root, ".elementor-element-71a8e014 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountNumber || "-")}</p>`);
+    setHtml(root, ".elementor-element-16681b37 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountHolder || "-")}</p>`);
 
     const copyBox1 = root.querySelector(".elementor-element-24d1d394 .copy-content");
     const copyBox2 = root.querySelector(".elementor-element-751d79fe .copy-content");
-    if (copyBox1) copyBox1.textContent = normalizeText(bank1.accountNumber || "");
-    if (copyBox2) copyBox2.textContent = normalizeText(bank2.accountNumber || "");
+    if (copyBox1) copyBox1.textContent = pickText(bank1?.accountNumber);
+    if (copyBox2) copyBox2.textContent = pickText(bank2?.accountNumber);
 
     setHtml(root, ".elementor-element-45da7c64 .elementor-widget-container", `<p>${escapeHtml(copy.shippingTitle || "Kirim Hadiah")}</p>`);
     setHtml(
       root,
       ".elementor-element-63cff63a .elementor-widget-container",
-      `<p>Nama Penerima : ${escapeHtml(giftInfo.shipping?.recipient || "-")}</p><p>No. HP : ${escapeHtml(
-        giftInfo.shipping?.phone || "-"
-      )}</p><p>${escapeHtml(giftInfo.shipping?.address || "-")}</p>`
+      `<p>Nama Penerima : ${escapeHtml(shipping.recipient)}</p><p>No. HP : ${escapeHtml(shipping.phone)}</p><p>${escapeHtml(shipping.address)}</p>`
     );
 
     setText(root, ".elementor-element-3437d66e .elementor-heading-title", copy.wishesTitle || "Wishes");
     setHtml(root, ".elementor-element-59922aab .elementor-widget-container", `<p>${escapeHtml(copy.wishesIntro || "")}</p>`);
+    setNodeVisible(root, ".elementor-element-36ff6cc1", mergedData?.features?.wishesEnabled ?? true);
 
     const wishesWidget = root.querySelector(".elementor-element-44eea63b .cui-wrapper");
     if (wishesWidget) wishesWidget.classList.remove("cui-comments-closed");
@@ -492,7 +1329,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     if (wishesFormContainer && !wishesFormContainer.querySelector("#commentform-13735")) {
       wishesFormContainer.innerHTML = `
         <div class="respond">
-          <form action="#" method="post" id="commentform-13735" class="comment-form">
+          <form action="#" method="post" id="commentform-13735" class="comment-form pa-wish-form">
             <p class="comment-form-author cui-field-1">
               <input id="author" name="author" type="text" class="cui-input" maxlength="50" placeholder="Nama" autocomplete="name" required />
             </p>
@@ -503,7 +1340,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
               <select id="attendance-13735" name="attendance" class="cui-select" required>
                 <option value="" selected disabled>Pilih Kehadiran</option>
                 <option value="Hadir">Hadir</option>
-                <option value="Absen">Absen</option>
+                <option value="Tidak Hadir">Tidak Hadir</option>
               </select>
             </div>
             <div class="cui-wrap-submit">
@@ -595,7 +1432,15 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       }
 
       try {
-        await postInvitationWish("puspa-asmara", nextEntry);
+        const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "puspa-asmara";
+        const activeOrderId = mergedData?.invitation?.orderId || mergedData?.orderId || "";
+        await postInvitationWish(activeInvitationSlug, {
+          invitationSlug: activeInvitationSlug,
+          orderId: activeOrderId,
+          author: nextEntry.author,
+          comment: nextEntry.comment,
+          attendance: nextEntry.attendance,
+        });
       } catch {
         // Keep optimistic local render
       } finally {
@@ -630,13 +1475,13 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
 
     setHtml(root, ".elementor-element-5308cf9a .elementor-widget-container", `<p>${escapeHtml(copy.closingText || "")}</p>`);
     setText(root, ".elementor-element-189716e3 .elementor-heading-title", coupleDisplay);
+    setText(root, ".elementor-element-3e99b45f p", getNameInitial(groom.nickName, "H"));
+    setText(root, ".elementor-element-13c06846 p", getNameInitial(bride.nickName, "A"));
 
     setHtml(root, ".elementor-element-40dd7e2e .elementor-widget-container", `<p>${escapeHtml(copy.creditText || "")}</p>`);
 
-    const closingImage = root.querySelector(".elementor-element-32cb9456 img");
-    if (closingImage) {
-      closingImage.setAttribute("src", resolveAssetUrl("assets/images/SUJA-24SK1173-PII-9-1-e1730097922583.jpg"));
-    }
+    const closingPhoto = pickAsset(copy.closingBackgroundPhoto, resepsi.coverPhoto, akad.coverPhoto, heroPhoto, "assets/images/SUJA-24SK1173-PII-9-1-e1730097922583.jpg");
+    setImage(root, ".elementor-element-32cb9456 img", closingPhoto, "assets/images/SUJA-24SK1173-PII-9-1-e1730097922583.jpg");
 
     const countdownNode = root.querySelector("#wpkoi-elements-countdown-627ba577");
     if (countdownNode) {
@@ -673,6 +1518,25 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     const coverNode = root.querySelector("#sec");
     const awNode = root.querySelector(".aw");
     const openButton = root.querySelector("#open");
+    const saveDateButton = root.querySelector(".elementor-element-1f3c6efb a.elementor-button");
+
+    if (saveDateButton) {
+      const onSaveDateClick = (event) => {
+        const eventMeta = buildCalendarEventMeta(mergedData);
+        if (!eventMeta) return;
+        event.preventDefault();
+
+        if (shouldUseIcsCalendar()) {
+          downloadCalendarFile(mergedData, invitationSlug || mergedData?.invitation?.slug || "puspa-asmara");
+          return;
+        }
+
+        openGoogleCalendar(mergedData);
+      };
+
+      saveDateButton.addEventListener("click", onSaveDateClick);
+      registerCleanup(() => saveDateButton.removeEventListener("click", onSaveDateClick));
+    }
 
     const song = root.querySelector("#song");
     const songSource = root.querySelector("#song source");
@@ -743,6 +1607,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     if (openButton) {
       const onOpen = (event) => {
         event.preventDefault();
+        setIsInvitationOpened(true);
         document.body.classList.remove("pa-lock-scroll");
         document.body.style.position = "";
         document.body.style.height = "";
@@ -911,7 +1776,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
         }
       });
     };
-  }, [mergedData, wishes]);
+  }, [fallbackWishes, invitationSlug, isStaticDemoMode, mergedData, wishes]);
 
   useEffect(() => {
     if (!lightboxImage) return undefined;
@@ -925,7 +1790,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
   }, [lightboxImage]);
 
   return (
-    <div className="pa-template" ref={rootRef}>
+    <div className={`pa-template ${isStaticDemoMode ? "pa-demo" : "pa-live"}`} ref={rootRef}>
       <div dangerouslySetInnerHTML={{ __html: markup }} />
 
       {lightboxImage ? (

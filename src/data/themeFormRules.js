@@ -11,6 +11,11 @@ const BASE_UPLOAD_FIELDS = {
     required: true,
     description: "Dipakai untuk hero foto di bagian dalam setelah undangan dibuka. Format JPG/PNG, Max 5MB, gunakan orientasi landscape.",
   },
+  openingThumbnail: {
+    visible: false,
+    required: false,
+    description: "Dipakai untuk thumbnail pasangan pada section pertama setelah undangan dibuka.",
+  },
   bridePhoto: {
     visible: true,
     required: false,
@@ -181,6 +186,36 @@ const THEME_UPLOAD_OVERRIDES = {
       visible: true,
       required: false,
       description: "Dipakai sebagai background section penutup pada Misty Romance.",
+    },
+  },
+  "puspa-asmara": {
+    frontCover: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di form order Puspa Asmara karena cover depan memakai asset bawaan template.",
+    },
+    cover: {
+      visible: true,
+      required: true,
+      description: "Dipakai untuk cover dalam setelah undangan dibuka pada media desktop di Puspa Asmara.",
+    },
+    openingThumbnail: {
+      visible: true,
+      required: true,
+      description: "Dipakai untuk thumbnail pasangan pada section pertama setelah undangan dibuka di Puspa Asmara.",
+    },
+    akadCover: {
+      visible: true,
+      description: "Dipakai sebagai background foto section akad pada Puspa Asmara. Jika kosong, sistem pakai cover utama.",
+    },
+    resepsiCover: {
+      visible: true,
+      description: "Dipakai sebagai background foto section resepsi pada Puspa Asmara. Jika kosong, sistem pakai foto akad atau cover utama.",
+    },
+    closingBackground: {
+      visible: true,
+      required: false,
+      description: "Dipakai sebagai foto penutup pada section akhir Puspa Asmara.",
     },
   },
 };

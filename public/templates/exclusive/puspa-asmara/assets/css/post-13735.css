@@ -3,6 +3,26 @@
     position: sticky; /* Membuat elemen menjadi sticky */
     top: 0;          /* Menempel di bagian atas viewport */
 }/* End custom CSS */
+
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .e-con-inner > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .e-con-inner > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .elementor-motion-effects-container > .elementor-motion-effects-layer::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .e-con-inner > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .e-con-inner > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .elementor-motion-effects-container > .elementor-motion-effects-layer::before {
+    background-image: none !important;
+    background-color: transparent !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    content: none !important;
+    display: none !important;
+}
 /* Start custom CSS for image, class: .elementor-element-dfc973f */.elementor-13735 .elementor-element.elementor-element-dfc973f img {
 height :41vh!important}/* End custom CSS */
 /* Start custom CSS for container, class: .elementor-element-735328a4 */.kolom-pertama {

@@ -115,8 +115,80 @@ body.pa-lock-scroll {
   background-size: cover;
 }
 
+.pa-template .pa-section-photo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: unset !important;
+  height: auto !important;
+  background-color: #6b5039;
+}
+
+.pa-template.pa-live .pa-section-photo::before {
+  content: none;
+}
+
+.pa-template.pa-live .elementor-element.elementor-element-4773c7fd::before,
+.pa-template.pa-live .elementor-element.elementor-element-4773c7fd > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-element.elementor-element-4773c7fd > .e-con-inner > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-element.elementor-element-4773c7fd > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-element.elementor-element-4773c7fd > .e-con-inner > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-element.elementor-element-4773c7fd > .elementor-motion-effects-container > .elementor-motion-effects-layer::before,
+.pa-template.pa-live .elementor-element.elementor-element-40607301::before,
+.pa-template.pa-live .elementor-element.elementor-element-40607301 > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-element.elementor-element-40607301 > .e-con-inner > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-element.elementor-element-40607301 > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-element.elementor-element-40607301 > .e-con-inner > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-element.elementor-element-40607301 > .elementor-motion-effects-container > .elementor-motion-effects-layer::before {
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .e-con-inner > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .e-con-inner > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-4773c7fd > .elementor-motion-effects-container > .elementor-motion-effects-layer::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .e-con-inner > .elementor-background-video-container::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .e-con-inner > .elementor-background-slideshow::before,
+.pa-template.pa-live .elementor-13735 .elementor-element.elementor-element-40607301 > .elementor-motion-effects-container > .elementor-motion-effects-layer::before {
+  content: none !important;
+  background: none !important;
+  background-image: none !important;
+  background-color: transparent !important;
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.pa-template .pa-section-photo > * {
+  position: relative;
+  z-index: 1;
+}
+
 .pa-template .cui-wrapper .cui-holder {
   display: none !important;
+}
+
+.pa-template .pa-wish-form.is-submitting {
+  opacity: 0.72;
+}
+
+.pa-template .pa-wish-form.is-submitting .submit {
+  cursor: wait;
+}
+
+.pa-template .pa-wish-form .submit[disabled] {
+  opacity: 0.85;
 }
 
 .pa-lightbox {

@@ -180,6 +180,7 @@ async function prepareOrderAssetsForSubmission({
   orderId,
   frontCoverImage,
   coverImage,
+  openingThumbnailImage,
   groomPhoto,
   bridePhoto,
   akadCoverImage,
@@ -194,6 +195,7 @@ async function prepareOrderAssetsForSubmission({
 }) {
   const uploadedFrontCover = await uploadOptionalImageAsset(orderId, frontCoverImage, "front-cover");
   const uploadedCover = await uploadOptionalImageAsset(orderId, coverImage, "cover");
+  const uploadedOpeningThumbnail = await uploadOptionalImageAsset(orderId, openingThumbnailImage, "opening-thumbnail");
   const uploadedGroomPhoto = await uploadOptionalImageAsset(orderId, groomPhoto, "groom-photo");
   const uploadedBridePhoto = await uploadOptionalImageAsset(orderId, bridePhoto, "bride-photo");
   const uploadedAkadCover = await uploadOptionalImageAsset(orderId, akadCoverImage, "akad-cover");
@@ -243,6 +245,7 @@ async function prepareOrderAssetsForSubmission({
   return {
     uploadedFrontCover,
     uploadedCover,
+    uploadedOpeningThumbnail,
     uploadedGroomPhoto,
     uploadedBridePhoto,
     uploadedAkadCover,
@@ -788,6 +791,7 @@ function ImageUploadCard({
 function StepThreeFoto({
   frontCoverImage,
   coverImage,
+  openingThumbnailImage,
   groomPhoto,
   bridePhoto,
   akadCoverImage,
@@ -806,6 +810,7 @@ function StepThreeFoto({
   setStories,
   isReceptionEnabled,
   onUploadCover,
+  onUploadOpeningThumbnail,
   onUploadFrontCover,
   onUploadGroomPhoto,
   onRemoveGroomPhoto,
@@ -826,6 +831,7 @@ function StepThreeFoto({
   onUploadLoveStoryPhotoTwo,
   onRemoveLoveStoryPhotoTwo,
   onRemoveCover,
+  onRemoveOpeningThumbnail,
   onRemoveFrontCover,
   onUploadGallery,
   onRemoveGallery,
@@ -929,49 +935,39 @@ function StepThreeFoto({
         </section>
       )}
 
-      {uploadFields.cover?.visible && (
+      {(uploadFields.cover?.visible || uploadFields.openingThumbnail?.visible) && (
         <section id="inner_cover_upload_section" className="space-y-4 mb-8">
           <div className="flex items-baseline justify-between px-1">
             <h3 className="text-lg font-bold">Foto Setelah Buka Undangan</h3>
             <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
 
-          {coverImage ? (
-            <div
-              className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
-              {...createDropZoneProps("inner-cover", onUploadCover)}
-            >
-              <img src={coverImage.url} alt={coverImage.name} className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{coverImage.name}</p>
-                  <p className="text-white/80 text-xs">{coverImage.sizeLabel}</p>
-                </div>
-                <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-xl">edit</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
-                </label>
-              </div>
-              <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveCover}>
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-          ) : (
-            <label
-              className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "inner-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
-              {...createDropZoneProps("inner-cover", onUploadCover)}
-            >
-              <span className="material-symbols-outlined text-3xl">upload</span>
-              <span className="text-sm font-semibold">Upload atau Drop Foto Setelah Buka</span>
-              <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
-            </label>
-          )}
-
-          <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-sm">info</span>
-            {uploadFields.cover?.description}
-          </p>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {uploadFields.cover?.visible && (
+              <ImageUploadCard
+                id="after_open_desktop_upload_section"
+                title="Cover Desktop"
+                description={uploadFields.cover?.description}
+                image={coverImage}
+                onUpload={onUploadCover}
+                onRemove={onRemoveCover}
+                aspectClass="aspect-video"
+                badge={uploadFields.cover?.required ? "Wajib" : "Opsional"}
+              />
+            )}
+            {uploadFields.openingThumbnail?.visible && (
+              <ImageUploadCard
+                id="opening_thumbnail_upload_section"
+                title="Foto Pasangan"
+                description={uploadFields.openingThumbnail?.description}
+                image={openingThumbnailImage}
+                onUpload={onUploadOpeningThumbnail}
+                onRemove={onRemoveOpeningThumbnail}
+                aspectClass="aspect-video"
+                badge={uploadFields.openingThumbnail?.required ? "Wajib" : "Opsional"}
+              />
+            )}
+          </div>
         </section>
       )}
 
@@ -1464,6 +1460,7 @@ function StepFourReview({
   isSessionEnabled,
   sessions,
   coverImage,
+  openingThumbnailImage,
   quote,
   quoteSource,
   saveTheDateBackgroundImage,
@@ -1559,8 +1556,14 @@ function StepFourReview({
             )}
             {uploadFields.cover?.visible && (
               <div className="pt-3">
-                <p className="text-xs text-slate-500 mb-2">Foto Setelah Buka Undangan</p>
+                <p className="text-xs text-slate-500 mb-2">Cover Dalam Desktop</p>
                 <p className="text-sm font-medium">{coverImage?.name || "Belum upload"}</p>
+              </div>
+            )}
+            {uploadFields.openingThumbnail?.visible && (
+              <div className="pt-3">
+                <p className="text-xs text-slate-500 mb-2">Thumbnail Pasangan Section Pertama</p>
+                <p className="text-sm font-medium">{openingThumbnailImage?.name || "Belum upload"}</p>
               </div>
             )}
             {uploadFields.bridePhoto?.visible && (
@@ -1738,6 +1741,7 @@ export default function CreateInvitationFormPage() {
 
   const [coverImage, setCoverImage] = useState(null);
   const [frontCoverImage, setFrontCoverImage] = useState(null);
+  const [openingThumbnailImage, setOpeningThumbnailImage] = useState(null);
   const [galleryImages, setGalleryImages] = useState([]);
   const [quotePresetId, setQuotePresetId] = useState("");
   const [quote, setQuote] = useState("");
@@ -1798,6 +1802,7 @@ export default function CreateInvitationFormPage() {
     const hasMedia = Boolean(
       (uploadConfig.cover?.visible && coverImage) ||
       (uploadConfig.frontCover?.visible && frontCoverImage) ||
+      (uploadConfig.openingThumbnail?.visible && openingThumbnailImage) ||
       (uploadConfig.saveTheDateBackground?.visible && saveTheDateBackgroundImage) ||
       (uploadConfig.wishesBackground?.visible && wishesBackgroundImage) ||
       (uploadConfig.closingBackground?.visible && closingBackgroundImage) ||
@@ -1820,6 +1825,7 @@ export default function CreateInvitationFormPage() {
     resepsi,
     coverImage,
     frontCoverImage,
+    openingThumbnailImage,
     saveTheDateBackgroundImage,
     wishesBackgroundImage,
     closingBackgroundImage,
@@ -1860,6 +1866,7 @@ export default function CreateInvitationFormPage() {
   useEffect(() => {
     if (!uploadConfig.frontCover?.visible) setFrontCoverImage(null);
     if (!uploadConfig.cover?.visible) setCoverImage(null);
+    if (!uploadConfig.openingThumbnail?.visible) setOpeningThumbnailImage(null);
     if (!uploadConfig.bridePhoto?.visible) {
       setBride((prev) => (prev.photo ? { ...prev, photo: null } : prev));
     }
@@ -1958,13 +1965,16 @@ export default function CreateInvitationFormPage() {
       return ["Isi tanggal, jam, dan alamat acara dengan detail.", "Tempel link Google Maps agar tamu tidak tersesat.", "Resepsi sekarang selalu aktif dan wajib diisi.", "Aktifkan pembagian sesi hanya jika tamu datang per gelombang waktu."];
     }
     if (currentStep === 3) {
+      if (selectedTheme?.slug === "puspa-asmara") {
+        return ["Cover depan memakai asset bawaan template dan tidak perlu diupload.", "Upload cover dalam desktop untuk tampilan setelah undangan dibuka.", "Upload thumbnail pasangan untuk section pertama setelah undangan dibuka.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup."];
+      }
       return ["Upload cover depan khusus untuk halaman sampul sebelum undangan dibuka.", "Upload foto setelah buka undangan untuk hero section di bagian dalam.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Isi ayat atau quote agar area opening mengikuti template BASIC."];
     }
     if (currentStep === 4) {
       return ["Periksa kembali nama mempelai dan orang tua.", "Pastikan jadwal acara sudah benar.", "Lihat ulang galeri dan cerita cinta.", "Jika semua benar, lanjut submit pesanan."];
     }
     return ["Gunakan nama lengkap sesuai identitas.", "Isi nama orang tua sesuai format undangan.", "Akun Instagram opsional, bisa dikosongkan.", "Klik Selanjutnya untuk lanjut ke data acara."];
-  }, [currentStep]);
+  }, [currentStep, selectedTheme?.slug]);
 
   const addSession = () => setSessions((prev) => [...prev, { id: Date.now(), start: "13:00", end: "14:00" }]);
   const removeSession = (id) => setSessions((prev) => prev.filter((session) => session.id !== id));
@@ -1989,7 +1999,7 @@ export default function CreateInvitationFormPage() {
   };
 
   const handleUploadCover = async (event) => {
-    const asset = await readSingleImageFromInput(event, "foto sampul");
+    const asset = await readSingleImageFromInput(event, "cover dalam desktop");
     if (asset) {
       setCoverImage(asset);
     }
@@ -1999,6 +2009,13 @@ export default function CreateInvitationFormPage() {
     const asset = await readSingleImageFromInput(event, "foto cover depan");
     if (asset) {
       setFrontCoverImage(asset);
+    }
+  };
+
+  const handleUploadOpeningThumbnail = async (event) => {
+    const asset = await readSingleImageFromInput(event, "thumbnail pasangan section pertama");
+    if (asset) {
+      setOpeningThumbnailImage(asset);
     }
   };
 
@@ -2240,13 +2257,14 @@ export default function CreateInvitationFormPage() {
       const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
-        frontCoverImage, coverImage, galleryImages, stories,
+        frontCoverImage, coverImage, openingThumbnailImage, galleryImages, stories,
         quote, quoteSource, saveTheDateBackgroundImage, wishesBackgroundImage, closingBackgroundImage,
         giftInfo: {
           bankList: normalizedGiftBankList,
           shipping: normalizedGiftShipping,
         },
         selectedPackage,
+        selectedTheme,
         musicMode,
         selectedMusicTrack,
         uploadedMusicFile,
@@ -2330,8 +2348,15 @@ export default function CreateInvitationFormPage() {
       const singleCoverFlow = usesSingleCoverFlow(uploadConfig);
       if (uploadConfig.cover?.required && !coverImage) {
         return {
-          message: "Mohon upload foto setelah buka undangan terlebih dahulu.",
-          selector: "#inner_cover_upload_section",
+          message: "Mohon upload cover dalam desktop terlebih dahulu.",
+          selector: "#after_open_desktop_upload_section",
+          shouldFocus: false,
+        };
+      }
+      if (uploadConfig.openingThumbnail?.required && !openingThumbnailImage) {
+        return {
+          message: "Mohon upload thumbnail pasangan section pertama terlebih dahulu.",
+          selector: "#opening_thumbnail_upload_section",
           shouldFocus: false,
         };
       }
@@ -2389,6 +2414,13 @@ export default function CreateInvitationFormPage() {
           value: closingBackgroundImage,
           message: "Mohon upload background penutup terlebih dahulu.",
           selector: "#closing_background_upload_section",
+          shouldFocus: false,
+        },
+        {
+          visible: uploadConfig.openingThumbnail?.required,
+          value: openingThumbnailImage,
+          message: "Mohon upload thumbnail pasangan section pertama terlebih dahulu.",
+          selector: "#opening_thumbnail_upload_section",
           shouldFocus: false,
         },
         {
@@ -2496,6 +2528,7 @@ export default function CreateInvitationFormPage() {
       const {
         uploadedFrontCover,
         uploadedCover,
+        uploadedOpeningThumbnail,
         uploadedGroomPhoto,
         uploadedBridePhoto,
         uploadedAkadCover,
@@ -2510,6 +2543,7 @@ export default function CreateInvitationFormPage() {
         orderId,
         frontCoverImage,
         coverImage,
+        openingThumbnailImage,
         groomPhoto: groom.photo,
         bridePhoto: bride.photo,
         akadCoverImage: shouldIncludeAkadCoverUpload ? akad.coverImage : null,
@@ -2547,6 +2581,7 @@ export default function CreateInvitationFormPage() {
         sessions: isSessionEnabled ? sessions : [],
         frontCoverImage: uploadedFrontCover,
         coverImage: uploadedCover,
+        openingThumbnailImage: uploadedOpeningThumbnail,
         saveTheDateBackgroundImage: uploadedSaveTheDateBackground,
         wishesBackgroundImage: uploadedWishesBackground,
         closingBackgroundImage: uploadedClosingBackground,
@@ -2724,6 +2759,7 @@ export default function CreateInvitationFormPage() {
               <StepThreeFoto
                 coverImage={coverImage}
                 frontCoverImage={frontCoverImage}
+                openingThumbnailImage={openingThumbnailImage}
                 groomPhoto={groom.photo}
                 bridePhoto={bride.photo}
                 akadCoverImage={akad.coverImage}
@@ -2742,6 +2778,7 @@ export default function CreateInvitationFormPage() {
                 setStories={setStories}
                 isReceptionEnabled={isReceptionEnabled}
                 onUploadCover={handleUploadCover}
+                onUploadOpeningThumbnail={handleUploadOpeningThumbnail}
                 onUploadFrontCover={handleUploadFrontCover}
                 onUploadGroomPhoto={handleUploadGroomPhoto}
                 onRemoveGroomPhoto={() => setGroom((prev) => ({ ...prev, photo: null }))}
@@ -2762,6 +2799,7 @@ export default function CreateInvitationFormPage() {
                 onUploadLoveStoryPhotoTwo={handleUploadStoryPhoto(1, "thumbnail love story kedua")}
                 onRemoveLoveStoryPhotoTwo={() => handleRemoveStoryPhoto(1)}
                 onRemoveCover={() => setCoverImage(null)}
+                onRemoveOpeningThumbnail={() => setOpeningThumbnailImage(null)}
                 onRemoveFrontCover={() => setFrontCoverImage(null)}
                 onUploadGallery={handleUploadGallery}
                 onRemoveGallery={(id) => setGalleryImages((prev) => prev.filter((img) => img.id !== id))}
@@ -2791,6 +2829,7 @@ export default function CreateInvitationFormPage() {
                 isSessionEnabled={isSessionEnabled}
                 sessions={sessions}
                 coverImage={coverImage}
+                openingThumbnailImage={openingThumbnailImage}
                 quote={quote}
                 quoteSource={quoteSource}
                 saveTheDateBackgroundImage={saveTheDateBackgroundImage}
