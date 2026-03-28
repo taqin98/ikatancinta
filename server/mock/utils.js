@@ -3,6 +3,29 @@ import { findThemeBySlug } from "./data/themes.seed.js";
 
 const PUBLIC_INVITATION_STATUSES = new Set(["published", "done"]);
 
+function normalizeText(value) {
+  return String(value || "").trim();
+}
+
+function inferLivestreamPlatformLabel(url, fallback = "") {
+  const raw = normalizeText(url).toLowerCase();
+  if (!raw) return normalizeText(fallback);
+  if (raw.includes("youtube.com") || raw.includes("youtu.be")) return "YouTube";
+  if (raw.includes("instagram.com")) return "Instagram";
+  if (raw.includes("zoom.us")) return "Zoom";
+  if (raw.includes("tiktok.com")) return "TikTok";
+  return normalizeText(fallback) || "Live Streaming";
+}
+
+function formatEventTimeRange(startTime, endTime) {
+  const start = normalizeText(startTime);
+  const end = normalizeText(endTime);
+  if (!start) return "";
+  const normalizedStart = start.replace(":", ".");
+  if (!end) return `${normalizedStart} WIB`;
+  return `${normalizedStart} - ${end.replace(":", ".")} WIB`;
+}
+
 function normalizeAssetPayload(asset, fallbackKind = "file") {
   if (!asset) return null;
 
@@ -84,6 +107,12 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
   const rawGalleryImages = Array.isArray(payload?.galleryImages)
     ? payload.galleryImages.map((image) => normalizeAssetPayload(image, "gallery")).filter(Boolean)
     : [];
+  const rawLivestream = payload?.livestream || payload?.event?.livestream || {};
+  const livestreamUrl = normalizeText(rawLivestream?.url || rawLivestream?.link);
+  const livestreamEnabled = Boolean(payload?.features?.livestreamEnabled || rawLivestream?.enabled || livestreamUrl);
+  const livestreamPlatformLabel = inferLivestreamPlatformLabel(livestreamUrl, rawLivestream?.platformLabel || rawLivestream?.label);
+  const livestreamDate = normalizeText(rawLivestream?.date || payload?.akad?.date);
+  const livestreamTime = normalizeText(rawLivestream?.time || formatEventTimeRange(payload?.akad?.startTime, payload?.akad?.endTime));
   const status = "published";
   const isPublished = PUBLIC_INVITATION_STATUSES.has(status);
   const publishedAt = new Date().toISOString();
@@ -173,10 +202,10 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
         mapsUrl: "https://maps.google.com",
       },
       livestream: {
-        date: "Senin, 30 Maret 2026",
-        time: "10.00 WIB",
-        platformLabel: "YouTube",
-        url: "https://youtube.com",
+        date: livestreamDate,
+        time: livestreamTime,
+        platformLabel: livestreamPlatformLabel,
+        url: livestreamUrl,
       },
     },
     akad: {
@@ -200,7 +229,7 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
       coverImage: normalizeAssetPayload(payload?.resepsi?.coverImage, "resepsi-cover"),
     },
     copy: {
-      openingGreeting: theme?.title || "The Wedding Of",
+      openingGreeting: "The Wedding Of",
       openingText: "Tanpa mengurangi rasa hormat, kami mengundang Anda untuk menghadiri acara pernikahan kami.",
       quote: "",
       quoteSource: "",
@@ -220,6 +249,13 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
     stories: packageConfig.capabilities.loveStory ? rawStories : [],
     gallery: Array.from({ length: Math.min(packageConfig.limits.galleryMax, 4) }, () => heroPhoto).filter(Boolean),
     galleryImages: rawGalleryImages,
+    livestream: {
+      enabled: livestreamEnabled,
+      url: livestreamUrl,
+      platformLabel: livestreamPlatformLabel,
+      date: livestreamDate,
+      time: livestreamTime,
+    },
     features: {
       countdownEnabled: true,
       saveTheDateEnabled: true,
@@ -230,7 +266,7 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
           : [],
       },
       rsvpEnabled: packageConfig.capabilities.rsvp,
-      livestreamEnabled: packageConfig.capabilities.livestream,
+      livestreamEnabled: livestreamEnabled,
     },
     gift: {
       bankList: Array.isArray(payload?.gift?.bankList) ? payload.gift.bankList : [],
@@ -337,6 +373,16 @@ export function sanitizeOrderPayload(payload) {
     : [];
 
   const music = normalizeMusicPayload(payload?.music, packageConfig);
+  const normalizedLivestreamUrl = normalizeText(payload?.livestream?.url || payload?.livestream?.link);
+  const livestream = {
+    enabled: Boolean(payload?.livestream?.enabled || normalizedLivestreamUrl),
+    url: normalizedLivestreamUrl,
+    platformLabel: inferLivestreamPlatformLabel(normalizedLivestreamUrl, payload?.livestream?.platformLabel || payload?.livestream?.label),
+  };
+  const features = {
+    ...(payload?.features || {}),
+    livestreamEnabled: Boolean(payload?.features?.livestreamEnabled || livestream.enabled || livestream.url),
+  };
 
   return {
     value: {
@@ -344,6 +390,8 @@ export function sanitizeOrderPayload(payload) {
       coverImage: sanitizeAssetReference(payload?.coverImage, "cover"),
       galleryImages,
       stories,
+      livestream,
+      features,
       music,
       selectedTheme: {
         ...selectedTheme,

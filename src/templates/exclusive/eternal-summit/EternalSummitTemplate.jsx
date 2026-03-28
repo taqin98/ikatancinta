@@ -173,6 +173,10 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     skipFetch: Boolean(propData),
   });
   const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
+  const liveOrderPayload = useMemo(
+    () => mergedData?.order?.payload || fetchedData?.order?.payload || propData?.order?.payload || {},
+    [mergedData, fetchedData, propData]
+  );
   const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
 
   const fallbackWishes = useMemo(() => {
@@ -284,9 +288,25 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     const heroDate = normalizeText(event.heroDate || copy.heroDate || "Minggu, 28 Desember 2025");
     const countdownDateISO = event.dateISO || "2026-02-04T10:00:00+07:00";
 
+    const orderPayload = liveOrderPayload;
     const akad = event.akad || {};
     const resepsi = event.resepsi || {};
-    const streaming = mergedData?.streaming || {};
+    const streamingSource =
+      mergedData?.streaming ||
+      mergedData?.livestream ||
+      mergedData?.event?.livestream ||
+      orderPayload?.streaming ||
+      orderPayload?.livestream ||
+      {};
+    const streaming = {
+      title: normalizeText(streamingSource?.title || copy.streamingTitle || "Live Streaming"),
+      intro: normalizeText(streamingSource?.intro || copy.streamingIntro || ""),
+      date: normalizeText(streamingSource?.date || ""),
+      time: normalizeText(streamingSource?.time || ""),
+      label: normalizeText(streamingSource?.label || "Klik Disini"),
+      url: normalizeText(streamingSource?.url || streamingSource?.link || ""),
+    };
+    const hasStreaming = (orderPayload?.features?.livestreamEnabled ?? mergedData?.features?.livestreamEnabled ?? false) || Boolean(streaming.url);
     const stories = Array.isArray(mergedData?.loveStory) ? mergedData.loveStory : [];
     const gifts = mergedData?.gifts || {};
     const bankList = Array.isArray(gifts.bankAccounts) ? gifts.bankAccounts : [];
@@ -374,12 +394,14 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     setHtml(root, ".elementor-element-48b08001 .elementor-widget-container", formatAddressHtml(resepsi.addressName || "", resepsi.address || ""));
     setLink(root, ".elementor-element-6f77a52c a.elementor-button", normalizeText(resepsi.mapsUrl || "https://www.google.com/maps"));
 
-    setText(root, ".elementor-element-7185baf3 .elementor-heading-title", normalizeText(streaming.title || copy.streamingTitle || "Live Streaming"));
-    setHtml(root, ".elementor-element-4b860fdb .elementor-widget-container", `<p>${escapeHtml(streaming.intro || copy.streamingIntro || "")}</p>`);
+    setText(root, ".elementor-element-7185baf3 .elementor-heading-title", streaming.title || "Live Streaming");
+    setHtml(root, ".elementor-element-4b860fdb .elementor-widget-container", `<p>${escapeHtml(streaming.intro || "")}</p>`);
     setHtml(root, ".elementor-element-5d5400e7 .elementor-widget-container", `<p>${escapeHtml(streaming.date || "")}</p>`);
     setHtml(root, ".elementor-element-1bf2a554 .elementor-widget-container", `<p>${escapeHtml(streaming.time || "")}</p>`);
-    setText(root, ".elementor-element-c42713b .elementor-button-text", normalizeText(streaming.label || "Klik Disini"));
-    setLink(root, ".elementor-element-c42713b a.elementor-button", normalizeText(streaming.url || "https://www.instagram.com/"));
+    setText(root, ".elementor-element-c42713b .elementor-button-text", streaming.label || "Klik Disini");
+    setLink(root, ".elementor-element-c42713b a.elementor-button", streaming.url);
+    const streamingWrap = root.querySelector(".elementor-element-2a68ad7b");
+    if (streamingWrap) streamingWrap.style.display = hasStreaming ? "" : "none";
 
     setHtml(root, ".elementor-element-6018d302 .elementor-widget-container", `<p>${escapeHtml(copy.galleryTitle || "Gallery")}</p>`);
 
@@ -870,7 +892,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
         }
       });
     };
-  }, [mergedData, wishes, fallbackWishes]);
+  }, [mergedData, wishes, fallbackWishes, liveOrderPayload]);
 
   useEffect(() => {
     if (!lightboxImage) return undefined;

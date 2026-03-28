@@ -173,15 +173,17 @@ export function mapFormToInvitationSchema({
         ...(giftInfo?.shipping || {}),
     };
     const hasGiftData = mappedGiftBankList.length > 0 || Boolean(mappedGiftShipping.recipient || mappedGiftShipping.phone || mappedGiftShipping.address);
+    const normalizedLivestreamUrl = String(livestream?.url || "").trim();
+    const isLivestreamEnabled = packageCapabilities.livestream === true && (Boolean(livestream?.enabled) || Boolean(normalizedLivestreamUrl));
     const resolvedAudioSrc = musicMode === "upload"
         ? uploadedMusicFile?.dataUrl || defaultSchema.audio?.src || ""
         : selectedMusicTrack?.previewUrl || defaultSchema.audio?.src || "";
     const mappedStreaming = {
         ...(defaultSchema.streaming || {}),
-        url: livestream?.url || defaultSchema.streaming?.url || "",
-        label: inferStreamingLabel(livestream?.url),
-        date: mappedAkad.date || defaultSchema.streaming?.date || "",
-        time: mappedAkad.time || defaultSchema.streaming?.time || "",
+        url: isLivestreamEnabled ? normalizedLivestreamUrl : "",
+        label: inferStreamingLabel(normalizedLivestreamUrl),
+        date: isLivestreamEnabled ? (mappedAkad.date || defaultSchema.streaming?.date || "") : "",
+        time: isLivestreamEnabled ? (mappedAkad.time || defaultSchema.streaming?.time || "") : "",
     };
 
     return {
@@ -231,7 +233,7 @@ export function mapFormToInvitationSchema({
             ...defaultSchema.features,
             digitalEnvelopeEnabled: Boolean(packageCapabilities.digitalEnvelope && hasGiftData),
             rsvpEnabled: packageCapabilities.rsvp ?? defaultSchema.features?.rsvpEnabled,
-            livestreamEnabled: packageCapabilities.livestream ?? defaultSchema.features?.livestreamEnabled,
+            livestreamEnabled: isLivestreamEnabled,
         },
         audio: {
             ...defaultSchema.audio,

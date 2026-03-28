@@ -218,6 +218,51 @@ const THEME_UPLOAD_OVERRIDES = {
       description: "Dipakai sebagai foto penutup pada section akhir Puspa Asmara.",
     },
   },
+  "botanical-elegance": {
+    frontCover: {
+      visible: true,
+      required: true,
+      title: "Foto Thumbnail Pasangan",
+      reviewLabel: "Thumbnail Pasangan Cover Depan",
+      uploadLabel: "Upload atau Drop Foto",
+      validationMessage: "Mohon upload foto thumbnail pasangan terlebih dahulu.",
+      description: "Dipakai sebagai foto thumbnail pasangan pada cover utama sebelum tamu menekan tombol buka undangan di Botanical Elegance.",
+    },
+    cover: {
+      visible: true,
+      required: true,
+      title: "Foto Side Cover Desktop",
+      reviewLabel: "Side Cover Desktop",
+      sectionTitle: "Cover Desktop",
+      validationMessage: "Mohon upload foto side cover desktop terlebih dahulu.",
+      description: "Dipakai khusus untuk side cover di sisi kiri pada tampilan desktop atau laptop di Botanical Elegance. Bagian ini bisa dianggap sebagai cover utama desktop.",
+    },
+    openingThumbnail: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Botanical Elegance karena foto pasangan ditampilkan di cover utama sebelum undangan dibuka.",
+    },
+    akadCover: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Botanical Elegance karena section akad tidak memakai background foto terpisah.",
+    },
+    resepsiCover: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Botanical Elegance karena section resepsi tidak memakai background foto terpisah.",
+    },
+    loveStoryPhotoOne: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Botanical Elegance karena section love story tidak memiliki thumbnail foto.",
+    },
+    loveStoryPhotoTwo: {
+      visible: false,
+      required: false,
+      description: "Tidak digunakan di template Botanical Elegance karena section love story tidak memiliki thumbnail foto.",
+    },
+  },
 };
 
 export function getThemeUploadConfig(theme, packageConfig) {

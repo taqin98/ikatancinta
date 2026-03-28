@@ -273,6 +273,10 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     incomingData?.giftInfo ||
     incomingData?.gifts ||
     {};
+  const runtimeFeatures = {
+    ...(incomingData?.features || {}),
+    ...(orderPayload?.features || {}),
+  };
   const runtimeBankList = Array.isArray(rawGift?.bankList)
     ? rawGift.bankList
     : Array.isArray(rawGift?.bankAccounts)
@@ -354,6 +358,13 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
       ...(incomingData?.gifts || {}),
       bankAccounts: runtimeBankList,
       shipping: runtimeShipping,
+    },
+    features: {
+      ...runtimeFeatures,
+      livestreamEnabled:
+        orderPayload?.features?.livestreamEnabled ??
+        incomingData?.features?.livestreamEnabled ??
+        Boolean(runtimeStreamingUrl),
     },
     event: {
       ...(incomingData.event || {}),
@@ -1063,7 +1074,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       time: pickText(livestreamSource?.time, akad.time),
       url: pickText(livestreamSource?.url),
     };
-    const hasStreaming = (mergedData?.features?.livestreamEnabled ?? true) && Boolean(streaming.url);
+    const hasStreaming = (mergedData?.features?.livestreamEnabled ?? false) || Boolean(streaming.url);
 
     const legacyGift = mergedData?.gifts || {};
     const genericGift = mergedData?.gift || {};

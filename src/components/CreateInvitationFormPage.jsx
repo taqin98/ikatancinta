@@ -20,6 +20,53 @@ const INITIAL_RESEPSI = { date: "", startTime: "", endTime: "", venue: "", addre
 const INITIAL_GIFT_BANK = { bank: "", account: "", name: "" };
 const INITIAL_GIFT_BANKS = [INITIAL_GIFT_BANK, INITIAL_GIFT_BANK].map((item) => ({ ...item }));
 const INITIAL_GIFT_SHIPPING = { recipient: "", phone: "", address: "" };
+const INITIAL_LIVESTREAM = { enabled: false, url: "" };
+const GIFT_PAYMENT_PROVIDER_GROUPS = [
+  {
+    label: "Bank Nasional",
+    options: [
+      "BCA",
+      "Bank Mandiri",
+      "BRI",
+      "BNI",
+      "BTN",
+      "BSI",
+      "CIMB Niaga",
+      "Permata Bank",
+      "Bank Danamon",
+      "Bank OCBC NISP",
+      "Maybank Indonesia",
+      "Bank Panin",
+      "Bank Mega",
+      "Bank Sinarmas",
+      "Bank Muamalat",
+      "Bank BTPN",
+      "Jenius",
+      "Bank Jago",
+      "SeaBank",
+      "Bank Neo Commerce",
+      "DBS Indonesia",
+      "UOB Indonesia",
+      "Bank Bukopin",
+      "Bank Commonwealth",
+      "Allo Bank",
+    ],
+  },
+  {
+    label: "E-Wallet",
+    options: [
+      "DANA",
+      "OVO",
+      "GoPay",
+      "ShopeePay",
+      "LinkAja",
+      "iSaku",
+      "Sakuku",
+      "AstraPay",
+    ],
+  },
+];
+const GIFT_PAYMENT_PROVIDER_VALUES = GIFT_PAYMENT_PROVIDER_GROUPS.flatMap((group) => group.options);
 const INITIAL_SESSIONS = [
   { id: 1, start: "10:00", end: "11:00" },
   { id: 2, start: "11:30", end: "12:30" },
@@ -640,13 +687,23 @@ function StepTwoAcara({
                 <div key={`gift-bank-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
                   <p className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">Rekening / E-Wallet {index + 1}</p>
                   <div className="space-y-3">
-                    <input
-                      type="text"
+                    <select
                       value={bank.bank}
                       onChange={handleGiftBank(index, "bank")}
-                      placeholder="Contoh: BCA, Mandiri, BRI, DANA"
                       className="w-full rounded-lg border-slate-200 bg-white px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-900"
-                    />
+                    >
+                      <option value="">Pilih bank / e-wallet</option>
+                      {!GIFT_PAYMENT_PROVIDER_VALUES.includes(bank.bank) && bank.bank ? <option value={bank.bank}>{bank.bank}</option> : null}
+                      {GIFT_PAYMENT_PROVIDER_GROUPS.map((group) => (
+                        <optgroup key={group.label} label={group.label}>
+                          {group.options.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                    </select>
                     <input
                       type="text"
                       value={bank.account}
@@ -789,6 +846,9 @@ function ImageUploadCard({
 }
 
 function StepThreeFoto({
+  themeSlug,
+  livestream,
+  setLivestream,
   frontCoverImage,
   coverImage,
   openingThumbnailImage,
@@ -846,11 +906,16 @@ function StepThreeFoto({
   const galleryLimit = packageConfig?.limits?.galleryMax || 4;
   const canUploadCustomMusic = packageConfig?.capabilities?.customMusic === true;
   const canUseLoveStory = packageConfig?.capabilities?.loveStory === true;
+  const canUseLivestream = packageConfig?.capabilities?.livestream === true;
   const uploadFields = uploadConfig || {};
   const canShowLoveStoryPhotos = canUseLoveStory && (uploadFields.loveStoryPhotoOne?.visible || uploadFields.loveStoryPhotoTwo?.visible);
   const singleCoverFlow = usesSingleCoverFlow(uploadFields);
-  const frontCoverTitle = singleCoverFlow ? "Foto Cover Utama" : "Foto Cover Depan";
-  const frontCoverUploadText = singleCoverFlow ? "Upload atau Drop Foto Cover Utama" : "Upload atau Drop Foto Cover Depan";
+  const isBotanicalElegance = themeSlug === "botanical-elegance";
+  const showBotanicalCoverRow = isBotanicalElegance && uploadFields.frontCover?.visible && uploadFields.cover?.visible && !uploadFields.openingThumbnail?.visible;
+  const frontCoverTitle = uploadFields.frontCover?.title || (singleCoverFlow ? "Foto Cover Utama" : "Foto Cover Depan");
+  const frontCoverUploadText = uploadFields.frontCover?.uploadLabel || (singleCoverFlow ? "Upload atau Drop Foto Cover Utama" : "Upload atau Drop Foto Cover Depan");
+  const innerCoverSectionTitle = uploadFields.cover?.sectionTitle || "Foto Setelah Buka Undangan";
+  const innerCoverTitle = uploadFields.cover?.title || "Cover Desktop";
   const [dragTarget, setDragTarget] = useState("");
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
@@ -882,6 +947,100 @@ function StepThreeFoto({
     },
   });
 
+  const renderFrontCoverUploader = (className = "") => (
+    <div className={className}>
+      <div className="flex items-baseline justify-between px-1">
+        <h3 className="text-lg font-bold">{frontCoverTitle}</h3>
+        <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
+      </div>
+
+      {frontCoverImage ? (
+        <div
+          className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
+          {...createDropZoneProps("front-cover", onUploadFrontCover)}
+        >
+          <img src={frontCoverImage.url} alt={frontCoverImage.name} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-white text-sm font-semibold truncate">{frontCoverImage.name}</p>
+              <p className="text-white/80 text-xs">{frontCoverImage.sizeLabel}</p>
+            </div>
+            <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
+              <span className="material-symbols-outlined text-xl">edit</span>
+              <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
+            </label>
+          </div>
+          <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveFrontCover}>
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+      ) : (
+        <label
+          className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
+          {...createDropZoneProps("front-cover", onUploadFrontCover)}
+        >
+          <span className="material-symbols-outlined text-3xl">upload</span>
+          <span className="text-sm font-semibold">{frontCoverUploadText}</span>
+          <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
+        </label>
+      )}
+
+      <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
+        <span className="material-symbols-outlined text-sm">info</span>
+        {uploadFields.frontCover?.description}
+      </p>
+    </div>
+  );
+
+  const renderDesktopSideCoverUploader = (className = "") => (
+    <div className={className}>
+      <div className="flex items-baseline justify-between px-1">
+        <h3 className="text-lg font-bold">{innerCoverTitle}</h3>
+        <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">
+          {uploadFields.cover?.required ? "Wajib" : "Opsional"}
+        </span>
+      </div>
+
+      {coverImage ? (
+        <div
+          className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "desktop-side-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
+          {...createDropZoneProps("desktop-side-cover", onUploadCover)}
+        >
+          <img src={coverImage.url} alt={coverImage.name} className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
+          <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-white text-sm font-semibold truncate">{coverImage.name}</p>
+              <p className="text-white/80 text-xs">{coverImage.sizeLabel}</p>
+            </div>
+            <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
+              <span className="material-symbols-outlined text-xl">edit</span>
+              <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
+            </label>
+          </div>
+          <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveCover}>
+            <span className="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+      ) : (
+        <label
+          className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "desktop-side-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
+          {...createDropZoneProps("desktop-side-cover", onUploadCover)}
+        >
+          <span className="material-symbols-outlined text-3xl">upload</span>
+          <span className="text-sm font-semibold">Upload atau Drop Foto</span>
+          <input type="file" accept="image/*" className="hidden" onChange={onUploadCover} />
+        </label>
+      )}
+
+      <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
+        <span className="material-symbols-outlined text-sm">info</span>
+        {uploadFields.cover?.description}
+      </p>
+    </div>
+  );
+
   return (
     <>
       <div className="mb-8">
@@ -889,56 +1048,25 @@ function StepThreeFoto({
         <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Sesuaikan foto, quote, dan media pendukung agar konten yang tampil tetap mengikuti desain tema yang dipilih.</p>
       </div>
 
-      {uploadFields.frontCover?.visible && (
+      {showBotanicalCoverRow ? (
+        <section id="cover_upload_section" className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+            {renderDesktopSideCoverUploader("space-y-4")}
+          </article>
+          <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+            {renderFrontCoverUploader("space-y-4")}
+          </article>
+        </section>
+      ) : uploadFields.frontCover?.visible && (
         <section id="cover_upload_section" className="space-y-4 mb-8">
-          <div className="flex items-baseline justify-between px-1">
-            <h3 className="text-lg font-bold">{frontCoverTitle}</h3>
-            <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
-          </div>
-
-          {frontCoverImage ? (
-            <div
-              className={`group relative w-full aspect-video rounded-lg overflow-hidden shadow-soft bg-surface-light dark:bg-surface-dark border transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/10"}`}
-              {...createDropZoneProps("front-cover", onUploadFrontCover)}
-            >
-              <img src={frontCoverImage.url} alt={frontCoverImage.name} className="absolute inset-0 w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-70"></div>
-              <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                <div className="min-w-0">
-                  <p className="text-white text-sm font-semibold truncate">{frontCoverImage.name}</p>
-                  <p className="text-white/80 text-xs">{frontCoverImage.sizeLabel}</p>
-                </div>
-                <label className="bg-white/20 backdrop-blur-md hover:bg-white/30 text-white rounded-full p-2 transition-colors cursor-pointer">
-                  <span className="material-symbols-outlined text-xl">edit</span>
-                  <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
-                </label>
-              </div>
-              <button className="absolute top-3 right-3 bg-white/90 dark:bg-black/50 text-red-500 hover:text-red-600 rounded-full p-1.5 shadow-sm" type="button" onClick={onRemoveFrontCover}>
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
-            </div>
-          ) : (
-            <label
-              className={`w-full aspect-video rounded-lg border-2 border-dashed bg-primary-50/50 dark:bg-primary-900/10 flex flex-col items-center justify-center gap-2 text-primary cursor-pointer transition-colors ${dragTarget === "front-cover" ? "border-primary ring-2 ring-primary/20" : "border-primary/30 hover:border-primary"}`}
-              {...createDropZoneProps("front-cover", onUploadFrontCover)}
-            >
-              <span className="material-symbols-outlined text-3xl">upload</span>
-              <span className="text-sm font-semibold">{frontCoverUploadText}</span>
-              <input type="file" accept="image/*" className="hidden" onChange={onUploadFrontCover} />
-            </label>
-          )}
-
-          <p className="text-xs text-slate-500 px-1 flex items-center gap-1.5">
-            <span className="material-symbols-outlined text-sm">info</span>
-            {uploadFields.frontCover?.description}
-          </p>
+          {renderFrontCoverUploader("space-y-4")}
         </section>
       )}
 
-      {(uploadFields.cover?.visible || uploadFields.openingThumbnail?.visible) && (
+      {!showBotanicalCoverRow && (uploadFields.cover?.visible || uploadFields.openingThumbnail?.visible) && (
         <section id="inner_cover_upload_section" className="space-y-4 mb-8">
           <div className="flex items-baseline justify-between px-1">
-            <h3 className="text-lg font-bold">Foto Setelah Buka Undangan</h3>
+            <h3 className="text-lg font-bold">{innerCoverSectionTitle}</h3>
             <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
 
@@ -946,7 +1074,7 @@ function StepThreeFoto({
             {uploadFields.cover?.visible && (
               <ImageUploadCard
                 id="after_open_desktop_upload_section"
-                title="Cover Desktop"
+                title={innerCoverTitle}
                 description={uploadFields.cover?.description}
                 image={coverImage}
                 onUpload={onUploadCover}
@@ -1446,6 +1574,52 @@ function StepThreeFoto({
           </div>
         )}
       </section>
+
+      {canUseLivestream && (
+        <section className="space-y-4 mb-8">
+          <div className="flex items-baseline justify-between px-1">
+            <h3 className="text-lg font-bold">Livestreaming</h3>
+            <span className="text-xs font-medium text-slate-500">Opsional</span>
+          </div>
+
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40 space-y-4">
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-base font-bold">Aktifkan Livestreaming?</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">Jika diaktifkan, link livestream akan ditampilkan di undangan.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() =>
+                  setLivestream((prev) => (prev.enabled
+                    ? { enabled: false, url: "" }
+                    : { ...prev, enabled: true }))
+                }
+                className={`relative h-8 w-14 rounded-full transition-colors ${livestream.enabled ? "bg-primary" : "bg-slate-200 dark:bg-white/20"}`}
+              >
+                <span className={`absolute left-[2px] top-[2px] h-7 w-7 rounded-full bg-white border border-slate-300 transition-transform duration-300 ${livestream.enabled ? "translate-x-6" : "translate-x-0"}`}></span>
+              </button>
+            </div>
+
+            {livestream.enabled && (
+              <div className="space-y-2">
+                <label htmlFor="livestream_url" className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                  Link Livestreaming
+                </label>
+                <input
+                  id="livestream_url"
+                  type="url"
+                  value={livestream.url}
+                  onChange={(event) => setLivestream((prev) => ({ ...prev, url: event.target.value }))}
+                  placeholder="https://youtube.com/live/... atau https://instagram.com/..."
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-primary focus:ring-primary dark:border-slate-700 dark:bg-slate-950"
+                />
+                <p className="px-1 text-xs text-slate-500 dark:text-slate-400">Bisa memakai link YouTube Live, Instagram Live, Zoom, TikTok Live, atau platform lainnya.</p>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
     </>
   );
 }
@@ -1463,6 +1637,7 @@ function StepFourReview({
   openingThumbnailImage,
   quote,
   quoteSource,
+  livestream,
   saveTheDateBackgroundImage,
   wishesBackgroundImage,
   closingBackgroundImage,
@@ -1478,7 +1653,8 @@ function StepFourReview({
   const effectiveStoriesCount = selectedPackage?.capabilities?.loveStory ? stories.length : 0;
   const uploadFields = uploadConfig || {};
   const singleCoverFlow = usesSingleCoverFlow(uploadFields);
-  const frontCoverLabel = singleCoverFlow ? "Cover Utama" : "Cover Depan";
+  const frontCoverLabel = uploadFields.frontCover?.reviewLabel || (singleCoverFlow ? "Cover Utama" : "Cover Depan");
+  const coverReviewLabel = uploadFields.cover?.reviewLabel || "Cover Dalam Desktop";
   const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
   const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
   const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
@@ -1535,6 +1711,12 @@ function StepFourReview({
               {isSessionEnabled && (
                 <div><p className="text-xs text-slate-500">Teks Sesi di Bawah Resepsi</p><p className="text-sm font-medium">{formatSessionsSummary(sessions) || "-"}</p></div>
               )}
+              {selectedPackage?.capabilities?.livestream && (
+                <div>
+                  <p className="text-xs text-slate-500">Livestreaming</p>
+                  <p className="text-sm font-medium">{livestream?.enabled ? (livestream.url || "Aktif, link belum diisi") : "Tidak diaktifkan"}</p>
+                </div>
+              )}
             </div>
           </div>
         </details>
@@ -1556,7 +1738,7 @@ function StepFourReview({
             )}
             {uploadFields.cover?.visible && (
               <div className="pt-3">
-                <p className="text-xs text-slate-500 mb-2">Cover Dalam Desktop</p>
+                <p className="text-xs text-slate-500 mb-2">{coverReviewLabel}</p>
                 <p className="text-sm font-medium">{coverImage?.name || "Belum upload"}</p>
               </div>
             )}
@@ -1721,6 +1903,7 @@ export default function CreateInvitationFormPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const isReceptionEnabled = true;
   const [isSessionEnabled, setIsSessionEnabled] = useState(false);
+  const [livestream, setLivestream] = useState(INITIAL_LIVESTREAM);
   const [formAlert, setFormAlert] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitFailed, setHasSubmitFailed] = useState(false);
@@ -1808,6 +1991,8 @@ export default function CreateInvitationFormPage() {
       (uploadConfig.closingBackground?.visible && closingBackgroundImage) ||
       quote ||
       quoteSource ||
+      livestream.enabled ||
+      livestream.url ||
       galleryImages.length > 0 ||
       stories.some((story) => story.title || story.description || story.date || story.photo)
     );
@@ -1835,6 +2020,7 @@ export default function CreateInvitationFormPage() {
     galleryImages.length,
     quote,
     quoteSource,
+    livestream,
     stories,
     musicMode,
     uploadedMusicFile,
@@ -1968,7 +2154,10 @@ export default function CreateInvitationFormPage() {
       if (selectedTheme?.slug === "puspa-asmara") {
         return ["Cover depan memakai asset bawaan template dan tidak perlu diupload.", "Upload cover dalam desktop untuk tampilan setelah undangan dibuka.", "Upload thumbnail pasangan untuk section pertama setelah undangan dibuka.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup."];
       }
-      return ["Upload cover depan khusus untuk halaman sampul sebelum undangan dibuka.", "Upload foto setelah buka undangan untuk hero section di bagian dalam.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Isi ayat atau quote agar area opening mengikuti template BASIC."];
+      if (selectedTheme?.slug === "botanical-elegance") {
+        return ["Upload foto thumbnail pasangan untuk cover depan sebelum undangan dibuka.", "Upload foto side cover desktop untuk tampilan cover utama di layar laptop atau desktop.", "Template ini tidak memakai foto cover dalam setelah tombol buka undangan diklik.", "Aktifkan livestreaming hanya jika memang ada link siaran yang akan dibagikan."];
+      }
+      return ["Upload cover depan khusus untuk halaman sampul sebelum undangan dibuka.", "Upload foto setelah buka undangan untuk hero section di bagian dalam.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Aktifkan livestreaming jika Anda ingin menampilkan link siaran langsung di undangan."];
     }
     if (currentStep === 4) {
       return ["Periksa kembali nama mempelai dan orang tua.", "Pastikan jadwal acara sudah benar.", "Lihat ulang galeri dan cerita cinta.", "Jika semua benar, lanjut submit pesanan."];
@@ -2257,6 +2446,7 @@ export default function CreateInvitationFormPage() {
       const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
       const schemaData = mapFormToInvitationSchema({
         groom, bride, akad, resepsi, isReceptionEnabled,
+        livestream,
         frontCoverImage, coverImage, openingThumbnailImage, galleryImages, stories,
         quote, quoteSource, saveTheDateBackgroundImage, wishesBackgroundImage, closingBackgroundImage,
         giftInfo: {
@@ -2348,7 +2538,7 @@ export default function CreateInvitationFormPage() {
       const singleCoverFlow = usesSingleCoverFlow(uploadConfig);
       if (uploadConfig.cover?.required && !coverImage) {
         return {
-          message: "Mohon upload cover dalam desktop terlebih dahulu.",
+          message: uploadConfig.cover?.validationMessage || "Mohon upload cover dalam desktop terlebih dahulu.",
           selector: "#after_open_desktop_upload_section",
           shouldFocus: false,
         };
@@ -2362,9 +2552,9 @@ export default function CreateInvitationFormPage() {
       }
       if (uploadConfig.frontCover?.required && !frontCoverImage) {
         return {
-          message: singleCoverFlow
+          message: uploadConfig.frontCover?.validationMessage || (singleCoverFlow
             ? "Mohon upload foto cover utama terlebih dahulu."
-            : "Mohon upload foto cover depan terlebih dahulu.",
+            : "Mohon upload foto cover depan terlebih dahulu."),
           selector: "#cover_upload_section",
           shouldFocus: false,
         };
@@ -2381,7 +2571,6 @@ export default function CreateInvitationFormPage() {
           selector: "#quote_source",
         };
       }
-
       const uploadValidationChecks = [
         {
           visible: uploadConfig.bridePhoto?.required,
@@ -2525,6 +2714,16 @@ export default function CreateInvitationFormPage() {
       const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
       const shouldIncludeAkadCoverUpload = uploadConfig.akadCover?.visible;
       const shouldIncludeResepsiCoverUpload = uploadConfig.resepsiCover?.visible;
+      const normalizedLivestreamUrl = String(livestream?.url || "").trim();
+      const livestreamPayload = livestream.enabled
+        ? {
+          enabled: true,
+          url: normalizedLivestreamUrl,
+        }
+        : {
+          enabled: false,
+          url: "",
+        };
       const {
         uploadedFrontCover,
         uploadedCover,
@@ -2587,6 +2786,7 @@ export default function CreateInvitationFormPage() {
         closingBackgroundImage: uploadedClosingBackground,
         quote,
         quoteSource,
+        livestream: livestreamPayload,
         galleryImages: uploadedGallery,
         stories: uploadedStories,
         music: musicMode === "list"
@@ -2615,6 +2815,9 @@ export default function CreateInvitationFormPage() {
             bankList: [],
             shipping: {},
           },
+        features: {
+          livestreamEnabled: Boolean(livestream.enabled || normalizedLivestreamUrl),
+        },
         selectedPackage,
       };
 
@@ -2757,6 +2960,9 @@ export default function CreateInvitationFormPage() {
             )}
             {currentStep === 3 && (
               <StepThreeFoto
+                themeSlug={selectedTheme?.slug}
+                livestream={livestream}
+                setLivestream={setLivestream}
                 coverImage={coverImage}
                 frontCoverImage={frontCoverImage}
                 openingThumbnailImage={openingThumbnailImage}
@@ -2832,6 +3038,7 @@ export default function CreateInvitationFormPage() {
                 openingThumbnailImage={openingThumbnailImage}
                 quote={quote}
                 quoteSource={quoteSource}
+                livestream={livestream}
                 saveTheDateBackgroundImage={saveTheDateBackgroundImage}
                 wishesBackgroundImage={wishesBackgroundImage}
                 closingBackgroundImage={closingBackgroundImage}
