@@ -684,7 +684,7 @@ function StepTwoAcara({
           <>
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
               {giftBankList.map((bank, index) => (
-                <div key={`gift-bank-${index}`} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
+                <div key={`gift-bank-${index}`} className="rounded-md border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
                   <p className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">Rekening / E-Wallet {index + 1}</p>
                   <div className="space-y-3">
                     <select
@@ -723,7 +723,7 @@ function StepTwoAcara({
               ))}
             </div>
 
-            <div className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
+            <div className="rounded-md border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-700 dark:bg-slate-900/30">
               <p className="mb-3 text-sm font-bold text-slate-900 dark:text-slate-100">Alamat Pengiriman Hadiah</p>
               <div className="space-y-3">
                 <input
@@ -792,7 +792,7 @@ function ImageUploadCard({
   return (
     <article
       id={id}
-      className={`rounded-2xl border bg-white p-4 shadow-sm transition-colors dark:bg-slate-900/40 ${isDragOver ? "border-primary ring-2 ring-primary/20 dark:border-primary" : "border-slate-200 dark:border-slate-700"}`}
+      className={`rounded-md border bg-white p-4 shadow-sm transition-colors dark:bg-slate-900/40 ${isDragOver ? "border-primary ring-2 ring-primary/20 dark:border-primary" : "border-slate-200 dark:border-slate-700"}`}
       onDragEnter={handleDragOver}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -809,7 +809,7 @@ function ImageUploadCard({
       </div>
 
       {image ? (
-        <div className={`group relative overflow-hidden rounded-2xl border border-primary/10 bg-surface-light ${aspectClass}`}>
+        <div className={`group relative overflow-hidden rounded-md border border-primary/10 bg-surface-light ${aspectClass}`}>
           <img src={image.url} alt={image.name} className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-4">
@@ -832,7 +832,7 @@ function ImageUploadCard({
           </button>
         </div>
       ) : (
-        <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/30 bg-primary-50/40 text-center text-primary transition-colors hover:border-primary hover:bg-primary-50 dark:bg-primary-900/10 ${aspectClass}`}>
+        <label className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-md border-2 border-dashed border-primary/30 bg-primary-50/40 text-center text-primary transition-colors hover:border-primary hover:bg-primary-50 dark:bg-primary-900/10 ${aspectClass}`}>
           <span className="material-symbols-outlined text-3xl">upload</span>
           <div>
             <p className="text-sm font-semibold">Upload atau Drop Foto</p>
@@ -911,11 +911,21 @@ function StepThreeFoto({
   const canShowLoveStoryPhotos = canUseLoveStory && (uploadFields.loveStoryPhotoOne?.visible || uploadFields.loveStoryPhotoTwo?.visible);
   const singleCoverFlow = usesSingleCoverFlow(uploadFields);
   const isBotanicalElegance = themeSlug === "botanical-elegance";
-  const showBotanicalCoverRow = isBotanicalElegance && uploadFields.frontCover?.visible && uploadFields.cover?.visible && !uploadFields.openingThumbnail?.visible;
+  const isEternalSummit = themeSlug === "eternal-summit";
+  const showDualPrimaryCoverRow =
+    (isBotanicalElegance || isEternalSummit) &&
+    uploadFields.frontCover?.visible &&
+    uploadFields.cover?.visible &&
+    (isBotanicalElegance ? !uploadFields.openingThumbnail?.visible : true);
   const frontCoverTitle = uploadFields.frontCover?.title || (singleCoverFlow ? "Foto Cover Utama" : "Foto Cover Depan");
   const frontCoverUploadText = uploadFields.frontCover?.uploadLabel || (singleCoverFlow ? "Upload atau Drop Foto Cover Utama" : "Upload atau Drop Foto Cover Depan");
-  const innerCoverSectionTitle = uploadFields.cover?.sectionTitle || "Foto Setelah Buka Undangan";
+  const innerCoverSectionTitle = (showDualPrimaryCoverRow
+    ? uploadFields.openingThumbnail?.sectionTitle
+    : uploadFields.cover?.sectionTitle) || "Foto Setelah Buka Undangan";
   const innerCoverTitle = uploadFields.cover?.title || "Cover Desktop";
+  const showInnerDesktopCoverCard = !showDualPrimaryCoverRow && uploadFields.cover?.visible;
+  const showOpeningThumbnailCard = uploadFields.openingThumbnail?.visible;
+  const innerCoverGridClass = showInnerDesktopCoverCard && showOpeningThumbnailCard ? "grid grid-cols-1 gap-4 md:grid-cols-2" : "grid grid-cols-1 gap-4";
   const [dragTarget, setDragTarget] = useState("");
   const quotePresetGroups = QUOTE_CATEGORIES.map((category) => ({
     ...category,
@@ -1048,12 +1058,12 @@ function StepThreeFoto({
         <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Sesuaikan foto, quote, dan media pendukung agar konten yang tampil tetap mengikuti desain tema yang dipilih.</p>
       </div>
 
-      {showBotanicalCoverRow ? (
+      {showDualPrimaryCoverRow ? (
         <section id="cover_upload_section" className="mb-8 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+          <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
             {renderDesktopSideCoverUploader("space-y-4")}
           </article>
-          <article className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+          <article className="rounded-md border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
             {renderFrontCoverUploader("space-y-4")}
           </article>
         </section>
@@ -1063,15 +1073,15 @@ function StepThreeFoto({
         </section>
       )}
 
-      {!showBotanicalCoverRow && (uploadFields.cover?.visible || uploadFields.openingThumbnail?.visible) && (
+      {(!showDualPrimaryCoverRow || uploadFields.openingThumbnail?.visible) && ((showDualPrimaryCoverRow && uploadFields.openingThumbnail?.visible) || (!showDualPrimaryCoverRow && (uploadFields.cover?.visible || uploadFields.openingThumbnail?.visible))) && (
         <section id="inner_cover_upload_section" className="space-y-4 mb-8">
           <div className="flex items-baseline justify-between px-1">
             <h3 className="text-lg font-bold">{innerCoverSectionTitle}</h3>
             <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {uploadFields.cover?.visible && (
+          <div className={innerCoverGridClass}>
+            {showInnerDesktopCoverCard && (
               <ImageUploadCard
                 id="after_open_desktop_upload_section"
                 title={innerCoverTitle}
@@ -1083,10 +1093,10 @@ function StepThreeFoto({
                 badge={uploadFields.cover?.required ? "Wajib" : "Opsional"}
               />
             )}
-            {uploadFields.openingThumbnail?.visible && (
+            {showOpeningThumbnailCard && (
               <ImageUploadCard
                 id="opening_thumbnail_upload_section"
-                title="Foto Pasangan"
+                title={uploadFields.openingThumbnail?.title || "Foto Pasangan"}
                 description={uploadFields.openingThumbnail?.description}
                 image={openingThumbnailImage}
                 onUpload={onUploadOpeningThumbnail}
@@ -1104,7 +1114,7 @@ function StepThreeFoto({
           <h3 className="text-lg font-bold">Ayat / Quote</h3>
           <span className="text-xs font-medium text-primary bg-primary-50 dark:bg-primary-900/30 px-2 py-1 rounded-full">Wajib</span>
         </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
+        <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40">
           <div className="space-y-4">
             <div>
               <label className="mb-1.5 ml-1 block text-sm font-semibold text-slate-700 dark:text-slate-300">Pilih Preset Quote</label>
@@ -1223,7 +1233,7 @@ function StepThreeFoto({
                 badge={uploadFields.resepsiCover?.required ? "Wajib" : "Opsional"}
               />
             ) : uploadFields.resepsiCover?.visible ? (
-              <article className="flex aspect-video items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/20 dark:text-slate-400">
+              <article className="flex aspect-video items-center justify-center rounded-md border border-dashed border-slate-300 bg-slate-50 px-5 text-center text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-900/20 dark:text-slate-400">
                 Cover resepsi tidak diperlukan karena acara resepsi belum diaktifkan.
               </article>
             ) : null}
@@ -1481,7 +1491,7 @@ function StepThreeFoto({
         </div>
 
         {!canUseLoveStory && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             Tema BASIC tidak menampilkan section Love Story. Fokus konten BASIC ada di cover, profil pasangan, detail acara, galeri, dan RSVP.
           </div>
         )}
@@ -1502,7 +1512,7 @@ function StepThreeFoto({
                       <span className="material-symbols-outlined text-sm">{index === 0 ? "favorite" : "handshake"}</span>
                     </div>
                   </div>
-                  <div className="flex-grow space-y-3 bg-surface-light dark:bg-surface-dark p-4 rounded-2xl border border-gray-200 dark:border-gray-700 shadow-sm focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary/50 transition-all">
+                  <div className="flex-grow space-y-3 bg-surface-light dark:bg-surface-dark p-4 rounded-md border border-gray-200 dark:border-gray-700 shadow-sm focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary/50 transition-all">
                     <div className="space-y-1">
                       <label className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         Momen {index === 0 ? "Pertama" : `Ke-${index + 1}`}
@@ -1582,7 +1592,7 @@ function StepThreeFoto({
             <span className="text-xs font-medium text-slate-500">Opsional</span>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40 space-y-4">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-900/40 space-y-4">
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4">
               <div>
                 <p className="text-base font-bold">Aktifkan Livestreaming?</p>
@@ -1655,6 +1665,7 @@ function StepFourReview({
   const singleCoverFlow = usesSingleCoverFlow(uploadFields);
   const frontCoverLabel = uploadFields.frontCover?.reviewLabel || (singleCoverFlow ? "Cover Utama" : "Cover Depan");
   const coverReviewLabel = uploadFields.cover?.reviewLabel || "Cover Dalam Desktop";
+  const openingThumbnailReviewLabel = uploadFields.openingThumbnail?.reviewLabel || "Thumbnail Pasangan Section Pertama";
   const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
   const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
   const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
@@ -1744,7 +1755,7 @@ function StepFourReview({
             )}
             {uploadFields.openingThumbnail?.visible && (
               <div className="pt-3">
-                <p className="text-xs text-slate-500 mb-2">Thumbnail Pasangan Section Pertama</p>
+                <p className="text-xs text-slate-500 mb-2">{openingThumbnailReviewLabel}</p>
                 <p className="text-sm font-medium">{openingThumbnailImage?.name || "Belum upload"}</p>
               </div>
             )}
@@ -2156,6 +2167,9 @@ export default function CreateInvitationFormPage() {
       }
       if (selectedTheme?.slug === "botanical-elegance") {
         return ["Upload foto thumbnail pasangan untuk cover depan sebelum undangan dibuka.", "Upload foto side cover desktop untuk tampilan cover utama di layar laptop atau desktop.", "Template ini tidak memakai foto cover dalam setelah tombol buka undangan diklik.", "Aktifkan livestreaming hanya jika memang ada link siaran yang akan dibagikan."];
+      }
+      if (selectedTheme?.slug === "eternal-summit") {
+        return ["Upload cover utama portrait untuk halaman pembuka sebelum undangan dibuka.", "Upload cover desktop khusus tampilan layar laptop atau desktop di halaman utama.", "Upload thumbnail pasangan untuk section pertama setelah undangan dibuka.", "Aktifkan livestreaming jika memang ada link siaran yang akan dibagikan."];
       }
       return ["Upload cover depan khusus untuk halaman sampul sebelum undangan dibuka.", "Upload foto setelah buka undangan untuk hero section di bagian dalam.", "Tambahkan cover akad dan resepsi agar section acara lebih hidup.", "Aktifkan livestreaming jika Anda ingin menampilkan link siaran langsung di undangan."];
     }
@@ -3138,7 +3152,7 @@ export default function CreateInvitationFormPage() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-2xl shadow-2xl p-6"
+            className="w-full max-w-sm bg-white dark:bg-slate-900 rounded-md shadow-2xl p-6"
             style={{ animation: "dialogSlideUp 0.22s ease-out" }}
           >
             <div className="flex items-start gap-3 mb-5">

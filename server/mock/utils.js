@@ -185,6 +185,7 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
     },
     frontCoverImage: normalizeAssetPayload(payload?.frontCoverImage, "front-cover") || normalizeAssetPayload(frontCoverPhoto, "front-cover"),
     coverImage: normalizeAssetPayload(payload?.coverImage, "cover") || normalizeAssetPayload(heroPhoto, "cover"),
+    openingThumbnailImage: normalizeAssetPayload(payload?.openingThumbnailImage, "opening-thumbnail"),
     event: {
       dateISO: "2026-03-30T10:00:00+07:00",
       akad: {

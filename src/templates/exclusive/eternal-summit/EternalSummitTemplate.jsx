@@ -131,6 +131,10 @@ function writeStoredWishes(entries) {
   }
 }
 
+function getOpenStateStorageKey(invitationSlug) {
+  return `exclusive_03_open_${String(invitationSlug || "eternal-summit").trim().toLowerCase()}`;
+}
+
 function setText(root, selector, value) {
   const node = root.querySelector(selector);
   if (!node) return;
@@ -145,8 +149,8 @@ function setHtml(root, selector, value) {
 
 function setLink(root, selector, value) {
   const node = root.querySelector(selector);
-  if (!node || !value) return;
-  node.setAttribute("href", value);
+  if (!node) return;
+  node.setAttribute("href", normalizeText(value) || "#");
 }
 
 function parentInfoToHtml(parentInfo) {
@@ -167,12 +171,493 @@ function creditToHtml(text) {
   return `<p>${withEmoji}</p>`;
 }
 
-export default function EternalSummitTemplate({ data: propData, invitationSlug = "eternal-summit" }) {
+function pickText(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    if (typeof value === "object") continue;
+    const text = String(value).replace(/\s+/g, " ").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function pickAsset(...values) {
+  for (const value of values) {
+    if (!value) continue;
+    if (typeof value === "string") {
+      const text = pickText(value);
+      if (text) return text;
+      continue;
+    }
+    if (typeof value === "object") {
+      const text = pickText(value.url, value.src, value.image, value.photo, value.imageUrl, value.fileUrl, value.dataUrl);
+      if (text) return text;
+    }
+  }
+  return "";
+}
+
+function formatDateID(value) {
+  const text = pickText(value);
+  if (!text) return "";
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text;
+  return new Intl.DateTimeFormat("id-ID", {
+    weekday: "long",
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
+function formatCompactDateInput(...values) {
+  for (const value of values) {
+    const text = pickText(value);
+    if (!text) continue;
+
+    const isoDateMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoDateMatch) {
+      return `${isoDateMatch[3]} . ${isoDateMatch[2]} . ${isoDateMatch[1]}`;
+    }
+
+    const date = new Date(text);
+    if (!Number.isNaN(date.getTime())) {
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = String(date.getFullYear());
+      return `${day} . ${month} . ${year}`;
+    }
+  }
+
+  return "";
+}
+
+function formatTimeRange(start, end) {
+  const startText = pickText(start);
+  const endText = pickText(end);
+  if (!startText) return "";
+  if (/(pukul|wib|selesai)/i.test(startText)) return startText;
+
+  const normalizedStart = startText.replace(":", ".");
+  if (!endText) return `Pukul : ${normalizedStart} WIB`;
+
+  const normalizedEnd = endText.replace(":", ".");
+  return `Pukul : ${normalizedStart} WIB - ${normalizedEnd} WIB`;
+}
+
+function buildDateISO(dateValue, timeValue, fallback = "") {
+  const dateText = pickText(dateValue);
+  if (!dateText) return pickText(fallback);
+
+  if (/^\d{4}-\d{2}-\d{2}T/i.test(dateText)) {
+    return dateText;
+  }
+
+  const dateMatch = dateText.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateMatch) {
+    const timeMatch = pickText(timeValue).match(/(\d{1,2})[:.](\d{2})/);
+    const hour = String(timeMatch ? Number(timeMatch[1]) : 9).padStart(2, "0");
+    const minute = timeMatch ? timeMatch[2] : "00";
+    return `${dateMatch[1]}-${dateMatch[2]}-${dateMatch[3]}T${hour}:${minute}:00+07:00`;
+  }
+
+  const parsed = new Date(dateText);
+  if (!Number.isNaN(parsed.getTime())) return parsed.toISOString();
+  return pickText(fallback);
+}
+
+function inferStreamingLabel(url, fallback = "") {
+  const raw = String(url || "").trim().toLowerCase();
+  if (!raw) return pickText(fallback, "Klik Disini");
+  if (raw.includes("youtube.com") || raw.includes("youtu.be")) return "YouTube Live";
+  if (raw.includes("instagram.com")) return "Instagram Live";
+  if (raw.includes("zoom.us")) return "Zoom Meeting";
+  if (raw.includes("tiktok.com")) return "TikTok Live";
+  if (raw.includes("facebook.com") || raw.includes("fb.watch")) return "Facebook Live";
+  return pickText(fallback, "Klik Disini");
+}
+
+function normalizeRuntimeStory(item) {
+  if (typeof item === "string") {
+    const text = pickText(item);
+    return text ? { title: "", description: text, text } : null;
+  }
+  if (!item || typeof item !== "object") return null;
+
+  const title = pickText(item.title, item.storyTitle, item.story_title, item.heading, item.headline, item.judul, item.name, item.label);
+  const description = pickText(item.description, item.text, item.story, item.storyText, item.story_text, item.content, item.body);
+  const date = pickText(item.date, item.year, item.period, item.momentDate, item.moment_date);
+
+  if (!title && !description && !date) return null;
+
+  return {
+    title,
+    description,
+    text: description,
+    date,
+  };
+}
+
+function normalizeGalleryItem(item) {
+  if (typeof item === "string") return pickText(item);
+  if (!item || typeof item !== "object") return "";
+  return pickAsset(item.url, item.src, item.image, item.photo, item.imageUrl);
+}
+
+function normalizeBankAccount(item) {
+  if (!item || typeof item !== "object") return null;
+
+  const bankName = pickText(item.bankName, item.bank, item.provider, item.title);
+  const accountNumber = pickText(item.accountNumber, item.account, item.number);
+  const accountHolder = pickText(item.accountHolder, item.accountName, item.name);
+  const logo = pickAsset(item.logo, item.image);
+  const chip = pickAsset(item.chip);
+
+  if (!bankName && !accountNumber && !accountHolder && !logo) return null;
+
+  return {
+    bankName,
+    accountNumber,
+    accountHolder,
+    logo,
+    chip,
+  };
+}
+
+function pickStreamingSource(...candidates) {
+  const normalizedCandidates = candidates.filter((candidate) => candidate && typeof candidate === "object");
+  for (const candidate of normalizedCandidates) {
+    const hasUrl = Boolean(pickText(candidate.url, candidate.link));
+    const hasLabel = Boolean(pickText(candidate.label, candidate.platformLabel, candidate.title));
+    const hasDate = Boolean(pickText(candidate.date));
+    const hasTime = Boolean(pickText(candidate.time));
+    const isEnabled = candidate.enabled === true;
+    if (hasUrl || hasLabel || hasDate || hasTime || isEnabled) {
+      return candidate;
+    }
+  }
+  return normalizedCandidates[0] || {};
+}
+
+function buildRuntimeInvitationData(incomingData, baseSchema) {
+  if (!incomingData || typeof incomingData !== "object") return {};
+
+  const orderPayload =
+    incomingData.order?.payload ||
+    incomingData.payload ||
+    incomingData.data?.payload ||
+    incomingData.orderPayload ||
+    {};
+
+  const hasRawPayload = Boolean(
+    incomingData.groom ||
+      incomingData.bride ||
+      incomingData.akad ||
+      incomingData.resepsi ||
+      incomingData.coverImage ||
+      incomingData.frontCoverImage ||
+      incomingData.galleryImages ||
+      incomingData.gallery ||
+      incomingData.stories ||
+      incomingData.loveStory ||
+      incomingData.lovestory ||
+      incomingData.streaming ||
+      incomingData.livestream ||
+      incomingData.event?.livestream ||
+      incomingData.gift ||
+      incomingData.gifts ||
+      incomingData.quote ||
+      incomingData.quoteSource ||
+      orderPayload.groom ||
+      orderPayload.bride ||
+      orderPayload.akad ||
+      orderPayload.resepsi ||
+      orderPayload.coverImage ||
+      orderPayload.frontCoverImage ||
+      orderPayload.galleryImages ||
+      orderPayload.gallery ||
+      orderPayload.stories ||
+      orderPayload.loveStory ||
+      orderPayload.lovestory ||
+      orderPayload.streaming ||
+      orderPayload.livestream ||
+      orderPayload.gift ||
+      orderPayload.gifts ||
+      orderPayload.quote ||
+      orderPayload.quoteSource
+  );
+
+  if (!hasRawPayload) return {};
+
+  const groom = orderPayload.groom || incomingData.groom || {};
+  const bride = orderPayload.bride || incomingData.bride || {};
+  const akad = orderPayload.akad || incomingData.akad || incomingData.event?.akad || {};
+  const resepsi = orderPayload.resepsi || incomingData.resepsi || incomingData.event?.resepsi || {};
+  const rawStories = Array.isArray(orderPayload.stories)
+    ? orderPayload.stories
+    : Array.isArray(orderPayload.loveStory)
+      ? orderPayload.loveStory
+      : Array.isArray(orderPayload.lovestory)
+        ? orderPayload.lovestory
+        : Array.isArray(incomingData.stories)
+          ? incomingData.stories
+          : Array.isArray(incomingData.loveStory)
+            ? incomingData.loveStory
+            : Array.isArray(incomingData.lovestory)
+              ? incomingData.lovestory
+              : [];
+  const runtimeStories = rawStories.map(normalizeRuntimeStory).filter(Boolean);
+  const rawGallery = Array.isArray(orderPayload.galleryImages)
+    ? orderPayload.galleryImages
+    : Array.isArray(orderPayload.gallery)
+      ? orderPayload.gallery
+      : Array.isArray(incomingData.galleryImages)
+        ? incomingData.galleryImages
+        : Array.isArray(incomingData.gallery)
+          ? incomingData.gallery
+          : [];
+  const runtimeGallery = rawGallery.map(normalizeGalleryItem).filter(Boolean);
+  const rawStreaming = pickStreamingSource(
+    orderPayload.livestream,
+    orderPayload.streaming,
+    orderPayload.event?.livestream,
+    incomingData.livestream,
+    incomingData.event?.livestream,
+    incomingData.streaming
+  );
+  const runtimeStreamingUrl = pickText(rawStreaming.url, rawStreaming.link);
+  const rawGift =
+    orderPayload.gift ||
+    orderPayload.giftInfo ||
+    orderPayload.gifts ||
+    incomingData.gift ||
+    incomingData.giftInfo ||
+    incomingData.gifts ||
+    {};
+  const runtimeFeatures = {
+    ...(incomingData.features || {}),
+    ...(orderPayload.features || {}),
+  };
+  const runtimeBankList = Array.isArray(rawGift.bankList)
+    ? rawGift.bankList
+    : Array.isArray(rawGift.bankAccounts)
+      ? rawGift.bankAccounts
+      : Array.isArray(runtimeFeatures?.digitalEnvelopeInfo?.bankList)
+        ? runtimeFeatures.digitalEnvelopeInfo.bankList
+        : [];
+  const runtimeShipping = {
+    ...(runtimeFeatures?.digitalEnvelopeInfo?.shipping || {}),
+    ...(rawGift.shipping || {}),
+  };
+  const runtimeDateISO = buildDateISO(
+    akad.date,
+    akad.startTime || akad.time,
+    pickText(incomingData?.event?.dateISO, baseSchema?.event?.dateISO)
+  );
+
+  return {
+    guest: {
+      ...(orderPayload.guest || incomingData.guest || {}),
+    },
+    groom: {
+      nickName: pickText(groom.nickname, groom.nickName, groom.fullname?.split?.(" ")[0], groom.nameFull),
+      fullName: pickText(groom.fullname, groom.fullName, groom.nameFull),
+      parentInfo: pickText(groom.parents, groom.parentInfo),
+      instagram: pickText(groom.instagram),
+      image: pickAsset(groom.photo, groom.image),
+      photo: pickAsset(groom.photo, groom.image),
+    },
+    bride: {
+      nickName: pickText(bride.nickname, bride.nickName, bride.fullname?.split?.(" ")[0], bride.nameFull),
+      fullName: pickText(bride.fullname, bride.fullName, bride.nameFull),
+      parentInfo: pickText(bride.parents, bride.parentInfo),
+      instagram: pickText(bride.instagram),
+      image: pickAsset(bride.photo, bride.image),
+      photo: pickAsset(bride.photo, bride.image),
+    },
+    frontCoverImage: pickAsset(orderPayload.frontCoverImage, incomingData.frontCoverImage),
+    coverImage: pickAsset(orderPayload.coverImage, incomingData.coverImage),
+    openingThumbnailImage: pickAsset(orderPayload.openingThumbnailImage, incomingData.openingThumbnailImage),
+    event: {
+      ...(incomingData.event || {}),
+      dateISO: runtimeDateISO,
+      displayDate: pickText(
+        formatCompactDateInput(runtimeDateISO, akad.date, resepsi.date),
+        incomingData?.event?.displayDate,
+        baseSchema?.event?.displayDate
+      ),
+      heroDate: pickText(
+        formatDateID(akad.date),
+        incomingData?.event?.heroDate,
+        incomingData?.copy?.heroDate,
+        baseSchema?.event?.heroDate
+      ),
+      akad: {
+        ...(incomingData.event?.akad || {}),
+        title: pickText(akad.title, baseSchema?.event?.akad?.title),
+        date: pickText(formatDateID(akad.date), akad.date, baseSchema?.event?.akad?.date),
+        time: pickText(akad.time, formatTimeRange(akad.startTime, akad.endTime), baseSchema?.event?.akad?.time),
+        addressName: pickText(akad.addressName, akad.venueName, akad.venue, baseSchema?.event?.akad?.addressName),
+        address: pickText(akad.address, baseSchema?.event?.akad?.address),
+        mapsUrl: pickText(akad.mapsLink, akad.mapsUrl, baseSchema?.event?.akad?.mapsUrl),
+      },
+      resepsi: {
+        ...(incomingData.event?.resepsi || {}),
+        title: pickText(resepsi.title, baseSchema?.event?.resepsi?.title),
+        date: pickText(formatDateID(resepsi.date), resepsi.date, formatDateID(akad.date), baseSchema?.event?.resepsi?.date),
+        time: pickText(resepsi.time, formatTimeRange(resepsi.startTime, resepsi.endTime), baseSchema?.event?.resepsi?.time),
+        addressName: pickText(resepsi.addressName, resepsi.venueName, resepsi.venue, baseSchema?.event?.resepsi?.addressName),
+        address: pickText(resepsi.address, akad.address, baseSchema?.event?.resepsi?.address),
+        mapsUrl: pickText(resepsi.mapsLink, resepsi.mapsUrl, akad.mapsLink, akad.mapsUrl, baseSchema?.event?.resepsi?.mapsUrl),
+      },
+      livestream: {
+        ...(incomingData.event?.livestream || {}),
+        title: pickText(rawStreaming.title, incomingData?.copy?.streamingTitle, baseSchema?.streaming?.title),
+        intro: pickText(rawStreaming.intro, incomingData?.copy?.streamingIntro, baseSchema?.streaming?.intro),
+        label: inferStreamingLabel(runtimeStreamingUrl, pickText(rawStreaming.label, rawStreaming.platformLabel, baseSchema?.streaming?.label)),
+        date: pickText(rawStreaming.date, formatDateID(akad.date), baseSchema?.streaming?.date),
+        time: pickText(rawStreaming.time, formatTimeRange(akad.startTime, akad.endTime), akad.time, baseSchema?.streaming?.time),
+        url: runtimeStreamingUrl,
+      },
+    },
+    streaming: {
+      ...(incomingData.streaming || {}),
+      title: pickText(rawStreaming.title, incomingData?.copy?.streamingTitle, baseSchema?.streaming?.title),
+      intro: pickText(rawStreaming.intro, incomingData?.copy?.streamingIntro, baseSchema?.streaming?.intro),
+      label: inferStreamingLabel(runtimeStreamingUrl, pickText(rawStreaming.label, rawStreaming.platformLabel, baseSchema?.streaming?.label)),
+      date: pickText(rawStreaming.date, formatDateID(akad.date), baseSchema?.streaming?.date),
+      time: pickText(rawStreaming.time, formatTimeRange(akad.startTime, akad.endTime), akad.time, baseSchema?.streaming?.time),
+      url: runtimeStreamingUrl,
+    },
+    gallery: runtimeGallery,
+    loveStory: runtimeStories,
+    lovestory: runtimeStories,
+    stories: runtimeStories,
+    gifts: {
+      ...(incomingData.gifts || {}),
+      bankAccounts: runtimeBankList.map(normalizeBankAccount).filter(Boolean),
+      shipping: runtimeShipping,
+    },
+    copy: {
+      ...(incomingData.copy || {}),
+      coverTitle: pickText(orderPayload.copy?.coverTitle, incomingData.copy?.coverTitle, baseSchema?.copy?.coverTitle),
+      coverDear: pickText(orderPayload.copy?.coverDear, incomingData.copy?.coverDear, baseSchema?.copy?.coverDear),
+      openButton: pickText(orderPayload.copy?.openButton, incomingData.copy?.openButton, baseSchema?.copy?.openButton),
+      heroTitle: pickText(orderPayload.copy?.heroTitle, incomingData.copy?.heroTitle, baseSchema?.copy?.heroTitle),
+      heroCouple: pickText(
+        orderPayload.copy?.heroCouple,
+        incomingData.copy?.heroCouple,
+        `${pickText(groom.nickname, groom.nickName, groom.fullname?.split?.(" ")[0], groom.nameFull)} & ${pickText(
+          bride.nickname,
+          bride.nickName,
+          bride.fullname?.split?.(" ")[0],
+          bride.nameFull
+        )}`,
+        baseSchema?.copy?.heroCouple
+      ),
+      heroDate: pickText(orderPayload.copy?.heroDate, incomingData.copy?.heroDate, baseSchema?.copy?.heroDate),
+      quote: pickText(orderPayload.quote, incomingData.quote, orderPayload.copy?.quote, incomingData.copy?.quote, baseSchema?.copy?.quote),
+      quoteSource: pickText(orderPayload.quoteSource, incomingData.quoteSource, orderPayload.copy?.quoteSource, incomingData.copy?.quoteSource, baseSchema?.copy?.quoteSource),
+      intro: pickText(orderPayload.copy?.intro, incomingData.copy?.intro, baseSchema?.copy?.intro),
+      countdownTitle: pickText(orderPayload.copy?.countdownTitle, incomingData.copy?.countdownTitle, baseSchema?.copy?.countdownTitle),
+      galleryTitle: pickText(orderPayload.copy?.galleryTitle, incomingData.copy?.galleryTitle, baseSchema?.copy?.galleryTitle),
+      loveStoryTitle: pickText(orderPayload.copy?.loveStoryTitle, incomingData.copy?.loveStoryTitle, baseSchema?.copy?.loveStoryTitle),
+      giftTitle: pickText(orderPayload.copy?.giftTitle, incomingData.copy?.giftTitle, baseSchema?.copy?.giftTitle),
+      giftIntro: pickText(orderPayload.copy?.giftIntro, incomingData.copy?.giftIntro, baseSchema?.copy?.giftIntro),
+      giftToggleLabel: pickText(orderPayload.copy?.giftToggleLabel, incomingData.copy?.giftToggleLabel, baseSchema?.copy?.giftToggleLabel),
+      shippingTitle: pickText(orderPayload.copy?.shippingTitle, incomingData.copy?.shippingTitle, baseSchema?.copy?.shippingTitle),
+      wishesTitle: pickText(orderPayload.copy?.wishesTitle, incomingData.copy?.wishesTitle, baseSchema?.copy?.wishesTitle),
+      wishesIntro: pickText(orderPayload.copy?.wishesIntro, incomingData.copy?.wishesIntro, baseSchema?.copy?.wishesIntro),
+      closingText: pickText(orderPayload.copy?.closingText, incomingData.copy?.closingText, baseSchema?.copy?.closingText),
+      closingLead: pickText(orderPayload.copy?.closingLead, incomingData.copy?.closingLead, baseSchema?.copy?.closingLead),
+      creditText: pickText(orderPayload.copy?.creditText, incomingData.copy?.creditText, baseSchema?.copy?.creditText),
+      streamingTitle: pickText(orderPayload.copy?.streamingTitle, incomingData.copy?.streamingTitle, baseSchema?.streaming?.title),
+      streamingIntro: pickText(orderPayload.copy?.streamingIntro, incomingData.copy?.streamingIntro, baseSchema?.streaming?.intro),
+    },
+    media: {
+      ...(incomingData.media || {}),
+      coverFrontImage: pickAsset(
+        orderPayload.frontCoverImage,
+        incomingData.frontCoverImage,
+        incomingData.media?.coverFrontImage
+      ),
+      desktopCoverImage: pickAsset(
+        orderPayload.coverImage,
+        incomingData.coverImage,
+        incomingData.media?.desktopCoverImage
+      ),
+      heroImage: pickAsset(
+        orderPayload.openingThumbnailImage,
+        incomingData.openingThumbnailImage,
+        incomingData.media?.heroImage,
+        incomingData.event?.heroImage,
+        incomingData.couple?.heroPhoto
+      ),
+      closingImage: pickAsset(
+        orderPayload.closingBackgroundImage,
+        incomingData.closingBackgroundImage,
+        incomingData.copy?.closingBackgroundPhoto,
+        incomingData.media?.closingImage,
+        orderPayload.openingThumbnailImage,
+        incomingData.openingThumbnailImage,
+        orderPayload.coverImage,
+        incomingData.coverImage
+      ),
+      audio: pickAsset(
+        orderPayload.music?.file,
+        incomingData.audio?.src,
+        incomingData.media?.audio,
+        incomingData.music?.src,
+        incomingData.music?.previewUrl
+      ),
+      lottiePrimary: pickText(incomingData.media?.lottiePrimary, baseSchema?.media?.lottiePrimary),
+    },
+    features: {
+      ...runtimeFeatures,
+      livestreamEnabled:
+        orderPayload.features?.livestreamEnabled ??
+        incomingData.features?.livestreamEnabled ??
+        Boolean(runtimeStreamingUrl),
+      digitalEnvelopeEnabled:
+        orderPayload.features?.digitalEnvelopeEnabled ??
+        incomingData.features?.digitalEnvelopeEnabled ??
+        Boolean(runtimeBankList.length || pickText(runtimeShipping.recipient, runtimeShipping.phone, runtimeShipping.address)),
+      wishesEnabled:
+        orderPayload.features?.wishesEnabled ??
+        incomingData.features?.wishesEnabled ??
+        baseSchema?.features?.wishesEnabled,
+      audioEnabled:
+        orderPayload.features?.audioEnabled ??
+        incomingData.features?.audioEnabled ??
+        baseSchema?.features?.audioEnabled,
+      lottieEnabled:
+        orderPayload.features?.lottieEnabled ??
+        incomingData.features?.lottieEnabled ??
+        baseSchema?.features?.lottieEnabled,
+      lightboxEnabled:
+        orderPayload.features?.lightboxEnabled ??
+        incomingData.features?.lightboxEnabled ??
+        baseSchema?.features?.lightboxEnabled,
+    },
+  };
+}
+
+export default function EternalSummitTemplate({ data: propData, invitationSlug = "eternal-summit", mode = "live" }) {
+  const isStaticDemoMode = mode === "demo";
+  const openStateStorageKey = useMemo(() => getOpenStateStorageKey(invitationSlug), [invitationSlug]);
   const { data: fetchedData } = useInvitationData(invitationSlug, {
     fallbackSlug: "eternal-summit",
-    skipFetch: Boolean(propData),
+    skipFetch: Boolean(propData) || isStaticDemoMode,
   });
-  const mergedData = useMemo(() => mergeInvitationData(defaultSchema, propData ?? schemaJson, fetchedData), [propData, fetchedData]);
+  const mergedData = useMemo(() => {
+    if (isStaticDemoMode) {
+      return mergeInvitationData(defaultSchema, schemaJson);
+    }
+
+    const fetchedRuntimeData = buildRuntimeInvitationData(fetchedData, defaultSchema);
+    const propRuntimeData = buildRuntimeInvitationData(propData, defaultSchema);
+    return mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
+  }, [fetchedData, isStaticDemoMode, propData]);
   const liveOrderPayload = useMemo(
     () => mergedData?.order?.payload || fetchedData?.order?.payload || propData?.order?.payload || {},
     [mergedData, fetchedData, propData]
@@ -191,6 +676,14 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
   const audioRef = useRef(null);
   const audioResumeRef = useRef(false);
   const unlockTimerRef = useRef(null);
+  const [opened, setOpened] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.sessionStorage.getItem(getOpenStateStorageKey(invitationSlug)) === "1";
+    } catch {
+      return false;
+    }
+  });
   const [lightboxImage, setLightboxImage] = useState("");
   const [wishes, setWishes] = useState(() => fallbackWishes);
 
@@ -219,7 +712,11 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
   useEffect(() => {
     const previousBodyClasses = BODY_CLASSES.filter((name) => document.body.classList.contains(name));
     BODY_CLASSES.forEach((name) => document.body.classList.add(name));
-    document.body.classList.add("es-lock-scroll");
+    if (!opened) {
+      document.body.classList.add("es-lock-scroll");
+    } else {
+      document.body.classList.remove("es-lock-scroll");
+    }
 
     setDynamicVh();
     const onResize = () => setDynamicVh();
@@ -231,7 +728,20 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
       BODY_CLASSES.forEach((name) => document.body.classList.remove(name));
       previousBodyClasses.forEach((name) => document.body.classList.add(name));
     };
-  }, []);
+  }, [opened]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (opened) {
+        window.sessionStorage.setItem(openStateStorageKey, "1");
+      } else {
+        window.sessionStorage.removeItem(openStateStorageKey);
+      }
+    } catch {
+      // ignore storage failures
+    }
+  }, [openStateStorageKey, opened]);
 
   useEffect(() => {
     AOS.init({
@@ -265,54 +775,100 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     const cleanups = [];
     const registerCleanup = (fn) => cleanups.push(fn);
 
-    const guestName = normalizeText(mergedData?.guest?.name || "Nama Tamu");
+    const guestName = pickText(mergedData?.guest?.name, "Nama Tamu");
     const groom = {
-      nickName: normalizeText(mergedData?.groom?.nickName || "Habib"),
-      fullName: normalizeText(mergedData?.groom?.fullName || "Habib Yulianto"),
-      parentInfo: normalizeText(mergedData?.groom?.parentInfo || "Putra dari Pasangan Bapak H. M. Dawam & Ibu Dewi Sudarwati (Almh)"),
-      instagram: normalizeText(mergedData?.groom?.instagram || "https://instagram.com/"),
-      image: mergedData?.groom?.image || schemaJson.groom.image,
+      nickName: pickText(mergedData?.groom?.nickName, mergedData?.groom?.fullName, schemaJson.groom.nickName, "Habib"),
+      fullName: pickText(mergedData?.groom?.fullName, mergedData?.groom?.nameFull, schemaJson.groom.fullName, "Habib Yulianto"),
+      parentInfo: pickText(mergedData?.groom?.parentInfo, schemaJson.groom.parentInfo),
+      instagram: pickText(mergedData?.groom?.instagram, "https://instagram.com/"),
+      image: pickAsset(mergedData?.groom?.image, mergedData?.groom?.photo, schemaJson.groom.image),
     };
     const bride = {
-      nickName: normalizeText(mergedData?.bride?.nickName || "Adiba"),
-      fullName: normalizeText(mergedData?.bride?.fullName || "Adiba Putri Syakilla"),
-      parentInfo: normalizeText(mergedData?.bride?.parentInfo || "Putri dari Pasangan Bapak Anas Rifai & Ibu Kholifah"),
-      instagram: normalizeText(mergedData?.bride?.instagram || "https://instagram.com/"),
-      image: mergedData?.bride?.image || schemaJson.bride.image,
+      nickName: pickText(mergedData?.bride?.nickName, mergedData?.bride?.fullName, schemaJson.bride.nickName, "Adiba"),
+      fullName: pickText(mergedData?.bride?.fullName, mergedData?.bride?.nameFull, schemaJson.bride.fullName, "Adiba Putri Syakilla"),
+      parentInfo: pickText(mergedData?.bride?.parentInfo, schemaJson.bride.parentInfo),
+      instagram: pickText(mergedData?.bride?.instagram, "https://instagram.com/"),
+      image: pickAsset(mergedData?.bride?.image, mergedData?.bride?.photo, schemaJson.bride.image),
     };
 
     const copy = mergedData?.copy || {};
     const event = mergedData?.event || {};
-    const coupleDisplay = normalizeText(copy.heroCouple || `${groom.nickName} & ${bride.nickName}`);
-    const displayDate = normalizeText(event.displayDate || "28 . 12. 2025");
-    const heroDate = normalizeText(event.heroDate || copy.heroDate || "Minggu, 28 Desember 2025");
-    const countdownDateISO = event.dateISO || "2026-02-04T10:00:00+07:00";
+    const coupleDisplay = pickText(`${groom.nickName} & ${bride.nickName}`, copy.heroCouple);
+    const displayDate = pickText(event.displayDate, schemaJson.event.displayDate, "28 . 12. 2025");
+    const heroDate = pickText(event.heroDate, copy.heroDate, schemaJson.event.heroDate, "Minggu, 28 Desember 2025");
+    const countdownDateISO = pickText(event.dateISO, schemaJson.event.dateISO, "2026-02-04T10:00:00+07:00");
+    const quoteText = pickText(copy.quote, mergedData?.quote, defaultSchema?.copy?.quote, schemaJson.copy.quote);
+    const quoteSourceText = pickText(copy.quoteSource, mergedData?.quoteSource, defaultSchema?.copy?.quoteSource, schemaJson.copy.quoteSource);
 
     const orderPayload = liveOrderPayload;
     const akad = event.akad || {};
     const resepsi = event.resepsi || {};
-    const streamingSource =
-      mergedData?.streaming ||
-      mergedData?.livestream ||
-      mergedData?.event?.livestream ||
-      orderPayload?.streaming ||
-      orderPayload?.livestream ||
-      {};
     const streaming = {
-      title: normalizeText(streamingSource?.title || copy.streamingTitle || "Live Streaming"),
-      intro: normalizeText(streamingSource?.intro || copy.streamingIntro || ""),
-      date: normalizeText(streamingSource?.date || ""),
-      time: normalizeText(streamingSource?.time || ""),
-      label: normalizeText(streamingSource?.label || "Klik Disini"),
-      url: normalizeText(streamingSource?.url || streamingSource?.link || ""),
+      ...(mergedData?.streaming || {}),
+      ...(mergedData?.event?.livestream || {}),
     };
-    const hasStreaming = (orderPayload?.features?.livestreamEnabled ?? mergedData?.features?.livestreamEnabled ?? false) || Boolean(streaming.url);
-    const stories = Array.isArray(mergedData?.loveStory) ? mergedData.loveStory : [];
+    const hasStreaming = (orderPayload?.features?.livestreamEnabled ?? mergedData?.features?.livestreamEnabled ?? false) || Boolean(pickText(streaming?.url));
+    const stories = (
+      Array.isArray(mergedData?.loveStory)
+        ? mergedData.loveStory
+        : Array.isArray(mergedData?.lovestory)
+          ? mergedData.lovestory
+          : Array.isArray(mergedData?.stories)
+            ? mergedData.stories
+            : []
+    )
+      .map(normalizeRuntimeStory)
+      .filter(Boolean);
     const gifts = mergedData?.gifts || {};
-    const bankList = Array.isArray(gifts.bankAccounts) ? gifts.bankAccounts : [];
+    const bankList = (Array.isArray(gifts.bankAccounts) ? gifts.bankAccounts : []).map(normalizeBankAccount).filter(Boolean);
     const bank1 = bankList[0] || {};
     const bank2 = bankList[1] || {};
-    const gallery = Array.isArray(mergedData?.gallery) ? mergedData.gallery.map(resolveAssetUrl).filter(Boolean) : [];
+    const gallery = (Array.isArray(mergedData?.gallery) ? mergedData.gallery : []).map(normalizeGalleryItem).map(resolveAssetUrl).filter(Boolean);
+    const hasGallery = gallery.length > 0;
+    const hasStories = stories.length > 0;
+    const hasShippingData = Boolean(pickText(gifts.shipping?.recipient, gifts.shipping?.phone, gifts.shipping?.address));
+    const hasGiftSection = (mergedData?.features?.digitalEnvelopeEnabled ?? true) && (bankList.length > 0 || hasShippingData);
+
+    const updateImage = (selector, value) => {
+      const node = root.querySelector(selector);
+      if (!node || !value) return;
+      const resolved = resolveAssetUrl(value);
+      node.setAttribute("src", resolved);
+      node.removeAttribute("srcset");
+      node.removeAttribute("sizes");
+    };
+
+    const updateResponsiveThumbnail = (selector, value) => {
+      const node = root.querySelector(selector);
+      if (!node || !value) return;
+      const resolved = resolveAssetUrl(value);
+      node.setAttribute("src", resolved);
+      node.removeAttribute("srcset");
+      node.removeAttribute("sizes");
+      node.removeAttribute("width");
+      node.removeAttribute("height");
+      node.style.width = "100%";
+      node.style.height = "auto";
+      node.style.objectFit = "cover";
+      node.style.objectPosition = "center top";
+      node.style.display = "block";
+    };
+
+    const setBackgroundImage = (selector, value) => {
+      const node = root.querySelector(selector);
+      if (!node || !value) return;
+      const resolved = resolveAssetUrl(value);
+      node.style.backgroundImage = `url("${resolved}")`;
+      node.style.backgroundPosition = "center center";
+      node.style.backgroundSize = "cover";
+      node.style.backgroundRepeat = "no-repeat";
+    };
+
+    const setNodeVisible = (selector, visible) => {
+      root.querySelectorAll(selector).forEach((node) => {
+        node.style.display = visible ? "" : "none";
+      });
+    };
 
     root.querySelectorAll("[src]").forEach((node) => {
       const value = node.getAttribute("src") || "";
@@ -357,9 +913,9 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     setText(root, ".elementor-element-46ab02c4 .elementor-heading-title", coupleDisplay);
     setHtml(root, ".elementor-element-628db1f7 .elementor-widget-container", `<p>${escapeHtml(heroDate)}</p>`);
 
-    setHtml(root, ".elementor-element-7b047187 .elementor-widget-container", `<p>${escapeHtml(copy.quote || "")}</p>`);
-    setHtml(root, ".elementor-element-5ea3d9b2 .elementor-widget-container", `<p><i>${escapeHtml(copy.quoteSource || "")}</i></p>`);
-    setHtml(root, ".elementor-element-7f497d56 .elementor-widget-container", `<p>${escapeHtml(copy.intro || "")}</p>`);
+    setHtml(root, ".elementor-element-7b047187 .elementor-widget-container", `<p>${escapeHtml(quoteText)}</p>`);
+    setHtml(root, ".elementor-element-5ea3d9b2 .elementor-widget-container", `<p><i>${escapeHtml(quoteSourceText)}</i></p>`);
+    setHtml(root, ".elementor-element-7f497d56 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.intro, schemaJson.copy.intro))}</p>`);
 
     setHtml(root, ".elementor-element-5f70916a .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bride.fullName)}</p>`);
     setHtml(root, ".elementor-element-2a4f9739 .elementor-widget-container", parentInfoToHtml(bride.parentInfo));
@@ -369,16 +925,24 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     setHtml(root, ".elementor-element-2a5e2a4d .elementor-widget-container", parentInfoToHtml(groom.parentInfo));
     setLink(root, ".elementor-element-6e27a39e a.elementor-social-icon-instagram", toInstagramUrl(groom.instagram));
 
-    const heroImage = resolveAssetUrl(mergedData?.media?.heroImage || schemaJson.media.heroImage);
-    const closingImage = resolveAssetUrl(mergedData?.media?.closingImage || schemaJson.media.closingImage);
-    const brideNode = root.querySelector(".elementor-element-4b37e843 img");
-    const groomNode = root.querySelector(".elementor-element-3b7f9a4a img");
-    const coverNode = root.querySelector(".elementor-element-50b78d58 img");
-    const closingNode = root.querySelector(".elementor-element-130b76d6 img");
-    if (brideNode) brideNode.setAttribute("src", resolveAssetUrl(bride.image));
-    if (groomNode) groomNode.setAttribute("src", resolveAssetUrl(groom.image));
-    if (coverNode && heroImage) coverNode.setAttribute("src", heroImage);
-    if (closingNode && closingImage) closingNode.setAttribute("src", closingImage);
+    const coverFrontImage = pickAsset(mergedData?.media?.coverFrontImage, mergedData?.frontCoverImage, schemaJson.media.heroImage);
+    const desktopCoverImage = pickAsset(mergedData?.media?.desktopCoverImage, mergedData?.coverImage, coverFrontImage);
+    const heroImage = pickAsset(mergedData?.media?.heroImage, mergedData?.openingThumbnailImage, coverFrontImage, schemaJson.media.heroImage);
+    const closingImage = pickAsset(mergedData?.media?.closingImage, schemaJson.media.closingImage, heroImage);
+    const countdownThumbnailImage = isStaticDemoMode
+      ? ""
+      : pickAsset(desktopCoverImage, mergedData?.coverImage, mergedData?.media?.desktopCoverImage, heroImage);
+    const loveStoryThumbnailImage = isStaticDemoMode
+      ? ""
+      : pickAsset(desktopCoverImage, mergedData?.coverImage, mergedData?.media?.desktopCoverImage, heroImage);
+    setBackgroundImage("#kolom", coverFrontImage);
+    setBackgroundImage("#desk_cov", desktopCoverImage);
+    updateImage(".elementor-element-4b37e843 img", bride.image);
+    updateImage(".elementor-element-3b7f9a4a img", groom.image);
+    updateImage(".elementor-element-50b78d58 img", heroImage);
+    updateImage(".elementor-element-130b76d6 img", closingImage);
+    updateResponsiveThumbnail(".elementor-element-76c4c342 img", countdownThumbnailImage);
+    updateResponsiveThumbnail(".elementor-element-3faf1b3 img", loveStoryThumbnailImage);
 
     setText(root, ".elementor-element-28d46c09 .elementor-heading-title", copy.countdownTitle || "Menuju Hari Bahagia");
 
@@ -394,19 +958,31 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     setHtml(root, ".elementor-element-48b08001 .elementor-widget-container", formatAddressHtml(resepsi.addressName || "", resepsi.address || ""));
     setLink(root, ".elementor-element-6f77a52c a.elementor-button", normalizeText(resepsi.mapsUrl || "https://www.google.com/maps"));
 
-    setText(root, ".elementor-element-7185baf3 .elementor-heading-title", streaming.title || "Live Streaming");
-    setHtml(root, ".elementor-element-4b860fdb .elementor-widget-container", `<p>${escapeHtml(streaming.intro || "")}</p>`);
-    setHtml(root, ".elementor-element-5d5400e7 .elementor-widget-container", `<p>${escapeHtml(streaming.date || "")}</p>`);
-    setHtml(root, ".elementor-element-1bf2a554 .elementor-widget-container", `<p>${escapeHtml(streaming.time || "")}</p>`);
-    setText(root, ".elementor-element-c42713b .elementor-button-text", streaming.label || "Klik Disini");
-    setLink(root, ".elementor-element-c42713b a.elementor-button", streaming.url);
+    setText(root, ".elementor-element-7185baf3 .elementor-heading-title", pickText(streaming.title, copy.streamingTitle, schemaJson.streaming.title, "Live Streaming"));
+    setHtml(root, ".elementor-element-4b860fdb .elementor-widget-container", `<p>${escapeHtml(pickText(streaming.intro, copy.streamingIntro, schemaJson.streaming.intro))}</p>`);
+    setHtml(root, ".elementor-element-5d5400e7 .elementor-widget-container", `<p>${escapeHtml(pickText(streaming.date, schemaJson.streaming.date))}</p>`);
+    setHtml(root, ".elementor-element-1bf2a554 .elementor-widget-container", `<p>${escapeHtml(pickText(streaming.time, schemaJson.streaming.time))}</p>`);
+    setText(root, ".elementor-element-c42713b .elementor-button-text", pickText(streaming.label, schemaJson.streaming.label, "Klik Disini"));
+    setLink(root, ".elementor-element-c42713b a.elementor-button", pickText(streaming.url));
     const streamingWrap = root.querySelector(".elementor-element-2a68ad7b");
     if (streamingWrap) streamingWrap.style.display = hasStreaming ? "" : "none";
 
-    setHtml(root, ".elementor-element-6018d302 .elementor-widget-container", `<p>${escapeHtml(copy.galleryTitle || "Gallery")}</p>`);
+    setHtml(root, ".elementor-element-6018d302 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.galleryTitle, schemaJson.copy.galleryTitle, "Gallery"))}</p>`);
 
     const galleryContainer = root.querySelector(".elementor-element-1671b0ec .elementor-gallery__container");
     if (galleryContainer) galleryContainer.classList.add("es-gallery-fallback");
+    if (galleryContainer) {
+      galleryContainer.querySelectorAll("[data-es-gallery-clone='true']").forEach((node) => node.remove());
+      const baseGalleryNode = galleryContainer.querySelector(".e-gallery-item");
+      if (baseGalleryNode && gallery.length > 1) {
+        const existingCount = galleryContainer.querySelectorAll(".e-gallery-item").length;
+        for (let index = existingCount; index < gallery.length; index += 1) {
+          const clone = baseGalleryNode.cloneNode(true);
+          clone.setAttribute("data-es-gallery-clone", "true");
+          galleryContainer.appendChild(clone);
+        }
+      }
+    }
 
     const galleryNodes = Array.from(root.querySelectorAll(".elementor-element-1671b0ec .e-gallery-item"));
     galleryNodes.forEach((anchor, index) => {
@@ -423,25 +999,41 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
         imageNode.style.backgroundImage = `url("${image}")`;
       }
     });
+    setNodeVisible(".elementor-element-6018d302", hasGallery);
+    setNodeVisible(".elementor-element-1671b0ec", hasGallery);
 
-    setText(root, ".elementor-element-572400b7 .elementor-heading-title", copy.loveStoryTitle || "Love Story");
-    setHtml(root, ".elementor-element-7af95d3d .elementor-widget-container", `<p>${escapeHtml(stories[0]?.title || "Awal Bertemu")}</p>`);
-    setHtml(root, ".elementor-element-1d0c858d .elementor-widget-container", `<p>${escapeHtml(stories[0]?.description || "")}</p>`);
-    setHtml(root, ".elementor-element-795576b2 .elementor-widget-container", `<p>${escapeHtml(stories[1]?.title || "Lamaran")}</p>`);
-    setHtml(root, ".elementor-element-e835975 .elementor-widget-container", `<p>${escapeHtml(stories[1]?.description || "")}</p>`);
-    setHtml(root, ".elementor-element-c722832 .elementor-widget-container", `<p>${escapeHtml(stories[2]?.title || "Pernikahan")}</p>`);
-    setHtml(root, ".elementor-element-1204c9f6 .elementor-widget-container", `<p>${escapeHtml(stories[2]?.description || "")}</p>`);
+    setText(root, ".elementor-element-572400b7 .elementor-heading-title", pickText(copy.loveStoryTitle, schemaJson.copy.loveStoryTitle, "Love Story"));
+    [
+      {
+        titleSelector: ".elementor-element-7af95d3d",
+        descSelector: ".elementor-element-1d0c858d",
+      },
+      {
+        titleSelector: ".elementor-element-795576b2",
+        descSelector: ".elementor-element-e835975",
+      },
+      {
+        titleSelector: ".elementor-element-c722832",
+        descSelector: ".elementor-element-1204c9f6",
+      },
+    ].forEach(({ titleSelector, descSelector }, index) => {
+      const story = stories[index];
+      const hasStory = Boolean(story?.title || story?.description || story?.text || story?.date);
+      setNodeVisible(titleSelector, hasStory);
+      setNodeVisible(descSelector, hasStory);
+      if (!hasStory) return;
+      setHtml(root, `${titleSelector} .elementor-widget-container`, `<p>${escapeHtml(pickText(story?.title, story?.date))}</p>`);
+      setHtml(root, `${descSelector} .elementor-widget-container`, `<p>${escapeHtml(pickText(story?.description, story?.text))}</p>`);
+    });
+    setNodeVisible(".elementor-element-572400b7", hasStories);
 
-    setText(root, ".elementor-element-1a11e47a .elementor-heading-title", copy.giftTitle || "Wedding Gift");
-    setHtml(root, ".elementor-element-1a868be4 .elementor-widget-container", `<p>${escapeHtml(copy.giftIntro || "")}</p>`);
-    setText(root, ".elementor-element-7f4f3cb2 .elementor-button-text", copy.giftToggleLabel || "Klik di sini");
+    setText(root, ".elementor-element-1a11e47a .elementor-heading-title", pickText(copy.giftTitle, schemaJson.copy.giftTitle, "Wedding Gift"));
+    setHtml(root, ".elementor-element-1a868be4 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.giftIntro, schemaJson.copy.giftIntro))}</p>`);
+    setText(root, ".elementor-element-7f4f3cb2 .elementor-button-text", pickText(copy.giftToggleLabel, schemaJson.copy.giftToggleLabel, "Klik di sini"));
 
-    const bank1LogoNode = root.querySelector(".elementor-element-30aeaa27 img");
-    const bank1ChipNode = root.querySelector(".elementor-element-1f63c40b img");
-    const bank2LogoNode = root.querySelector(".elementor-element-d4387de img");
-    if (bank1LogoNode && bank1.logo) bank1LogoNode.setAttribute("src", resolveAssetUrl(bank1.logo));
-    if (bank1ChipNode && bank1.chip) bank1ChipNode.setAttribute("src", resolveAssetUrl(bank1.chip));
-    if (bank2LogoNode && bank2.logo) bank2LogoNode.setAttribute("src", resolveAssetUrl(bank2.logo));
+    updateImage(".elementor-element-30aeaa27 img", bank1.logo);
+    updateImage(".elementor-element-1f63c40b img", bank1.chip);
+    updateImage(".elementor-element-d4387de img", bank2.logo);
 
     setHtml(root, ".elementor-element-6929603c .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1.accountNumber || "-")}</p>`);
     setHtml(root, ".elementor-element-53f178ad .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1.accountHolder || "-")}</p>`);
@@ -453,7 +1045,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     if (copyBox1) copyBox1.textContent = normalizeText(bank1.accountNumber || "");
     if (copyBox2) copyBox2.textContent = normalizeText(bank2.accountNumber || "");
 
-    setHtml(root, ".elementor-element-27c73c9 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(copy.shippingTitle || "Kirim Hadiah")}</p>`);
+    setHtml(root, ".elementor-element-27c73c9 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(pickText(copy.shippingTitle, schemaJson.copy.shippingTitle, "Kirim Hadiah"))}</p>`);
     setHtml(
       root,
       ".elementor-element-5c696c96 .elementor-widget-container",
@@ -461,9 +1053,23 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
         gifts.shipping?.phone || "-"
       )}</p><p>${escapeHtml(gifts.shipping?.address || "-")}</p>`
     );
+    setNodeVisible(".elementor-element-1a11e47a", hasGiftSection);
+    setNodeVisible(".elementor-element-1a868be4", hasGiftSection);
+    setNodeVisible(".elementor-element-7f4f3cb2", hasGiftSection);
+    setNodeVisible(".elementor-element-30aeaa27", hasGiftSection);
+    setNodeVisible(".elementor-element-1f63c40b", hasGiftSection);
+    setNodeVisible(".elementor-element-d4387de", hasGiftSection);
+    setNodeVisible(".elementor-element-6929603c", hasGiftSection);
+    setNodeVisible(".elementor-element-53f178ad", hasGiftSection);
+    setNodeVisible(".elementor-element-7cf3fe66", hasGiftSection);
+    setNodeVisible(".elementor-element-cbcefe6", hasGiftSection);
+    setNodeVisible(".elementor-element-7d66bf2", hasGiftSection);
+    setNodeVisible(".elementor-element-50271a07", hasGiftSection);
+    setNodeVisible(".elementor-element-27c73c9", hasGiftSection);
+    setNodeVisible(".elementor-element-5c696c96", hasGiftSection);
 
-    setText(root, ".elementor-element-4eed8a0c .elementor-heading-title", copy.wishesTitle || "Wishes");
-    setHtml(root, ".elementor-element-e2d3ee0 .elementor-widget-container", escapeHtml(copy.wishesIntro || ""));
+    setText(root, ".elementor-element-4eed8a0c .elementor-heading-title", pickText(copy.wishesTitle, schemaJson.copy.wishesTitle, "Wishes"));
+    setHtml(root, ".elementor-element-e2d3ee0 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.wishesIntro, schemaJson.copy.wishesIntro))}</p>`);
     const wishesEnabled = mergedData?.features?.wishesEnabled ?? true;
     const wishesHeading = root.querySelector(".elementor-element-4eed8a0c");
     const wishesIntro = root.querySelector(".elementor-element-e2d3ee0");
@@ -628,10 +1234,10 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
       registerCleanup(() => wishForm?.removeEventListener("submit", onWishSubmit));
     }
 
-    setHtml(root, ".elementor-element-2389b4dd .elementor-widget-container", `<p>${escapeHtml(copy.closingText || "")}</p>`);
-    setHtml(root, ".elementor-element-383ba879 .elementor-widget-container", `<p>${escapeHtml(copy.closingLead || "Kami yang berbahagia,")}</p>`);
+    setHtml(root, ".elementor-element-2389b4dd .elementor-widget-container", `<p>${escapeHtml(pickText(copy.closingText, schemaJson.copy.closingText))}</p>`);
+    setHtml(root, ".elementor-element-383ba879 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.closingLead, schemaJson.copy.closingLead, "Kami yang berbahagia,"))}</p>`);
     setText(root, ".elementor-element-43cb6db8 .elementor-heading-title", coupleDisplay);
-    setHtml(root, ".elementor-element-1bad6d51 .elementor-widget-container", creditToHtml(copy.creditText || "Support with ❤ by ikaancinta.in"));
+    setHtml(root, ".elementor-element-1bad6d51 .elementor-widget-container", creditToHtml(pickText(copy.creditText, schemaJson.copy.creditText, "Support with ❤ by ikaancinta.in")));
 
     const countdownNode = root.querySelector("#wpkoi-elements-countdown-4909d2ba");
     if (countdownNode) {
@@ -669,6 +1275,48 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     const coverContent = root.querySelector("#kolom");
     const awNode = root.querySelector(".aw");
     const openButton = root.querySelector("#open");
+
+    const applyOpenedState = (isOpened = opened) => {
+      if (!isOpened) {
+        root.classList.remove("es-opened");
+        return;
+      }
+
+      document.body.classList.remove("es-lock-scroll");
+      document.body.style.position = "";
+      document.body.style.height = "";
+      document.body.style.left = "";
+      document.body.style.right = "";
+      document.body.style.overflowY = "";
+
+      root.classList.add("es-opened");
+      root.querySelectorAll(".elementor-invisible").forEach((node) => {
+        node.classList.remove("elementor-invisible");
+        node.style.visibility = "visible";
+        node.style.opacity = "";
+        node.style.transform = "";
+      });
+
+      root.querySelectorAll(".aw").forEach((node) => {
+        node.style.setProperty("display", "block", "important");
+      });
+
+      if (coverContent) {
+        coverContent.style.transform = "translateY(-100%)";
+        coverContent.style.transition = `transform ${tokens.motion.gateDurationMs}ms ease-in-out`;
+      }
+
+      if (pageCover) {
+        pageCover.style.opacity = "0";
+        pageCover.style.visibility = "hidden";
+        pageCover.style.pointerEvents = "none";
+        pageCover.style.transition = `opacity ${tokens.motion.gateDurationMs}ms ease-in-out`;
+      }
+
+      if (awNode) awNode.style.setProperty("display", "block", "important");
+    };
+
+    applyOpenedState(opened);
 
     const song = root.querySelector("#song");
     const songSource = root.querySelector("#song source");
@@ -744,30 +1392,10 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     if (openButton) {
       const onOpen = (eventClick) => {
         eventClick.preventDefault();
+        if (opened) return;
 
-        document.body.classList.remove("es-lock-scroll");
-        document.body.style.position = "";
-        document.body.style.height = "";
-        document.body.style.left = "";
-        document.body.style.right = "";
-        document.body.style.overflowY = "";
-
-        root.classList.add("es-opened");
-        root.querySelectorAll(".elementor-invisible").forEach((node) => {
-          node.classList.remove("elementor-invisible");
-          node.style.visibility = "visible";
-          node.style.opacity = "";
-          node.style.transform = "";
-        });
-
-        root.querySelectorAll(".aw").forEach((node) => {
-          node.style.setProperty("display", "block", "important");
-        });
-
-        if (coverContent) {
-          coverContent.style.transform = "translateY(-100%)";
-          coverContent.style.transition = `transform ${tokens.motion.gateDurationMs}ms ease-in-out`;
-        }
+        setOpened(true);
+        applyOpenedState(true);
 
         if (pageCover) {
           pageCover.style.opacity = "0";
@@ -778,7 +1406,6 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
           }, tokens.motion.gateDurationMs);
         }
 
-        if (awNode) awNode.style.setProperty("display", "block", "important");
         playAudio();
       };
 
@@ -892,7 +1519,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
         }
       });
     };
-  }, [mergedData, wishes, fallbackWishes, liveOrderPayload]);
+  }, [mergedData, wishes, fallbackWishes, liveOrderPayload, opened, isStaticDemoMode]);
 
   useEffect(() => {
     if (!lightboxImage) return undefined;

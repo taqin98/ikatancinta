@@ -263,6 +263,35 @@ const THEME_UPLOAD_OVERRIDES = {
       description: "Tidak digunakan di template Botanical Elegance karena section love story tidak memiliki thumbnail foto.",
     },
   },
+  "eternal-summit": {
+    frontCover: {
+      visible: true,
+      required: true,
+      title: "Foto Cover Utama Portrait",
+      reviewLabel: "Cover Utama Portrait",
+      uploadLabel: "Upload atau Drop Foto Cover Utama",
+      validationMessage: "Mohon upload foto cover utama portrait terlebih dahulu.",
+      description: "Dipakai sebagai cover utama portrait pada halaman pembuka Eternal Summit sebelum tamu menekan tombol buka undangan.",
+    },
+    cover: {
+      visible: true,
+      required: true,
+      title: "Foto Cover Desktop",
+      reviewLabel: "Cover Desktop Halaman Utama",
+      sectionTitle: "Cover Halaman Utama",
+      validationMessage: "Mohon upload foto cover desktop terlebih dahulu.",
+      description: "Dipakai khusus sebagai background cover halaman utama pada layar desktop atau laptop di Eternal Summit.",
+    },
+    openingThumbnail: {
+      visible: true,
+      required: true,
+      title: "Foto Thumbnail Pasangan",
+      reviewLabel: "Thumbnail Pasangan Setelah Buka",
+      sectionTitle: "Foto Setelah Buka Undangan",
+      validationMessage: "Mohon upload foto thumbnail pasangan terlebih dahulu.",
+      description: "Dipakai sebagai foto thumbnail pasangan pada section pertama setelah undangan dibuka di Eternal Summit.",
+    },
+  },
 };
 
 export function getThemeUploadConfig(theme, packageConfig) {
