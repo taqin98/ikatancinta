@@ -104,6 +104,7 @@ function mergeInvitationData(base, ...sources) {
   output.copy = { ...(base?.copy || {}), ...(output.copy || {}) };
   output.media = { ...(base?.media || {}), ...(output.media || {}) };
   output.features = { ...(base?.features || {}), ...(output.features || {}) };
+  output.order = { ...(base?.order || {}), ...(output.order || {}) };
 
   return output;
 }
@@ -152,6 +153,31 @@ function inferStreamingLabel(url, fallback = "") {
   if (raw.includes("zoom.us")) return "Zoom Meeting";
   if (raw.includes("tiktok.com")) return "TikTok Live";
   return pickText(fallback, "Live Streaming");
+}
+
+function resolveInvitationSlug(data, fallback = "") {
+  return pickText(data?.invitation?.slug, data?.invitationSlug, data?.invitation_slug, data?.slug, fallback);
+}
+
+function resolveOrderId(data, fallback = "") {
+  return pickText(
+    data?.invitation?.orderId,
+    data?.invitation?.order_id,
+    data?.invitation?.id,
+    data?.orderId,
+    data?.order_id,
+    data?.order?.orderId,
+    data?.order?.order_id,
+    data?.order?.id,
+    data?.data?.orderId,
+    data?.data?.order_id,
+    data?.data?.order?.orderId,
+    data?.data?.order?.order_id,
+    data?.data?.order?.id,
+    data?.payload?.orderId,
+    data?.payload?.order_id,
+    fallback
+  );
 }
 
 function buildRuntimeInvitationData(incomingData, baseSchema) {
@@ -203,25 +229,19 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
   const bride = orderPayload.bride || incomingData.bride || {};
   const akad = orderPayload.akad || incomingData.akad || {};
   const resepsi = orderPayload.resepsi || incomingData.resepsi || {};
-  const runtimeInvitationSlug = pickText(
-    incomingData?.invitation?.slug,
-    incomingData?.invitationSlug,
-    incomingData?.invitation_slug,
-    incomingData?.slug,
-    orderPayload?.invitationSlug,
-    orderPayload?.invitation_slug,
-    baseSchema?.invitation?.slug
+  const runtimeInvitationSlug = resolveInvitationSlug(
+    {
+      ...incomingData,
+      invitationSlug: pickText(incomingData?.invitationSlug, incomingData?.invitation_slug, orderPayload?.invitationSlug, orderPayload?.invitation_slug),
+    },
+    resolveInvitationSlug(baseSchema)
   );
-  const runtimeOrderId = pickText(
-    incomingData?.invitation?.orderId,
-    incomingData?.invitation?.id,
-    incomingData?.orderId,
-    incomingData?.order_id,
-    incomingData?.order?.orderId,
-    incomingData?.order?.id,
-    orderPayload?.orderId,
-    orderPayload?.order_id,
-    baseSchema?.invitation?.orderId
+  const runtimeOrderId = resolveOrderId(
+    {
+      ...incomingData,
+      orderId: pickText(incomingData?.orderId, incomingData?.order_id, orderPayload?.orderId, orderPayload?.order_id),
+    },
+    resolveOrderId(baseSchema)
   );
   const runtimeDate = parseEventDateTime(
     akad?.date,
@@ -839,8 +859,20 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
 
     const fetchedRuntimeData = buildRuntimeInvitationData(fetchedData, defaultSchema);
     const propRuntimeData = buildRuntimeInvitationData(propData, defaultSchema);
-    return mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
-  }, [fetchedData, isStaticDemoMode, propData]);
+    const merged = mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
+    const resolvedInvitationSlug = resolveInvitationSlug(merged, invitationSlug || "puspa-asmara");
+    const resolvedOrderId = resolveOrderId(merged);
+
+    return {
+      ...merged,
+      orderId: resolvedOrderId,
+      invitation: {
+        ...(merged.invitation || {}),
+        slug: resolvedInvitationSlug,
+        orderId: resolvedOrderId,
+      },
+    };
+  }, [fetchedData, invitationSlug, isStaticDemoMode, propData]);
   const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
   const fallbackWishes = useMemo(() => {
     const fromSchema = (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : []).map(normalizeWishItem).filter(Boolean);
@@ -1443,8 +1475,8 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       }
 
       try {
-        const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "puspa-asmara";
-        const activeOrderId = mergedData?.invitation?.orderId || mergedData?.orderId || "";
+        const activeInvitationSlug = resolveInvitationSlug(mergedData, invitationSlug || "puspa-asmara");
+        const activeOrderId = resolveOrderId(mergedData);
         await postInvitationWish(activeInvitationSlug, {
           invitationSlug: activeInvitationSlug,
           orderId: activeOrderId,

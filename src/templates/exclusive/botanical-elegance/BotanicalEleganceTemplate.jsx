@@ -91,6 +91,8 @@ function mergeInvitationData(base, ...sources) {
     output.couple = { ...(base?.couple || {}), ...(output.couple || {}) };
     output.couple.groom = { ...(base?.couple?.groom || {}), ...(output.couple?.groom || {}) };
     output.couple.bride = { ...(base?.couple?.bride || {}), ...(output.couple?.bride || {}) };
+    output.invitation = { ...(base?.invitation || {}), ...(output.invitation || {}) };
+    output.order = { ...(base?.order || {}), ...(output.order || {}) };
 
     return output;
 }
@@ -125,6 +127,29 @@ function pickAsset(...values) {
         }
     }
     return "";
+}
+
+function resolveInvitationSlug(data, fallback = "") {
+    return pickText(data?.invitation?.slug, data?.invitationSlug, data?.invitation_slug, data?.slug, fallback);
+}
+
+function resolveOrderId(data, fallback = "") {
+    return pickText(
+        data?.invitation?.orderId,
+        data?.invitation?.order_id,
+        data?.invitation?.id,
+        data?.orderId,
+        data?.order_id,
+        data?.order?.orderId,
+        data?.order?.order_id,
+        data?.order?.id,
+        data?.data?.orderId,
+        data?.data?.order_id,
+        data?.data?.order?.orderId,
+        data?.data?.order?.order_id,
+        data?.data?.order?.id,
+        fallback
+    );
 }
 
 function formatDateID(value) {
@@ -375,8 +400,16 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
           ? rawGift.bankAccounts
           : [];
     const runtimeDateISO = buildDateISO(akad.date, akad.startTime || akad.time, pickText(incomingData?.event?.dateISO, baseSchema?.event?.dateISO));
+    const runtimeInvitationSlug = resolveInvitationSlug(incomingData, resolveInvitationSlug(baseSchema));
+    const runtimeOrderId = resolveOrderId(incomingData, resolveOrderId(baseSchema));
 
     return {
+        invitation: {
+            ...(incomingData.invitation || {}),
+            slug: runtimeInvitationSlug,
+            orderId: runtimeOrderId,
+        },
+        orderId: runtimeOrderId,
         guest: {
             ...(orderPayload.guest || incomingData.guest || {}),
         },
@@ -556,8 +589,20 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
 
         const fetchedRuntimeData = buildRuntimeInvitationData(fetchedData, defaultSchema);
         const propRuntimeData = buildRuntimeInvitationData(propData, defaultSchema);
-        return mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
-    }, [fetchedData, isStaticDemoMode, propData]);
+        const merged = mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
+        const resolvedInvitationSlug = resolveInvitationSlug(merged, invitationSlug || "botanical-elegance");
+        const resolvedOrderId = resolveOrderId(merged);
+
+        return {
+            ...merged,
+            orderId: resolvedOrderId,
+            invitation: {
+                ...(merged.invitation || {}),
+                slug: resolvedInvitationSlug,
+                orderId: resolvedOrderId,
+            },
+        };
+    }, [fetchedData, invitationSlug, isStaticDemoMode, propData]);
     const markup = useMemo(() => sanitizeTemplateHtml(rawBodyHtml), []);
     const fallbackWishes = useMemo(
         () => (Array.isArray(defaultSchema.wishes) ? defaultSchema.wishes : []).map(normalizeWishItem).filter(Boolean),
@@ -1218,7 +1263,13 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
             }
 
             try {
-                await postInvitationWish("botanical-elegance", nextEntry);
+                const activeInvitationSlug = resolveInvitationSlug(mergedData, invitationSlug || "botanical-elegance");
+                const activeOrderId = resolveOrderId(mergedData);
+                await postInvitationWish(activeInvitationSlug, {
+                    invitationSlug: activeInvitationSlug,
+                    orderId: activeOrderId,
+                    ...nextEntry,
+                });
             } catch {
                 // Keep optimistic local render
             } finally {
