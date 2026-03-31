@@ -97,6 +97,8 @@ function mergeInvitationData(base, ...sources) {
   output.copy = { ...(base?.copy || {}), ...(output.copy || {}) };
   output.media = { ...(base?.media || {}), ...(output.media || {}) };
   output.features = { ...(base?.features || {}), ...(output.features || {}) };
+  output.invitation = { ...(base?.invitation || {}), ...(output.invitation || {}) };
+  output.order = { ...(base?.order || {}), ...(output.order || {}) };
 
   return output;
 }
@@ -129,10 +131,6 @@ function writeStoredWishes(entries) {
   } catch {
     // ignore storage failures
   }
-}
-
-function getOpenStateStorageKey(invitationSlug) {
-  return `exclusive_03_open_${String(invitationSlug || "eternal-summit").trim().toLowerCase()}`;
 }
 
 function setText(root, selector, value) {
@@ -195,6 +193,29 @@ function pickAsset(...values) {
     }
   }
   return "";
+}
+
+function resolveInvitationSlug(data, fallback = "") {
+  return pickText(data?.invitation?.slug, data?.invitationSlug, data?.invitation_slug, data?.slug, fallback);
+}
+
+function resolveOrderId(data, fallback = "") {
+  return pickText(
+    data?.invitation?.orderId,
+    data?.invitation?.order_id,
+    data?.invitation?.id,
+    data?.orderId,
+    data?.order_id,
+    data?.order?.orderId,
+    data?.order?.order_id,
+    data?.order?.id,
+    data?.data?.orderId,
+    data?.data?.order_id,
+    data?.data?.order?.orderId,
+    data?.data?.order?.order_id,
+    data?.data?.order?.id,
+    fallback
+  );
 }
 
 function formatDateID(value) {
@@ -454,8 +475,16 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     akad.startTime || akad.time,
     pickText(incomingData?.event?.dateISO, baseSchema?.event?.dateISO)
   );
+  const runtimeInvitationSlug = resolveInvitationSlug(incomingData, resolveInvitationSlug(baseSchema));
+  const runtimeOrderId = resolveOrderId(incomingData, resolveOrderId(baseSchema));
 
   return {
+    invitation: {
+      ...(incomingData.invitation || {}),
+      slug: runtimeInvitationSlug,
+      orderId: runtimeOrderId,
+    },
+    orderId: runtimeOrderId,
     guest: {
       ...(orderPayload.guest || incomingData.guest || {}),
     },
@@ -644,7 +673,6 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
 
 export default function EternalSummitTemplate({ data: propData, invitationSlug = "eternal-summit", mode = "live" }) {
   const isStaticDemoMode = mode === "demo";
-  const openStateStorageKey = useMemo(() => getOpenStateStorageKey(invitationSlug), [invitationSlug]);
   const { data: fetchedData } = useInvitationData(invitationSlug, {
     fallbackSlug: "eternal-summit",
     skipFetch: Boolean(propData) || isStaticDemoMode,
@@ -656,8 +684,20 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
 
     const fetchedRuntimeData = buildRuntimeInvitationData(fetchedData, defaultSchema);
     const propRuntimeData = buildRuntimeInvitationData(propData, defaultSchema);
-    return mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
-  }, [fetchedData, isStaticDemoMode, propData]);
+    const merged = mergeInvitationData(defaultSchema, schemaJson, fetchedData, propData, fetchedRuntimeData, propRuntimeData);
+    const resolvedInvitationSlug = resolveInvitationSlug(merged, invitationSlug || "eternal-summit");
+    const resolvedOrderId = resolveOrderId(merged);
+
+    return {
+      ...merged,
+      orderId: resolvedOrderId,
+      invitation: {
+        ...(merged.invitation || {}),
+        slug: resolvedInvitationSlug,
+        orderId: resolvedOrderId,
+      },
+    };
+  }, [fetchedData, invitationSlug, isStaticDemoMode, propData]);
   const liveOrderPayload = useMemo(
     () => mergedData?.order?.payload || fetchedData?.order?.payload || propData?.order?.payload || {},
     [mergedData, fetchedData, propData]
@@ -676,14 +716,8 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
   const audioRef = useRef(null);
   const audioResumeRef = useRef(false);
   const unlockTimerRef = useRef(null);
-  const [opened, setOpened] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return window.sessionStorage.getItem(getOpenStateStorageKey(invitationSlug)) === "1";
-    } catch {
-      return false;
-    }
-  });
+  const renderWishesRef = useRef(null);
+  const [opened, setOpened] = useState(false);
   const [lightboxImage, setLightboxImage] = useState("");
   const [wishes, setWishes] = useState(() => fallbackWishes);
 
@@ -731,19 +765,6 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
   }, [opened]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      if (opened) {
-        window.sessionStorage.setItem(openStateStorageKey, "1");
-      } else {
-        window.sessionStorage.removeItem(openStateStorageKey);
-      }
-    } catch {
-      // ignore storage failures
-    }
-  }, [openStateStorageKey, opened]);
-
-  useEffect(() => {
     AOS.init({
       once: tokens.aos.once,
       mirror: tokens.aos.mirror,
@@ -767,6 +788,10 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     },
     []
   );
+
+  useEffect(() => {
+    renderWishesRef.current?.(wishes);
+  }, [wishes]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -854,12 +879,13 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
       node.style.display = "block";
     };
 
-    const setBackgroundImage = (selector, value) => {
+    const setBackgroundImage = (selector, value, options = {}) => {
       const node = root.querySelector(selector);
       if (!node || !value) return;
       const resolved = resolveAssetUrl(value);
+      const position = normalizeText(options.position) || "center center";
       node.style.backgroundImage = `url("${resolved}")`;
-      node.style.backgroundPosition = "center center";
+      node.style.backgroundPosition = position;
       node.style.backgroundSize = "cover";
       node.style.backgroundRepeat = "no-repeat";
     };
@@ -935,8 +961,8 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     const loveStoryThumbnailImage = isStaticDemoMode
       ? ""
       : pickAsset(desktopCoverImage, mergedData?.coverImage, mergedData?.media?.desktopCoverImage, heroImage);
-    setBackgroundImage("#kolom", coverFrontImage);
-    setBackgroundImage("#desk_cov", desktopCoverImage);
+    setBackgroundImage("#kolom", coverFrontImage, { position: "top center" });
+    setBackgroundImage("#desk_cov", desktopCoverImage, { position: "top center" });
     updateImage(".elementor-element-4b37e843 img", bride.image);
     updateImage(".elementor-element-3b7f9a4a img", groom.image);
     updateImage(".elementor-element-50b78d58 img", heroImage);
@@ -1094,7 +1120,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
       if (wishesFormContainer && !wishesFormContainer.querySelector("#commentform-13840")) {
         wishesFormContainer.innerHTML = `
           <div class="respond">
-            <form action="#" method="post" id="commentform-13840" class="comment-form">
+            <form action="javascript:void(0)" method="post" id="commentform-13840" class="comment-form">
               <p class="comment-form-author cui-field-1">
                 <input id="author" name="author" type="text" class="cui-input" maxlength="50" placeholder="Nama" autocomplete="name" required />
               </p>
@@ -1154,6 +1180,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
         }
       };
 
+      renderWishesRef.current = renderWishes;
       renderWishes(wishes);
 
       const onCountLinkClick = (event) => {
@@ -1169,6 +1196,10 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
 
       const onWishSubmit = async (eventSubmit) => {
         eventSubmit.preventDefault();
+        eventSubmit.stopPropagation();
+        if (typeof eventSubmit.stopImmediatePropagation === "function") {
+          eventSubmit.stopImmediatePropagation();
+        }
         const author = wishForm?.querySelector("#author");
         const comment = wishForm?.querySelector("#comment");
         const attendance = wishForm?.querySelector("#attendance-13840");
@@ -1198,8 +1229,15 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
           submitBtn.value = "Mengirim...";
         }
 
+        const activeInvitationSlug = resolveInvitationSlug(mergedData, invitationSlug || "eternal-summit");
+        const activeOrderId = resolveOrderId(mergedData);
+
         try {
-          await postInvitationWish("eternal-summit", nextEntry);
+          await postInvitationWish(activeInvitationSlug, {
+            invitationSlug: activeInvitationSlug,
+            orderId: activeOrderId,
+            ...nextEntry,
+          });
         } catch {
           // Keep optimistic local render
         } finally {
@@ -1232,6 +1270,11 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
 
       wishForm?.addEventListener("submit", onWishSubmit);
       registerCleanup(() => wishForm?.removeEventListener("submit", onWishSubmit));
+      registerCleanup(() => {
+        if (renderWishesRef.current === renderWishes) {
+          renderWishesRef.current = null;
+        }
+      });
     }
 
     setHtml(root, ".elementor-element-2389b4dd .elementor-widget-container", `<p>${escapeHtml(pickText(copy.closingText, schemaJson.copy.closingText))}</p>`);
@@ -1519,7 +1562,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
         }
       });
     };
-  }, [mergedData, wishes, fallbackWishes, liveOrderPayload, opened, isStaticDemoMode]);
+  }, [mergedData, fallbackWishes, liveOrderPayload, opened, isStaticDemoMode, invitationSlug]);
 
   useEffect(() => {
     if (!lightboxImage) return undefined;

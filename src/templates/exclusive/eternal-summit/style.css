@@ -57,6 +57,14 @@
   isolation: isolate;
 }
 
+.es-template #sec {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 999;
+}
+
 body.es-lock-scroll {
   position: fixed;
   left: 0;
@@ -68,6 +76,41 @@ body.es-lock-scroll {
 
 .es-template #open {
   cursor: pointer;
+}
+
+.es-template #kolom,
+.es-template #desk_cov {
+  position: relative;
+  background-position: top center !important;
+  background-repeat: no-repeat !important;
+  background-size: cover !important;
+}
+
+.es-template #kolom > *,
+.es-template #desk_cov > * {
+  position: relative;
+  z-index: 1;
+}
+
+.es-template .elementor-element-1c63d13d .elementor-heading-title,
+.es-template .elementor-element-21a7b3db .elementor-heading-title,
+.es-template .elementor-element-56950f19 .elementor-heading-title,
+.es-template .elementor-element-725f20f4 .elementor-heading-title,
+.es-template .elementor-element-3f94bff0 .elementor-heading-title,
+.es-template .elementor-element-5a8e76f9 .elementor-heading-title,
+.es-template .elementor-element-6875cbf .elementor-heading-title {
+  text-shadow: 0 6px 20px rgba(33, 18, 11, 0.18);
+}
+
+.es-template .elementor-element-3de94342 .elementor-button {
+  box-shadow: 0 10px 26px rgba(68, 40, 23, 0.2);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.es-template .elementor-element-3de94342 .elementor-button:hover,
+.es-template .elementor-element-3de94342 .elementor-button:focus {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 30px rgba(68, 40, 23, 0.24);
 }
 
 .es-template #amplop {
