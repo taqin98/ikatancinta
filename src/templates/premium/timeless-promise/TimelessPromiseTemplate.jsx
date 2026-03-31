@@ -2147,8 +2147,29 @@ export default function TimelessPromiseTemplate({
                     const liveAttendance = normalizeText(attendanceInput?.value || wishFormStateRef.current.attendance || "");
 
                     const payload = {
-                        invitationSlug: invitationSlug || mergedData?.invitation?.slug || "timeless-promise",
-                        orderId: mergedData?.invitation?.orderId || mergedData?.orderId || "",
+                        invitationSlug:
+                            invitationSlug ||
+                            mergedData?.invitation?.slug ||
+                            mergedData?.invitationSlug ||
+                            "timeless-promise",
+                        orderId:
+                            mergedData?.invitation?.orderId ||
+                            mergedData?.invitation?.order_id ||
+                            mergedData?.orderId ||
+                            mergedData?.order_id ||
+                            mergedData?.order?.orderId ||
+                            mergedData?.order?.order_id ||
+                            mergedData?.order?.id ||
+                            "",
+                        order_id:
+                            mergedData?.invitation?.orderId ||
+                            mergedData?.invitation?.order_id ||
+                            mergedData?.orderId ||
+                            mergedData?.order_id ||
+                            mergedData?.order?.orderId ||
+                            mergedData?.order?.order_id ||
+                            mergedData?.order?.id ||
+                            "",
                         author: liveAuthor || "Tamu",
                         comment: liveComment,
                         attendance: liveAttendance || "-",

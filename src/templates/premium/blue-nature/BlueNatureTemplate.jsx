@@ -648,11 +648,24 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
 
         setSubmittingWish(true);
         try {
-            const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "blue-nature";
-            const activeOrderId = mergedData?.invitation?.orderId || mergedData?.orderId || "";
+            const activeInvitationSlug =
+                invitationSlug ||
+                mergedData?.invitation?.slug ||
+                mergedData?.invitationSlug ||
+                "blue-nature";
+            const activeOrderId =
+                mergedData?.invitation?.orderId ||
+                mergedData?.invitation?.order_id ||
+                mergedData?.orderId ||
+                mergedData?.order_id ||
+                mergedData?.order?.orderId ||
+                mergedData?.order?.order_id ||
+                mergedData?.order?.id ||
+                "";
             await postInvitationWish(activeInvitationSlug, {
                 invitationSlug: activeInvitationSlug,
                 orderId: activeOrderId,
+                order_id: activeOrderId,
                 author: wishForm.author.trim(),
                 comment: wishForm.comment.trim(),
                 attendance: wishForm.attendance,

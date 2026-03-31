@@ -947,13 +947,31 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
         await new Promise((resolve, reject) => {
           const timeoutId = window.setTimeout(() => reject(new Error("WISH_SUBMIT_TIMEOUT")), 5000);
 
-          postInvitationWish(invitationSlug || "velvet-burgundy", {
-            invitationSlug,
-            orderId: mergedData?.orderId,
-            author,
-            comment,
-            attendance,
-          })
+          postInvitationWish(
+            invitationSlug || mergedData?.invitation?.slug || mergedData?.invitationSlug || "velvet-burgundy",
+            {
+              invitationSlug: invitationSlug || mergedData?.invitation?.slug || mergedData?.invitationSlug || "velvet-burgundy",
+              orderId:
+                mergedData?.invitation?.orderId ||
+                mergedData?.invitation?.order_id ||
+                mergedData?.orderId ||
+                mergedData?.order_id ||
+                mergedData?.order?.orderId ||
+                mergedData?.order?.order_id ||
+                mergedData?.order?.id,
+              order_id:
+                mergedData?.invitation?.orderId ||
+                mergedData?.invitation?.order_id ||
+                mergedData?.orderId ||
+                mergedData?.order_id ||
+                mergedData?.order?.orderId ||
+                mergedData?.order?.order_id ||
+                mergedData?.order?.id,
+              author,
+              comment,
+              attendance,
+            }
+          )
             .then((result) => {
               window.clearTimeout(timeoutId);
               resolve(result);

@@ -1944,12 +1944,32 @@ export default function IvoryGraceTemplate({
                     if (wishForm.classList.contains("is-submitting")) return;
 
                     const formData = new FormData(wishForm);
-                    const activeInvitationSlug = invitationSlug || mergedData?.invitation?.slug || "ivory-grace";
+                    const activeInvitationSlug =
+                        invitationSlug ||
+                        mergedData?.invitation?.slug ||
+                        mergedData?.invitationSlug ||
+                        "ivory-grace";
                     const payload = {
                         invitationSlug: activeInvitationSlug,
                         invitation_slug: activeInvitationSlug,
-                        orderId: mergedData?.invitation?.orderId || mergedData?.orderId || null,
-                        order_id: mergedData?.invitation?.orderId || mergedData?.orderId || null,
+                        orderId:
+                            mergedData?.invitation?.orderId ||
+                            mergedData?.invitation?.order_id ||
+                            mergedData?.orderId ||
+                            mergedData?.order_id ||
+                            mergedData?.order?.orderId ||
+                            mergedData?.order?.order_id ||
+                            mergedData?.order?.id ||
+                            null,
+                        order_id:
+                            mergedData?.invitation?.orderId ||
+                            mergedData?.invitation?.order_id ||
+                            mergedData?.orderId ||
+                            mergedData?.order_id ||
+                            mergedData?.order?.orderId ||
+                            mergedData?.order?.order_id ||
+                            mergedData?.order?.id ||
+                            null,
                         author: normalizeText(formData.get("author") || mergedData?.guest?.name || "Tamu"),
                         comment: normalizeText(formData.get("comment") || ""),
                         attendance: normalizeText(formData.get("konfirmasi") || "-"),

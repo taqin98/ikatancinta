@@ -1948,8 +1948,12 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                     "misty-romance";
                 const activeOrderId =
                     mergedData?.invitation?.orderId ||
+                    mergedData?.invitation?.order_id ||
                     mergedData?.orderId ||
+                    mergedData?.order_id ||
                     mergedData?.order?.orderId ||
+                    mergedData?.order?.order_id ||
+                    mergedData?.order?.id ||
                     "";
                 let nextCreatedAt = new Date().toISOString();
 
@@ -1957,6 +1961,7 @@ export default function MistyRomanceTemplate({ data: propData = null, invitation
                     const response = await postInvitationWish(activeInvitationSlug, {
                         invitationSlug: activeInvitationSlug,
                         orderId: activeOrderId,
+                        order_id: activeOrderId,
                         author: name,
                         comment: message,
                         attendance: nextAttendance,
