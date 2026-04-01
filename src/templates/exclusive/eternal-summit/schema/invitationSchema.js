@@ -3,7 +3,7 @@ import schemaJson from "./schema.json";
 export const defaultSchema = {
   slug: "eternal-summit",
   guest: {
-    name: schemaJson.guest?.name || "Nama Tamu",
+    name: schemaJson.guest?.name ?? "",
   },
   groom: {
     ...(schemaJson.groom || {}),

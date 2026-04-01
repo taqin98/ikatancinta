@@ -780,7 +780,7 @@ function applyInvitationData(root, invitationData, options = {}) {
     applyCarouselImages(root, ".elementor-element-1a8272fc", [resepsiCoverPhoto]);
     applyWidgetImage(root.querySelector(".elementor-element-1a57482a"), closingPhoto);
 
-    replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
+    replaceExactText(textSelector, "Nama Tamu", guest?.name || "");
     replaceExactText(textSelector, "Dear,", guest?.greetingLabel || "Dear,");
 
     const brideNick = bride?.nickName || contentDefaults?.couple?.bride?.nickName || "Adiba";

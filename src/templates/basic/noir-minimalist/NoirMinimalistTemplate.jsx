@@ -705,7 +705,7 @@ function applyInvitationData(root, invitationData, options = {}) {
     );
     applyClassicBackground(root.querySelector(".elementor-element-2d9b9ee9"), closingBackgroundPhoto, "center center");
 
-    replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
+    replaceExactText(textSelector, "Nama Tamu", guest?.name || "");
     replaceExactText(textSelector, "DEAR", guest?.greetingLabel || "DEAR");
 
     const coupleUpper = `${(groom?.nickName || "").toUpperCase()} & ${(bride?.nickName || "").toUpperCase()}`;

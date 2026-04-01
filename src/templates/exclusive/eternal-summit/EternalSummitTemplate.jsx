@@ -800,7 +800,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     const cleanups = [];
     const registerCleanup = (fn) => cleanups.push(fn);
 
-    const guestName = pickText(mergedData?.guest?.name, "Nama Tamu");
+    const guestName = pickText(mergedData?.guest?.name, schemaJson?.guest?.name);
     const groom = {
       nickName: pickText(mergedData?.groom?.nickName, mergedData?.groom?.fullName, schemaJson.groom.nickName, "Habib"),
       fullName: pickText(mergedData?.groom?.fullName, mergedData?.groom?.nameFull, schemaJson.groom.fullName, "Habib Yulianto"),

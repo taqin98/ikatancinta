@@ -7,7 +7,7 @@ export const defaultSchema = {
   },
   slug: "puspa-asmara",
   guest: {
-    name: schemaJson.guest?.name || "Nama Tamu",
+    name: schemaJson.guest?.name ?? "",
     greetingLabel: schemaJson.guest?.greetingLabel || schemaJson.copy?.coverDear || "Dear",
   },
   groom: {

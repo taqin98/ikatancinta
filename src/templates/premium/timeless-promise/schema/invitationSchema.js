@@ -1,7 +1,7 @@
 /** @type {import('../../blue-nature/schema/invitationSchema').defaultSchema} */
 export const defaultSchema = {
     guest: {
-        name: "Nama Tamu",
+        name: "",
         greetingLabel: "Kepada Bapak/Ibu/Saudara/i",
         code: "",
     },

@@ -461,7 +461,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
       document.body.classList.remove("vb-lock-scroll");
     }
 
-    const guestName = pickText(mergedData?.guest?.name, "Nama Tamu");
+    const guestName = pickText(mergedData?.guest?.name);
     const couple = mergedData?.couple || {};
     const copy = mergedData?.copy || {};
     const features = mergedData?.features || {};

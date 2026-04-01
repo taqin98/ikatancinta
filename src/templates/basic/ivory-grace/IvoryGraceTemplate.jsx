@@ -603,7 +603,7 @@ function applyInvitationData(root, invitationData, options = {}) {
     applyClassicBackground(root.querySelector(".elementor-element-31c3b0d"), wishesBackgroundPhoto, "center center");
     applyClassicBackground(root.querySelector(".elementor-element-4982d8ca"), closingBackgroundPhoto, "center center");
 
-    replaceExactText(textSelector, "Nama Tamu", guest?.name || "Nama Tamu");
+    replaceExactText(textSelector, "Nama Tamu", guest?.name || "");
     replaceExactText(textSelector, "DEAR", guest?.greetingLabel || "DEAR");
 
     const coupleMixed = `${groom?.nickName || ""} & ${bride?.nickName || ""}`;

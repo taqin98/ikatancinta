@@ -1031,7 +1031,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     const registerCleanup = (fn) => cleanups.push(fn);
 
     const copy = mergedData?.copy || {};
-    const guestName = pickText(mergedData?.guest?.name, schemaJson?.guest?.name, "Nama Tamu");
+    const guestName = pickText(mergedData?.guest?.name, schemaJson?.guest?.name);
     const guestGreeting = pickText(
       mergedData?.guest?.greetingLabel,
       copy.coverDear,

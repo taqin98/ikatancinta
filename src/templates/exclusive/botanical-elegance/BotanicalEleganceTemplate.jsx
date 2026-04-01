@@ -787,7 +787,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
             image: pickAsset(mergedData?.bride?.image, mergedData?.bride?.photo, mergedData?.couple?.bride?.photo, schemaJson.bride.image),
         };
 
-        const guestName = pickText(mergedData?.guest?.name, "Nama Tamu");
+        const guestName = pickText(mergedData?.guest?.name, schemaJson.guest?.name);
         const guestGreeting = pickText(mergedData?.guest?.greetingLabel, copy?.coverDear, "DEAR");
         const coupleDisplay = `${groom.nickName} & ${bride.nickName}`;
         const displayDate = pickText(

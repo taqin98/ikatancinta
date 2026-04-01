@@ -3,7 +3,7 @@ import schemaJson from "./schema.json";
 export const defaultSchema = {
     slug: "velvet-burgundy",
     guest: {
-        name: "Nama Tamu",
+        name: "",
     },
     groom: {
         ...schemaJson.groom,

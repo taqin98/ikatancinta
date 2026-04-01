@@ -1291,7 +1291,7 @@ function applyInvitationData(root, invitationData) {
     setText(".elementor-element-63cd0286 .elementor-heading-title", coupleNames);
 
     setHtml(".elementor-element-44b08d83 .elementor-widget-container", `<p>${escapeHtml(guest.greetingLabel || "Kepada Yth,")}</p>`);
-    setText(".elementor-element-4adfa30d .elementor-widget-container", guest.name || "Nama Tamu");
+    setText(".elementor-element-4adfa30d .elementor-widget-container", guest.name || "");
     setHtml(".elementor-element-7980ad32 .elementor-widget-container", `<p>${escapeHtml(formatCompactDate(event.dateISO))}</p>`);
 
     setHtml(".elementor-element-af3859d .elementor-widget-container", `<p>${escapeHtml(copy.quote || defaultSchema.copy.quote)}</p>`);

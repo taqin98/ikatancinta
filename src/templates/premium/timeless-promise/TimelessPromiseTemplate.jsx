@@ -662,7 +662,7 @@ function applyInvitationData(root, invitationData, options = {}) {
         location: akadLocationText,
     });
 
-    replaceExactText(".elementor-widget-container p, .elementor-heading-title", "Nama Tamu", guestName);
+    replaceExactText(".elementor-widget-container p, .elementor-heading-title", "Nama Tamu", guestName || "");
     replaceExactText(".elementor-widget-container p, .elementor-heading-title", "Kepada Bapak/Ibu/Saudara/i", greetingLabel);
 
     replaceExactText(".elementor-widget-container p, .elementor-heading-title", "Habib & Adiba", `${groom.nickName} & ${bride.nickName}`);

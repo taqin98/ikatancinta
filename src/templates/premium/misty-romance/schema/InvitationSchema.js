@@ -5,7 +5,7 @@ export const defaultSchema = {
         orderId: "",
     },
     guest: {
-        name: "Nama Tamu",
+        name: "",
         greetingLabel: "Kepada Yth,",
         code: "",
     },

@@ -8,7 +8,7 @@ export const defaultSchema = {
         orderId: "",
     },
     guest: {
-        name: contentDefaults?.guest?.name || "Nama Tamu",
+        name: contentDefaults?.guest?.name ?? "",
         greetingLabel: contentDefaults?.guest?.greetingLabel || "Kepada Bapak/Ibu/Saudara/i",
         code: "",
     },
