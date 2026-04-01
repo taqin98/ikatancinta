@@ -3,6 +3,7 @@ import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
 import { postInvitationWish } from "../../../services/wishesApi";
+import { getPackageConfig } from "../../../data/packageCatalog";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -150,6 +151,33 @@ function resolveOrderId(data, fallback = "") {
         data?.data?.order?.id,
         fallback
     );
+}
+
+function resolvePackageTier(data, fallback = "") {
+    return pickText(
+        data?.selectedPackage?.tier,
+        data?.packageTier,
+        data?.selectedTheme?.packageTier,
+        data?.theme?.packageTier,
+        data?.order?.packageTier,
+        data?.data?.packageTier,
+        fallback
+    );
+}
+
+function resolveLivestreamCapability(data) {
+    if (typeof data?.selectedPackage?.capabilities?.livestream === "boolean") {
+        return data.selectedPackage.capabilities.livestream;
+    }
+
+    if (typeof data?.order?.selectedPackage?.capabilities?.livestream === "boolean") {
+        return data.order.selectedPackage.capabilities.livestream;
+    }
+
+    const packageTier = resolvePackageTier(data);
+    if (!packageTier) return false;
+
+    return Boolean(getPackageConfig(packageTier)?.capabilities?.livestream);
 }
 
 function formatDateID(value) {
@@ -394,6 +422,14 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
         ...(incomingData.features || {}),
         ...(orderPayload.features || {}),
     };
+    const runtimeLivestreamEnabled =
+        orderPayload.features?.livestreamEnabled ??
+        incomingData.features?.livestreamEnabled;
+    const runtimeLivestreamCapability = resolveLivestreamCapability({
+        ...incomingData,
+        selectedPackage: incomingData?.selectedPackage || orderPayload?.selectedPackage,
+        packageTier: resolvePackageTier(incomingData, pickText(orderPayload?.packageTier, orderPayload?.selectedTheme?.packageTier)),
+    });
     const runtimeBankList = Array.isArray(rawGift.bankList)
         ? rawGift.bankList
         : Array.isArray(rawGift.bankAccounts)
@@ -479,10 +515,7 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
         },
         features: {
             ...runtimeFeatures,
-            livestreamEnabled:
-                orderPayload.features?.livestreamEnabled ??
-                incomingData.features?.livestreamEnabled ??
-                Boolean(runtimeStreamingUrl),
+            livestreamEnabled: runtimeLivestreamEnabled ?? (runtimeLivestreamCapability || Boolean(runtimeStreamingUrl)),
         },
         copy: {
             ...(incomingData.copy || {}),
@@ -817,7 +850,10 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
         )
             .map(normalizeRuntimeStory)
             .filter(Boolean);
-        const hasStreaming = (mergedData?.features?.livestreamEnabled ?? false) || Boolean(pickText(streaming?.url));
+        const hasStreaming =
+            (mergedData?.features?.livestreamEnabled ?? false) ||
+            resolveLivestreamCapability(mergedData) ||
+            Boolean(pickText(streaming?.url));
         const hasGallery = gallery.length > 0;
         const hasStories = (mergedData?.features?.loveStory ?? true) && stories.length > 0;
         const hasShippingData = Boolean(pickText(rawShipping?.recipient, rawShipping?.phone, rawShipping?.address));

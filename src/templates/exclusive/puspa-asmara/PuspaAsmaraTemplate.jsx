@@ -3,6 +3,7 @@ import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
 import { postInvitationWish } from "../../../services/wishesApi";
+import { getPackageConfig } from "../../../data/packageCatalog";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -180,6 +181,33 @@ function resolveOrderId(data, fallback = "") {
   );
 }
 
+function resolvePackageTier(data, fallback = "") {
+  return pickText(
+    data?.selectedPackage?.tier,
+    data?.packageTier,
+    data?.selectedTheme?.packageTier,
+    data?.theme?.packageTier,
+    data?.order?.packageTier,
+    data?.data?.packageTier,
+    fallback
+  );
+}
+
+function resolveLivestreamCapability(data) {
+  if (typeof data?.selectedPackage?.capabilities?.livestream === "boolean") {
+    return data.selectedPackage.capabilities.livestream;
+  }
+
+  if (typeof data?.order?.selectedPackage?.capabilities?.livestream === "boolean") {
+    return data.order.selectedPackage.capabilities.livestream;
+  }
+
+  const packageTier = resolvePackageTier(data);
+  if (!packageTier) return false;
+
+  return Boolean(getPackageConfig(packageTier)?.capabilities?.livestream);
+}
+
 function buildRuntimeInvitationData(incomingData, baseSchema) {
   if (!incomingData || typeof incomingData !== "object") return {};
 
@@ -297,6 +325,14 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     ...(incomingData?.features || {}),
     ...(orderPayload?.features || {}),
   };
+  const runtimeLivestreamEnabled =
+    orderPayload?.features?.livestreamEnabled ??
+    incomingData?.features?.livestreamEnabled;
+  const runtimeLivestreamCapability = resolveLivestreamCapability({
+    ...incomingData,
+    selectedPackage: incomingData?.selectedPackage || orderPayload?.selectedPackage,
+    packageTier: resolvePackageTier(incomingData, pickText(orderPayload?.packageTier, orderPayload?.selectedTheme?.packageTier)),
+  });
   const runtimeBankList = Array.isArray(rawGift?.bankList)
     ? rawGift.bankList
     : Array.isArray(rawGift?.bankAccounts)
@@ -381,10 +417,7 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     },
     features: {
       ...runtimeFeatures,
-      livestreamEnabled:
-        orderPayload?.features?.livestreamEnabled ??
-        incomingData?.features?.livestreamEnabled ??
-        Boolean(runtimeStreamingUrl),
+      livestreamEnabled: runtimeLivestreamEnabled ?? (runtimeLivestreamCapability || Boolean(runtimeStreamingUrl)),
     },
     event: {
       ...(incomingData.event || {}),
@@ -1106,7 +1139,10 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       time: pickText(livestreamSource?.time, akad.time),
       url: pickText(livestreamSource?.url),
     };
-    const hasStreaming = (mergedData?.features?.livestreamEnabled ?? false) || Boolean(streaming.url);
+    const hasStreaming =
+      (mergedData?.features?.livestreamEnabled ?? false) ||
+      resolveLivestreamCapability(mergedData) ||
+      Boolean(streaming.url);
 
     const legacyGift = mergedData?.gifts || {};
     const genericGift = mergedData?.gift || {};
@@ -1251,9 +1287,9 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setHtml(root, ".elementor-element-6fb79463 .elementor-widget-container", `<p>${escapeHtml(copy.galleryTitle || "Our Gallery")}</p>`);
 
     const galleryItems = Array.isArray(mergedData?.gallery) ? mergedData.gallery.map(resolveAssetUrl).filter(Boolean) : [];
+    const galleryContainer = root.querySelector(".elementor-element-663c198b .elementor-gallery__container");
     const galleryNodes = Array.from(root.querySelectorAll(".elementor-element-663c198b .e-gallery-item"));
-    const fallbackGallery = root.querySelector(".elementor-element-663c198b .elementor-gallery__container");
-    if (fallbackGallery) fallbackGallery.classList.add("pa-gallery-fallback");
+    if (galleryContainer) galleryContainer.classList.add("pa-gallery-fallback");
     const activeGalleryItems = isStaticDemoMode
       ? galleryItems.length > 0
         ? galleryItems
@@ -1262,21 +1298,35 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
           .filter(Boolean)
       : galleryItems;
 
-    galleryNodes.forEach((anchor, index) => {
-      const nextImage = activeGalleryItems[index] || "";
-      if (!nextImage) {
-        anchor.style.display = "none";
-        return;
-      }
-      anchor.style.display = "block";
-      anchor.setAttribute("href", nextImage);
-      anchor.removeAttribute("data-e-action-hash");
-      const imageNode = anchor.querySelector(".e-gallery-image");
-      if (imageNode) {
+    if (galleryContainer) {
+      const galleryTemplateNode = galleryNodes[0] || null;
+      galleryContainer.innerHTML = "";
+
+      activeGalleryItems.forEach((nextImage) => {
+        const anchor = galleryTemplateNode ? galleryTemplateNode.cloneNode(true) : document.createElement("a");
+        anchor.className = galleryTemplateNode?.className || "e-gallery-item elementor-gallery-item elementor-animated-content";
+        anchor.style.display = "block";
+        anchor.setAttribute("href", nextImage);
+        anchor.setAttribute("data-elementor-open-lightbox", "yes");
+        anchor.setAttribute("data-elementor-lightbox-slideshow", "663c198b");
+        anchor.removeAttribute("data-e-action-hash");
+
+        let imageNode = anchor.querySelector(".e-gallery-image");
+        if (!imageNode) {
+          imageNode = document.createElement("div");
+          imageNode.className = "e-gallery-image elementor-gallery-item__image";
+          anchor.appendChild(imageNode);
+        }
+
         imageNode.setAttribute("data-thumbnail", nextImage);
         imageNode.style.backgroundImage = `url("${nextImage}")`;
-      }
-    });
+        imageNode.style.backgroundPosition = "center center";
+        imageNode.style.backgroundRepeat = "no-repeat";
+        imageNode.style.backgroundSize = "cover";
+
+        galleryContainer.appendChild(anchor);
+      });
+    }
 
     setNodeVisible(root, ".elementor-element-663c198b", activeGalleryItems.length > 0 || isStaticDemoMode);
 
