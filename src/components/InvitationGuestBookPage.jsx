@@ -13,6 +13,7 @@ import {
 } from "../utils/invitationMetadata";
 
 const SCAN_STORAGE_PREFIX = "ikc_guestbook_scan_history_v1:";
+const QR_SCAN_THROTTLE_MS = 2500;
 
 function normalizeAttendance(value) {
   const normalized = String(value || "")
@@ -282,8 +283,7 @@ export default function InvitationGuestBookPage() {
   const [showScanner, setShowScanner] = useState(false);
 
   const videoRef = useRef(null);
-  const streamRef = useRef(null);
-  const frameRequestRef = useRef(0);
+  const qrScannerRef = useRef(null);
   const lastDetectedRef = useRef({ value: "", at: 0 });
   const pendingGuestKeysRef = useRef(new Set());
 
@@ -292,24 +292,15 @@ export default function InvitationGuestBookPage() {
   const coupleLabel = resolveInvitationCoupleLabel(invitationData, invitationSlug);
   const qrModeEnabled = packageTier === "EKSKLUSIF";
   const guestBookEnabled = packageConfig?.capabilities?.guestBook === true;
-  const canUseCameraScan =
-    typeof window !== "undefined" &&
-    "BarcodeDetector" in window &&
-    Boolean(navigator?.mediaDevices?.getUserMedia);
+  const canUseCameraScan = typeof window !== "undefined" && Boolean(navigator?.mediaDevices?.getUserMedia);
 
   async function stopScanner() {
-    if (frameRequestRef.current) {
-      window.cancelAnimationFrame(frameRequestRef.current);
-      frameRequestRef.current = 0;
-    }
-
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
-    }
-
-    if (videoRef.current) {
-      videoRef.current.srcObject = null;
+    if (qrScannerRef.current) {
+      try {
+        qrScannerRef.current.stop();
+      } catch {
+        // ignore stop errors
+      }
     }
 
     setScannerState("idle");
@@ -370,7 +361,11 @@ export default function InvitationGuestBookPage() {
   useEffect(() => {
     loadGuestBook();
     return () => {
-      stopScanner();
+      void stopScanner();
+      if (qrScannerRef.current) {
+        qrScannerRef.current.destroy();
+        qrScannerRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invitationSlug]);
@@ -383,86 +378,56 @@ export default function InvitationGuestBookPage() {
     writeScanHistory(invitationSlug, scanHistory);
   }, [invitationSlug, scanHistory]);
 
-  useEffect(() => {
-    if (!qrModeEnabled || scannerState !== "active" || !canUseCameraScan) {
-      return undefined;
-    }
-
-    let disposed = false;
-    let detector = null;
-
-    async function scanFrame() {
-      if (disposed) return;
-
-      const video = videoRef.current;
-      if (video && video.readyState >= 2 && detector) {
-        try {
-          const barcodes = await detector.detect(video);
-          const rawValue = pickText(barcodes?.[0]?.rawValue);
-
-          if (rawValue) {
-            const now = Date.now();
-            const lastDetected = lastDetectedRef.current;
-
-            if (lastDetected.value !== rawValue || now - lastDetected.at > 2500) {
-              lastDetectedRef.current = { value: rawValue, at: now };
-              void registerScan(rawValue);
-            }
-          }
-        } catch (err) {
-          setScannerMessage(err?.message || "Proses scan QR tidak tersedia di browser ini.");
-        }
-      }
-
-      frameRequestRef.current = window.requestAnimationFrame(scanFrame);
-    }
-
-    try {
-      const DetectorClass = window.BarcodeDetector;
-      detector = new DetectorClass({ formats: ["qr_code"] });
-      frameRequestRef.current = window.requestAnimationFrame(scanFrame);
-    } catch (err) {
-      setScannerMessage(err?.message || "Barcode detector tidak tersedia.");
-      stopScanner();
-    }
-
-    return () => {
-      disposed = true;
-      if (frameRequestRef.current) {
-        window.cancelAnimationFrame(frameRequestRef.current);
-        frameRequestRef.current = 0;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [qrModeEnabled, scannerState, canUseCameraScan, wishRecords]);
-
   async function startScanner() {
     if (!qrModeEnabled) return;
 
     if (!canUseCameraScan) {
-      setScannerMessage("Browser ini belum mendukung scan QR otomatis. Gunakan input manual di bawah.");
+      setScannerMessage("Browser ini tidak mendukung akses kamera. Gunakan input manual di bawah.");
       return;
     }
 
     try {
-      setScannerMessage("");
+      setScannerMessage("Membuka kamera...");
       setScannerState("starting");
+      const [{ default: QrScanner }] = await Promise.all([import("qr-scanner")]);
+      const video = videoRef.current;
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: "environment" },
-        },
-        audio: false,
-      });
-
-      streamRef.current = stream;
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
+      if (!video) {
+        throw new Error("Elemen video scanner tidak tersedia.");
       }
 
+      if (!qrScannerRef.current) {
+        qrScannerRef.current = new QrScanner(
+          video,
+          (result) => {
+            const rawValue = pickText(result?.data, result);
+            if (!rawValue) return;
+
+            const now = Date.now();
+            const lastDetected = lastDetectedRef.current;
+            if (lastDetected.value === rawValue && now - lastDetected.at <= QR_SCAN_THROTTLE_MS) {
+              return;
+            }
+
+            lastDetectedRef.current = { value: rawValue, at: now };
+            void registerScan(rawValue);
+          },
+          {
+            preferredCamera: "environment",
+            highlightScanRegion: true,
+            highlightCodeOutline: true,
+            maxScansPerSecond: 12,
+            returnDetailedScanResult: true,
+            onDecodeError: () => {
+              // ignore per-frame decode misses
+            },
+          }
+        );
+      }
+
+      await qrScannerRef.current.start();
       setScannerState("active");
+      setScannerMessage("Arahkan QR tamu ke kamera.");
     } catch (err) {
       setScannerState("idle");
       setScannerMessage(err?.message || "Akses kamera ditolak atau tidak tersedia.");
@@ -556,7 +521,7 @@ export default function InvitationGuestBookPage() {
 
   function handleToggleScanner() {
     if (showScanner) {
-      stopScanner();
+      void stopScanner();
       setShowScanner(false);
       return;
     }
