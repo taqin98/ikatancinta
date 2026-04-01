@@ -88,6 +88,16 @@ export function getInvitationSlugFromPath(pathname = getCurrentPathname()) {
   }
 }
 
+export function isPublishedInvitationPath(pathname = getCurrentPathname()) {
+  const normalizedPath = String(pathname || "").trim();
+  return /^\/undangan\/[^/]+$/.test(normalizedPath);
+}
+
+export function isInvitationGuestBookPath(pathname = getCurrentPathname()) {
+  const normalizedPath = String(pathname || "").trim();
+  return /^\/undangan\/[^/]+\/buku-tamu$/.test(normalizedPath);
+}
+
 export function navigateTo(href) {
   const resolvedHref = toAppPath(href);
   if (isExternalHref(resolvedHref)) {

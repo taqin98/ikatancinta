@@ -176,6 +176,8 @@ Route yang digunakan saat ini:
 | `/preview-undangan?preset_id=...` | Preview tema non-BASIC |
 | `/preview-undangan-basic?preset_id=...` | Preview tema BASIC |
 | `/preset&design?preset_id=...` | Alias ke preview non-BASIC |
+| `/undangan/:slug` | Halaman undangan customer yang sudah publish |
+| `/undangan/:slug/buku-tamu` | Halaman buku tamu customer untuk paket PREMIUM / EKSKLUSIF |
 
 Query param penting:
 - `theme`: slug tema awal untuk form order.

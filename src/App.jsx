@@ -5,6 +5,7 @@ import CreateInvitationFormPage from "./components/CreateInvitationFormPage";
 import Footer from "./components/Footer";
 import Hero from "./components/Hero";
 import HowItWorks from "./components/HowItWorks";
+import InvitationGuestBookPage from "./components/InvitationGuestBookPage";
 import Marquee from "./components/Marquee";
 import Navbar from "./components/Navbar";
 import OrderConfirmationPage from "./components/OrderConfirmationPage";
@@ -34,7 +35,12 @@ import ThemeGalleryPage from "./components/ThemeGalleryPage";
 import ThemeShowcase from "./components/ThemeShowcase";
 import TestimonialsSection from "./components/TestimonialsSection";
 import WhatsAppButton from "./components/WhatsAppButton";
-import { getCurrentPathname } from "./utils/navigation";
+import {
+  getCurrentPathname,
+  isInvitationGuestBookPath,
+  isPublishedInvitationPath,
+  toAppPath,
+} from "./utils/navigation";
 
 function HomePage() {
   return (
@@ -50,6 +56,26 @@ function HomePage() {
       <FaqSection />
       <Footer />
       <WhatsAppButton />
+    </main>
+  );
+}
+
+function NotFoundPage() {
+  return (
+    <main className="min-h-screen bg-[#f7f1e8] px-4 py-10 text-[#5f4d2f]">
+      <div className="mx-auto max-w-xl rounded-3xl border border-[#e7dccd] bg-white p-8 text-center shadow-soft">
+        <p className="mb-2 text-xs uppercase tracking-[0.3em] text-[#aa9470]">404</p>
+        <h1 className="mb-2 font-serif text-3xl font-bold">Halaman tidak ditemukan</h1>
+        <p className="mb-6 text-sm text-[#8f7a57]">
+          Route yang Anda akses tidak tersedia atau ada typo pada URL.
+        </p>
+        <a
+          href={toAppPath("/")}
+          className="inline-flex items-center justify-center rounded-full bg-[#8e742f] px-5 py-3 text-sm font-bold text-white"
+        >
+          Kembali ke Beranda
+        </a>
+      </div>
     </main>
   );
 }
@@ -183,8 +209,16 @@ function App() {
     return <EternalSummitTemplate mode="demo" />;
   }
 
-  if (pathname.startsWith("/undangan/")) {
+  if (isInvitationGuestBookPath(pathname)) {
+    return <InvitationGuestBookPage />;
+  }
+
+  if (isPublishedInvitationPath(pathname)) {
     return <PublishedInvitationPage />;
+  }
+
+  if (pathname.startsWith("/undangan/")) {
+    return <NotFoundPage />;
   }
 
   if (pathname === "/preview-undangan-premium") {

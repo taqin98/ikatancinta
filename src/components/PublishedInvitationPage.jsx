@@ -16,8 +16,9 @@ import {
   PuspaAsmaraTemplate,
 } from "../templates/exclusive";
 import { fetchInvitationBySlug } from "../services/invitationApi";
-import { getInvitationSlugFromPath, toAppPath } from "../utils/navigation";
+import { getInvitationSlugFromPath, isPublishedInvitationPath, toAppPath } from "../utils/navigation";
 import { applyGuestQueryOverrides, readGuestQueryParams } from "../utils/guestParams";
+import { isInvitationPubliclyAccessible, normalizeThemeKey } from "../utils/invitationMetadata";
 
 const invitationTemplates = {
   "blue-nature": BlueNatureTemplate,
@@ -52,81 +53,6 @@ const normalizedThemeLookup = Object.fromEntries(
   ]),
 );
 
-const ORDER_STATUSES = ["pending", "processing", "published", "done", "cancelled"];
-const PUBLICLY_ACCESSIBLE_STATUSES = new Set(["published", "done"]);
-
-function normalizeThemeKey(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[_\s]+/g, "-");
-}
-
-function normalizePublicationStatus(value) {
-  return String(value || "")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_-]+/g, "-");
-}
-
-function isExplicitFalse(value) {
-  return value === false || value === 0 || value === "0" || value === "false" || value === "no";
-}
-
-function isExplicitTrue(value) {
-  return value === true || value === 1 || value === "1" || value === "true" || value === "yes";
-}
-
-function isInvitationPubliclyAccessible(invitationData) {
-  if (!invitationData || typeof invitationData !== "object") return false;
-
-  const statusCandidates = [
-    invitationData?.status,
-    invitationData?.publishStatus,
-    invitationData?.invitation?.status,
-    invitationData?.invitation?.publishStatus,
-    invitationData?.orderStatus,
-    invitationData?.order?.status,
-  ]
-    .map(normalizePublicationStatus)
-    .filter(Boolean);
-
-  const knownOrderStatus = statusCandidates.find((status) => ORDER_STATUSES.includes(status));
-  if (knownOrderStatus) {
-    return PUBLICLY_ACCESSIBLE_STATUSES.has(knownOrderStatus);
-  }
-
-  const publishFlags = [
-    invitationData?.isPublished,
-    invitationData?.published,
-    invitationData?.invitation?.isPublished,
-    invitationData?.invitation?.published,
-  ];
-
-  if (publishFlags.some(isExplicitFalse)) {
-    return false;
-  }
-
-  if (publishFlags.some(isExplicitTrue)) {
-    return true;
-  }
-
-  const publishedAtCandidates = [
-    invitationData?.publishedAt,
-    invitationData?.publishAt,
-    invitationData?.invitation?.publishedAt,
-    invitationData?.invitation?.publishAt,
-  ];
-
-  if (publishedAtCandidates.some((value) => String(value || "").trim())) {
-    return true;
-  }
-
-  // Inference: if the backend response does not expose publication metadata,
-  // keep the existing behavior to avoid blocking valid live invitations.
-  return true;
-}
-
 function resolveThemeSlug(invitationData, invitationSlug) {
   const directCandidates = [
     invitationData?.theme?.slug,
@@ -160,6 +86,7 @@ function resolveThemeSlug(invitationData, invitationSlug) {
 
 export default function PublishedInvitationPage() {
   const invitationSlug = getInvitationSlugFromPath();
+  const isValidInvitationPath = isPublishedInvitationPath();
   const guestQuery = readGuestQueryParams(window.location.search);
   const [invitationData, setInvitationData] = useState(null);
   const [themeSlug, setThemeSlug] = useState(null);
@@ -173,10 +100,10 @@ export default function PublishedInvitationPage() {
       setLoading(true);
       setError("");
 
-      if (!invitationSlug) {
+      if (!isValidInvitationPath || !invitationSlug) {
         setInvitationData(null);
         setThemeSlug(null);
-        setError("Slug undangan tidak valid.");
+        setError("Halaman undangan tidak ditemukan.");
         setLoading(false);
         return;
       }
@@ -222,7 +149,7 @@ export default function PublishedInvitationPage() {
     return () => {
       active = false;
     };
-  }, [invitationSlug]);
+  }, [invitationSlug, isValidInvitationPath]);
 
   const Template = themeSlug ? invitationTemplates[themeSlug] || null : null;
   const resolvedInvitationData = applyGuestQueryOverrides(invitationData, guestQuery);

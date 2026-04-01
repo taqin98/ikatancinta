@@ -9,6 +9,18 @@ function cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function createWishRecordFromFallback(item, slug, index) {
+  return {
+    wishId: `wish_demo_${slug || "invitation"}_${index + 1}`,
+    invitationSlug: slug || null,
+    orderId: null,
+    name: item?.name || item?.author || "Anonim",
+    attendance: item?.attendance || "hadir",
+    message: item?.message || item?.comment || "",
+    createdAt: item?.createdAt || new Date().toISOString(),
+  };
+}
+
 function wait(ms = 180) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
@@ -53,4 +65,34 @@ export async function fetchInvitationBySlug(slug) {
 
   await wait();
   return cloneJson(getDefaultSchemaBySlug(slug));
+}
+
+export async function fetchInvitationWishListBySlug(slug) {
+  const apiUrl = import.meta.env.VITE_INVITATION_API_URL;
+  const mode = (import.meta.env.VITE_INVITATION_API_MODE || (apiUrl ? "real" : "dummy")).toLowerCase();
+
+  if (mode === "real" && apiUrl && slug) {
+    const data = await getJson(`${apiUrl}/invitations/${encodeURIComponent(slug)}/list-wishes`);
+    const wishes = Array.isArray(data?.data?.wishes) ? data.data.wishes : Array.isArray(data?.wishes) ? data.wishes : [];
+
+    return {
+      invitationSlug: data?.data?.invitationSlug || data?.invitationSlug || slug,
+      orderId: data?.data?.orderId || data?.orderId || null,
+      total: Number.isFinite(data?.data?.total) ? data.data.total : wishes.length,
+      wishes,
+    };
+  }
+
+  await wait();
+
+  const fallbackInvitation = cloneJson(getDefaultSchemaBySlug(slug));
+  const fallbackWishes = Array.isArray(fallbackInvitation?.wishes?.initial) ? fallbackInvitation.wishes.initial : [];
+  const wishes = fallbackWishes.map((item, index) => createWishRecordFromFallback(item, slug, index));
+
+  return {
+    invitationSlug: slug || null,
+    orderId: null,
+    total: wishes.length,
+    wishes,
+  };
 }
