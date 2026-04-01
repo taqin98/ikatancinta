@@ -4,6 +4,27 @@ const DEFAULT_JSON_HEADERS = {
   Accept: "application/json",
 };
 
+function sanitizeGuestName(value) {
+  if (typeof value !== "string") return value ?? "";
+  const normalized = value.replace(/\s+/g, " ").trim().toLowerCase();
+  if (normalized === "nama tamu") {
+    return "";
+  }
+  return value;
+}
+
+function sanitizeInvitationPayload(payload) {
+  if (!payload || typeof payload !== "object") return payload;
+
+  const nextPayload = cloneJson(payload);
+
+  if (nextPayload?.guest && typeof nextPayload.guest === "object") {
+    nextPayload.guest.name = sanitizeGuestName(nextPayload.guest.name);
+  }
+
+  return nextPayload;
+}
+
 function cloneJson(value) {
   if (value === undefined || value === null) return value ?? null;
   return JSON.parse(JSON.stringify(value));
@@ -60,11 +81,12 @@ export async function fetchInvitationBySlug(slug) {
   const mode = (import.meta.env.VITE_INVITATION_API_MODE || (apiUrl ? "real" : "dummy")).toLowerCase();
 
   if (mode === "real" && apiUrl && slug) {
-    return getJson(`${apiUrl}/invitations/${encodeURIComponent(slug)}`);
+    const data = await getJson(`${apiUrl}/invitations/${encodeURIComponent(slug)}`);
+    return sanitizeInvitationPayload(data);
   }
 
   await wait();
-  return cloneJson(getDefaultSchemaBySlug(slug));
+  return sanitizeInvitationPayload(getDefaultSchemaBySlug(slug));
 }
 
 export async function fetchInvitationWishListBySlug(slug) {

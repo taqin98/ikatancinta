@@ -84,6 +84,29 @@ function resolveThemeSlug(invitationData, invitationSlug) {
   return null;
 }
 
+function sanitizeInvitationGuestName(invitationData) {
+  if (!invitationData || typeof invitationData !== "object") {
+    return invitationData;
+  }
+
+  const guestName = String(invitationData?.guest?.name || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+
+  if (guestName !== "nama tamu") {
+    return invitationData;
+  }
+
+  return {
+    ...invitationData,
+    guest: {
+      ...(invitationData.guest || {}),
+      name: "",
+    },
+  };
+}
+
 export default function PublishedInvitationPage() {
   const invitationSlug = getInvitationSlugFromPath();
   const isValidInvitationPath = isPublishedInvitationPath();
@@ -152,7 +175,7 @@ export default function PublishedInvitationPage() {
   }, [invitationSlug, isValidInvitationPath]);
 
   const Template = themeSlug ? invitationTemplates[themeSlug] || null : null;
-  const resolvedInvitationData = applyGuestQueryOverrides(invitationData, guestQuery);
+  const resolvedInvitationData = sanitizeInvitationGuestName(applyGuestQueryOverrides(invitationData, guestQuery));
 
   if (loading) {
     return (

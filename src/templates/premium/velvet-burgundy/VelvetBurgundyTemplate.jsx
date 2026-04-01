@@ -1114,8 +1114,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
               </div>
               <div className="elementor-element elementor-element-17d8c3af elementor-widget elementor-widget-text-editor" data-id="17d8c3af" data-element_type="widget" data-aos="fade-up" data-aos-delay="5" data-aos-duration="2500" data-aos-easing="lease-in-cube" data-aos-offset="10" data-widget_type="text-editor.default">
                 <div className="elementor-widget-container">
-
-                  Nama Tamu
+                  
                 </div>
               </div>
               <div className="elementor-element elementor-element-4ba523aa elementor-align-center elementor-widget elementor-widget-button" data-id="4ba523aa" data-element_type="widget" id="open" data-aos="fade-up" data-aos-delay="15" data-aos-duration="2500" data-aos-easing="lease-in-cube" data-aos-offset="10" data-widget_type="button.default">
