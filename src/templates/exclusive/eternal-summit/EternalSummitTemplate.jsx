@@ -3,6 +3,7 @@ import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
 import { postInvitationWish } from "../../../services/wishesApi";
+import { upsertGuestQrSection } from "../../../utils/invitationGuestQr";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -1100,6 +1101,13 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     const wishesHeading = root.querySelector(".elementor-element-4eed8a0c");
     const wishesIntro = root.querySelector(".elementor-element-e2d3ee0");
     const wishesWidgetContainer = root.querySelector(".elementor-element-71fcba30");
+
+    upsertGuestQrSection({
+      root,
+      guestName,
+      beforeNode: wishesHeading || wishesWidgetContainer,
+      markerAttribute: "data-es-guest-qr-section",
+    });
 
     if (!wishesEnabled) {
       [wishesHeading, wishesIntro, wishesWidgetContainer].forEach((node) => {

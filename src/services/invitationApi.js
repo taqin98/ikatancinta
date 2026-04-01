@@ -38,6 +38,7 @@ function createWishRecordFromFallback(item, slug, index) {
     name: item?.name || item?.author || "Anonim",
     attendance: item?.attendance || "hadir",
     message: item?.message || item?.comment || "",
+    source: item?.source || "guest_wish",
     createdAt: item?.createdAt || new Date().toISOString(),
   };
 }

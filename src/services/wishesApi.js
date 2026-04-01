@@ -37,6 +37,7 @@ async function postJson(url, body) {
 function normalizeWishPayload(payload) {
   const invitationSlug = String(payload?.invitationSlug || payload?.invitation_slug || "").trim();
   const orderId = String(payload?.orderId || payload?.order_id || "").trim();
+  const source = String(payload?.source || payload?.entrySource || "").trim();
 
   return {
     invitationSlug,
@@ -46,6 +47,7 @@ function normalizeWishPayload(payload) {
     name: String(payload?.author || payload?.name || "").trim(),
     attendance: String(payload?.attendance || "Hadir").trim(),
     message: String(payload?.comment || payload?.message || "").trim(),
+    source,
   };
 }
 
@@ -67,6 +69,7 @@ export async function postInvitationWish(slug, payload) {
         author: normalizedPayload.name || "Anonim",
         comment: normalizedPayload.message,
         attendance: normalizedPayload.attendance,
+        source: normalizedPayload.source || "guest_wish",
       createdAt: new Date().toISOString(),
     },
   };

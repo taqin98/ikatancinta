@@ -4,6 +4,7 @@ import AOS from "aos";
 import { useInvitationData } from "../../../hooks/useInvitationData";
 import { postInvitationWish } from "../../../services/wishesApi";
 import { getPackageConfig } from "../../../data/packageCatalog";
+import { upsertGuestQrSection } from "../../../utils/invitationGuestQr";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -1411,6 +1412,13 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setText(root, ".elementor-element-3437d66e .elementor-heading-title", copy.wishesTitle || "Wishes");
     setHtml(root, ".elementor-element-59922aab .elementor-widget-container", `<p>${escapeHtml(copy.wishesIntro || "")}</p>`);
     setNodeVisible(root, ".elementor-element-36ff6cc1", mergedData?.features?.wishesEnabled ?? true);
+
+    upsertGuestQrSection({
+      root,
+      guestName,
+      beforeNode: root.querySelector(".elementor-element-3437d66e") || root.querySelector(".elementor-element-36ff6cc1"),
+      markerAttribute: "data-pa-guest-qr-section",
+    });
 
     const wishesWidget = root.querySelector(".elementor-element-44eea63b .cui-wrapper");
     if (wishesWidget) wishesWidget.classList.remove("cui-comments-closed");

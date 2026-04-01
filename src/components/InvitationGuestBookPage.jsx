@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
 import { fetchInvitationBySlug, fetchInvitationWishListBySlug } from "../services/invitationApi";
+import { postInvitationWish } from "../services/wishesApi";
 import { getInvitationSlugFromPath, toAppPath } from "../utils/navigation";
+import { readGuestQueryParams } from "../utils/guestParams";
 import {
   humanizeInvitationSlug,
   isInvitationPubliclyAccessible,
@@ -61,8 +63,48 @@ function normalizeWishRecord(record, index, fallbackSlug, fallbackOrderId) {
     name: pickText(record?.name, record?.author, "Anonim"),
     attendance: normalizeAttendance(record?.attendance),
     message: pickText(record?.message, record?.comment),
+    source: pickText(record?.source, record?.entrySource, record?.entry_source, "guest_wish").toLowerCase(),
     createdAt: pickText(record?.createdAt, record?.created_at),
   };
+}
+
+function normalizeGuestKey(value) {
+  return pickText(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function extractInvitationSlugFromUrlPath(pathname) {
+  const match = String(pathname || "").match(/\/undangan\/([^/]+)/i);
+  if (!match?.[1]) return "";
+
+  try {
+    return decodeURIComponent(match[1]).trim().toLowerCase();
+  } catch {
+    return String(match[1]).trim().toLowerCase();
+  }
+}
+
+function extractGuestAttendancePayload(rawValue, expectedSlug) {
+  const text = pickText(rawValue);
+  if (!text) return null;
+
+  try {
+    const url = new URL(text, window.location.origin);
+    const invitationSlug = extractInvitationSlugFromUrlPath(url.pathname);
+    const guestQuery = readGuestQueryParams(url.search);
+    const guestName = pickText(guestQuery.name);
+
+    if (!invitationSlug || !guestName) return null;
+    if (expectedSlug && invitationSlug !== String(expectedSlug).trim().toLowerCase()) return null;
+
+    return {
+      invitationSlug,
+      sourceUrl: url.toString(),
+      name: guestName,
+      attendance: "hadir",
+    };
+  } catch {
+    return null;
+  }
 }
 
 function normalizeTokenVariants(value) {
@@ -137,6 +179,22 @@ function buildWishTokens(record) {
   );
 }
 
+function isQrCheckInWish(record) {
+  const source = pickText(record?.source).toLowerCase();
+  if (source === "qr_checkin") return true;
+  return pickText(record?.message) === "Check-in via QR tamu.";
+}
+
+function findExistingQrCheckInWish(wishes, guestAttendancePayload) {
+  if (!guestAttendancePayload) return null;
+
+  return (
+    wishes.find(
+      (wish) => isQrCheckInWish(wish) && normalizeGuestKey(wish.name) === normalizeGuestKey(guestAttendancePayload.name)
+    ) || null
+  );
+}
+
 function resolveScanMatch(rawValue, wishes) {
   const scanTokens = extractScanTokens(rawValue);
   if (!scanTokens.length) return null;
@@ -172,15 +230,22 @@ function writeScanHistory(slug, entries) {
   }
 }
 
-function createScanEntry(rawValue, matchedWish, duplicateDetected) {
+function createScanEntry(rawValue, options = {}) {
+  const {
+    status = "unmatched",
+    matchedRecordId = null,
+    matchedName = "",
+    matchedAttendance = "",
+  } = options;
+
   return {
     id: `scan_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     rawValue,
     scannedAt: new Date().toISOString(),
-    status: matchedWish ? (duplicateDetected ? "duplicate" : "matched") : "unmatched",
-    matchedWishId: matchedWish?.wishId || null,
-    matchedName: matchedWish?.name || "",
-    matchedAttendance: matchedWish?.attendance || "",
+    status,
+    matchedWishId: matchedRecordId,
+    matchedName,
+    matchedAttendance,
   };
 }
 
@@ -220,6 +285,7 @@ export default function InvitationGuestBookPage() {
   const streamRef = useRef(null);
   const frameRequestRef = useRef(0);
   const lastDetectedRef = useRef({ value: "", at: 0 });
+  const pendingGuestKeysRef = useRef(new Set());
 
   const packageTier = normalizePackageTier(resolveInvitationPackageTier(invitationData));
   const packageConfig = getPackageConfig(packageTier);
@@ -340,7 +406,7 @@ export default function InvitationGuestBookPage() {
 
             if (lastDetected.value !== rawValue || now - lastDetected.at > 2500) {
               lastDetectedRef.current = { value: rawValue, at: now };
-              registerScan(rawValue);
+              void registerScan(rawValue);
             }
           }
         } catch (err) {
@@ -403,15 +469,77 @@ export default function InvitationGuestBookPage() {
     }
   }
 
-  function registerScan(rawValue) {
-    const matchedWish = resolveScanMatch(rawValue, wishRecords);
+  async function registerScan(rawValue) {
+    const guestAttendancePayload = extractGuestAttendancePayload(rawValue, invitationSlug);
+    const existingQrWish = findExistingQrCheckInWish(wishRecords, guestAttendancePayload);
+    const matchedWish = guestAttendancePayload ? existingQrWish : resolveScanMatch(rawValue, wishRecords);
+    const pendingGuestKey = guestAttendancePayload
+      ? normalizeGuestKey(guestAttendancePayload.sourceUrl || guestAttendancePayload.name)
+      : "";
+    const pendingGuestDetected = pendingGuestKey ? pendingGuestKeysRef.current.has(pendingGuestKey) : false;
+    const duplicateWish = matchedWish
+      ? scanHistory.some((entry) => entry.matchedWishId && entry.matchedWishId === matchedWish.wishId)
+      : false;
+    const duplicateGuest = Boolean(existingQrWish) || pendingGuestDetected;
+    const duplicateDetected = duplicateWish || duplicateGuest;
+
+    let matchedRecordId = matchedWish?.wishId || null;
+    let matchedName = matchedWish?.name || "";
+    let matchedAttendance = matchedWish?.attendance || "";
+
+    if (guestAttendancePayload) {
+      matchedName = matchedName || guestAttendancePayload.name;
+      matchedAttendance = matchedAttendance || guestAttendancePayload.attendance;
+    }
+
+    const hasMatch = Boolean(matchedWish || guestAttendancePayload);
+    let status = hasMatch ? (duplicateDetected ? "duplicate" : "matched") : "unmatched";
+
+    if (guestAttendancePayload && !matchedWish && !duplicateDetected && pendingGuestKey) {
+      setScannerMessage("Menyimpan kehadiran QR ke backend...");
+      pendingGuestKeysRef.current.add(pendingGuestKey);
+
+      try {
+        const response = await postInvitationWish(invitationSlug, {
+          invitationSlug,
+          name: guestAttendancePayload.name,
+          attendance: guestAttendancePayload.attendance,
+          message: "Check-in via QR tamu.",
+          source: "qr_checkin",
+        });
+        const createdRecord = normalizeWishRecord(response?.data, 0, invitationSlug, response?.data?.orderId || null);
+        matchedRecordId = createdRecord.wishId;
+        matchedName = createdRecord.name;
+        matchedAttendance = createdRecord.attendance;
+        setWishRecords((current) => {
+          const nextRecords = [createdRecord, ...current];
+          nextRecords.sort((left, right) => {
+            const leftTime = new Date(left.createdAt || 0).getTime();
+            const rightTime = new Date(right.createdAt || 0).getTime();
+            return rightTime - leftTime;
+          });
+          return nextRecords;
+        });
+        setScannerMessage("Kehadiran QR berhasil disimpan.");
+        void loadGuestBook({ silent: true });
+      } catch (err) {
+        status = "unmatched";
+        matchedRecordId = null;
+        matchedAttendance = "";
+        setScannerMessage(err?.message || "Gagal menyimpan kehadiran QR ke backend.");
+      } finally {
+        pendingGuestKeysRef.current.delete(pendingGuestKey);
+      }
+    }
 
     setScanHistory((current) => {
-      const duplicateDetected = matchedWish
-        ? current.some((entry) => entry.matchedWishId && entry.matchedWishId === matchedWish.wishId)
-        : current.some((entry) => entry.rawValue === rawValue);
-
-      const nextEntry = createScanEntry(rawValue, matchedWish, duplicateDetected);
+      const rawDuplicate = !hasMatch ? current.some((entry) => entry.rawValue === rawValue) : false;
+      const nextEntry = createScanEntry(rawValue, {
+        status: rawDuplicate ? "duplicate" : status,
+        matchedRecordId,
+        matchedName,
+        matchedAttendance,
+      });
       setLastScanEntry(nextEntry);
       return [nextEntry, ...current].slice(0, 25);
     });
@@ -422,7 +550,7 @@ export default function InvitationGuestBookPage() {
     const rawValue = pickText(manualScanValue);
     if (!rawValue) return;
 
-    registerScan(rawValue);
+    void registerScan(rawValue);
     setManualScanValue("");
   }
 
@@ -436,7 +564,11 @@ export default function InvitationGuestBookPage() {
     setShowScanner(true);
   }
 
-  const totalGuests = wishRecords.length;
+  const guestBookRows = [...wishRecords].sort((left, right) => {
+    const leftTime = new Date(left.createdAt || left.scannedAt || 0).getTime();
+    const rightTime = new Date(right.createdAt || right.scannedAt || 0).getTime();
+    return rightTime - leftTime;
+  });
 
   if (loading) {
     return (
@@ -541,7 +673,7 @@ export default function InvitationGuestBookPage() {
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#9e7e57]">Tamu</p>
               <h2 className="mt-2 font-['Playfair_Display'] text-3xl font-semibold text-[#4d3925]">Daftar Buku Tamu</h2>
-              <p className="mt-2 text-sm text-[#7d6447]">Total data: {totalGuests}</p>
+              <p className="mt-2 text-sm text-[#7d6447]">Total data: {guestBookRows.length}</p>
             </div>
 
             {qrModeEnabled ? (
@@ -655,8 +787,8 @@ export default function InvitationGuestBookPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f1e4d4] bg-white">
-                  {wishRecords.length ? (
-                    wishRecords.map((wish, index) => (
+                  {guestBookRows.length ? (
+                    guestBookRows.map((wish, index) => (
                       <tr key={wish.wishId} className="align-top">
                         <td className="px-4 py-4 text-sm font-medium text-[#5c4329]">{index + 1}</td>
                         <td className="px-4 py-4 text-sm text-[#5c4329]">

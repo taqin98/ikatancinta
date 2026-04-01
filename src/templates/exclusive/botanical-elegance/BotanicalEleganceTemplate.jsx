@@ -4,6 +4,7 @@ import AOS from "aos";
 import { useInvitationData } from "../../../hooks/useInvitationData";
 import { postInvitationWish } from "../../../services/wishesApi";
 import { getPackageConfig } from "../../../data/packageCatalog";
+import { upsertGuestQrSection } from "../../../utils/invitationGuestQr";
 import rawBodyHtml from "./source-body.html?raw";
 import schemaJson from "./schema/schema.json";
 import defaultSchema from "./schema/invitationSchema";
@@ -1051,6 +1052,13 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
         setHtml(".elementor-element-861c1f4 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.closingText, schemaJson.copy.closingText))}</p>`);
         setText(".elementor-element-24c59066 .elementor-widget-container", pickText(copy.creditText, schemaJson.copy.creditText));
 
+        upsertGuestQrSection({
+            root,
+            guestName,
+            beforeNode: root.querySelector(".elementor-element-58efe146"),
+            markerAttribute: "data-be-guest-qr-section",
+        });
+
         const countdownNode = root.querySelector("#wpkoi-elements-countdown-4884d460");
         const countdownTarget = pickText(mergedData?.event?.dateISO, schemaJson.event.dateISO);
         if (countdownNode) {
@@ -1425,7 +1433,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
             lottieInstancesRef.current.forEach((instance) => instance?.destroy?.());
             lottieInstancesRef.current = [];
         };
-    }, [mergedData, opened, scrollUnlocked, wishes]);
+    }, [invitationSlug, mergedData, opened, scrollUnlocked, wishes]);
 
     useEffect(() => {
         const onKeyDown = (event) => {
