@@ -250,12 +250,6 @@ function createScanEntry(rawValue, options = {}) {
   };
 }
 
-function getScanBadgeClass(status) {
-  if (status === "matched") return "bg-emerald-100 text-emerald-700 border-emerald-200";
-  if (status === "duplicate") return "bg-amber-100 text-amber-700 border-amber-200";
-  return "bg-rose-100 text-rose-700 border-rose-200";
-}
-
 function getAttendanceBadgeClass(attendance) {
   const normalized = normalizeAttendance(attendance);
   if (normalized === "hadir") return "bg-emerald-100 text-emerald-700";
@@ -266,6 +260,12 @@ function getAttendanceBadgeClass(attendance) {
 function getPackageTagClass(packageTier) {
   if (packageTier === "EKSKLUSIF") return "bg-slate-900 text-white";
   return "bg-amber-100 text-amber-800";
+}
+
+function getScanPopupClass(type) {
+  if (type === "success") return "border-emerald-200 bg-emerald-50 text-emerald-800";
+  if (type === "warning") return "border-amber-200 bg-amber-50 text-amber-800";
+  return "border-rose-200 bg-rose-50 text-rose-800";
 }
 
 export default function InvitationGuestBookPage() {
@@ -279,13 +279,14 @@ export default function InvitationGuestBookPage() {
   const [manualScanValue, setManualScanValue] = useState("");
   const [scannerState, setScannerState] = useState("idle");
   const [scannerMessage, setScannerMessage] = useState("");
-  const [lastScanEntry, setLastScanEntry] = useState(null);
+  const [scanPopup, setScanPopup] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
 
   const videoRef = useRef(null);
   const qrScannerRef = useRef(null);
   const lastDetectedRef = useRef({ value: "", at: 0 });
   const pendingGuestKeysRef = useRef(new Set());
+  const popupTimerRef = useRef(0);
 
   const packageTier = normalizePackageTier(resolveInvitationPackageTier(invitationData));
   const packageConfig = getPackageConfig(packageTier);
@@ -293,6 +294,24 @@ export default function InvitationGuestBookPage() {
   const qrModeEnabled = packageTier === "EKSKLUSIF";
   const guestBookEnabled = packageConfig?.capabilities?.guestBook === true;
   const canUseCameraScan = typeof window !== "undefined" && Boolean(navigator?.mediaDevices?.getUserMedia);
+
+  function showScanPopupMessage(type, title, message) {
+    if (popupTimerRef.current) {
+      window.clearTimeout(popupTimerRef.current);
+    }
+
+    setScanPopup({
+      id: `scan_popup_${Date.now()}`,
+      type,
+      title,
+      message,
+    });
+
+    popupTimerRef.current = window.setTimeout(() => {
+      setScanPopup(null);
+      popupTimerRef.current = 0;
+    }, 3200);
+  }
 
   async function stopScanner() {
     if (qrScannerRef.current) {
@@ -362,6 +381,10 @@ export default function InvitationGuestBookPage() {
     loadGuestBook();
     return () => {
       void stopScanner();
+      if (popupTimerRef.current) {
+        window.clearTimeout(popupTimerRef.current);
+        popupTimerRef.current = 0;
+      }
       if (qrScannerRef.current) {
         qrScannerRef.current.destroy();
         qrScannerRef.current = null;
@@ -383,6 +406,7 @@ export default function InvitationGuestBookPage() {
 
     if (!canUseCameraScan) {
       setScannerMessage("Browser ini tidak mendukung akses kamera. Gunakan input manual di bawah.");
+      showScanPopupMessage("error", "Scanner tidak tersedia", "Browser ini tidak mendukung akses kamera untuk scan QR.");
       return;
     }
 
@@ -430,7 +454,9 @@ export default function InvitationGuestBookPage() {
       setScannerMessage("Arahkan QR tamu ke kamera.");
     } catch (err) {
       setScannerState("idle");
-      setScannerMessage(err?.message || "Akses kamera ditolak atau tidak tersedia.");
+      const nextMessage = err?.message || "Akses kamera ditolak atau tidak tersedia.";
+      setScannerMessage(nextMessage);
+      showScanPopupMessage("error", "Gagal membuka kamera", nextMessage);
     }
   }
 
@@ -486,15 +512,24 @@ export default function InvitationGuestBookPage() {
           return nextRecords;
         });
         setScannerMessage("Kehadiran QR berhasil disimpan.");
+        showScanPopupMessage("success", "Scan berhasil", `${createdRecord.name} berhasil dicatat sebagai hadir.`);
         void loadGuestBook({ silent: true });
       } catch (err) {
         status = "unmatched";
         matchedRecordId = null;
         matchedAttendance = "";
-        setScannerMessage(err?.message || "Gagal menyimpan kehadiran QR ke backend.");
+        const nextMessage = err?.message || "Gagal menyimpan kehadiran QR ke backend.";
+        setScannerMessage(nextMessage);
+        showScanPopupMessage("error", "Gagal menyimpan", nextMessage);
       } finally {
         pendingGuestKeysRef.current.delete(pendingGuestKey);
       }
+    }
+
+    if (status === "duplicate") {
+      showScanPopupMessage("warning", "QR sudah pernah discan", matchedName ? `${matchedName} sudah tercatat sebelumnya.` : "Data tamu ini sudah pernah dicatat.");
+    } else if (status === "unmatched") {
+      showScanPopupMessage("error", "QR tidak valid", "QR ini tidak cocok dengan undangan atau data tamu yang sedang dibuka.");
     }
 
     setScanHistory((current) => {
@@ -505,7 +540,6 @@ export default function InvitationGuestBookPage() {
         matchedName,
         matchedAttendance,
       });
-      setLastScanEntry(nextEntry);
       return [nextEntry, ...current].slice(0, 25);
     });
   }
@@ -598,6 +632,27 @@ export default function InvitationGuestBookPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fff9f1_0%,#f5ecdd_48%,#ecdcc5_100%)] px-4 py-6 text-[#493521] sm:px-6 sm:py-8">
+      {scanPopup ? (
+        <div className="fixed inset-x-4 top-4 z-50 mx-auto max-w-md">
+          <div className={`rounded-[1.4rem] border px-4 py-4 shadow-[0_18px_40px_rgba(56,39,20,0.18)] backdrop-blur ${getScanPopupClass(scanPopup.type)}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold">{scanPopup.title}</p>
+                <p className="mt-1 text-sm leading-6">{scanPopup.message}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setScanPopup(null)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-current/15 bg-white/60 text-base"
+                aria-label="Tutup popup scan"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="mx-auto max-w-5xl space-y-6">
         <section className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-[0_24px_80px_rgba(92,67,38,0.14)] backdrop-blur sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -710,32 +765,6 @@ export default function InvitationGuestBookPage() {
                       Proses QR
                     </button>
                   </form>
-
-                  <div className="mt-5 rounded-[1.4rem] border border-[#eadcc8] bg-white p-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#9e7e57]">Hasil Scan Terakhir</p>
-                    {lastScanEntry ? (
-                      <div className="mt-3 space-y-3">
-                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${getScanBadgeClass(lastScanEntry.status)}`}>
-                          {lastScanEntry.status === "matched"
-                            ? "Scan valid"
-                            : lastScanEntry.status === "duplicate"
-                              ? "Duplikat"
-                              : "Tidak cocok"}
-                        </span>
-                        <p className="text-sm font-semibold text-[#5c4329]">
-                          {lastScanEntry.matchedName || "QR belum cocok dengan data tamu"}
-                        </p>
-                        <p className="text-sm text-[#7d6447]">
-                          {lastScanEntry.matchedAttendance
-                            ? `Attendance: ${formatAttendanceLabel(lastScanEntry.matchedAttendance)}`
-                            : "Belum ada attendance yang cocok."}
-                        </p>
-                        <p className="text-xs text-[#8d7150]">{formatDateTime(lastScanEntry.scannedAt)}</p>
-                      </div>
-                    ) : (
-                      <p className="mt-3 text-sm text-[#7d6447]">Belum ada scan pada sesi ini.</p>
-                    )}
-                  </div>
                 </div>
               </div>
             </div>
