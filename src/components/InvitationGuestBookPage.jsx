@@ -301,6 +301,7 @@ export default function InvitationGuestBookPage() {
   const qrScannerRef = useRef(null);
   const lastDetectedRef = useRef({ value: "", at: 0 });
   const pendingGuestKeysRef = useRef(new Set());
+  const processingScanRef = useRef(false);
   const popupTimerRef = useRef(0);
   const audioContextRef = useRef(null);
 
@@ -392,7 +393,7 @@ export default function InvitationGuestBookPage() {
     }, SCAN_POPUP_DURATION_MS);
   }
 
-  async function stopScanner() {
+  async function stopScanner(nextState = "idle") {
     if (qrScannerRef.current) {
       try {
         qrScannerRef.current.stop();
@@ -401,7 +402,7 @@ export default function InvitationGuestBookPage() {
       }
     }
 
-    setScannerState("idle");
+    setScannerState(nextState);
   }
 
   async function loadGuestBook({ silent = false } = {}) {
@@ -484,6 +485,7 @@ export default function InvitationGuestBookPage() {
 
   async function startScanner() {
     if (!qrModeEnabled) return;
+    if (processingScanRef.current) return;
 
     if (!canUseCameraScan) {
       setScannerMessage("Browser ini tidak mendukung akses kamera. Gunakan input manual di bawah.");
@@ -507,7 +509,7 @@ export default function InvitationGuestBookPage() {
           video,
           (result) => {
             const rawValue = pickText(result?.data, result);
-            if (!rawValue) return;
+            if (!rawValue || processingScanRef.current) return;
 
             const now = Date.now();
             const lastDetected = lastDetectedRef.current;
@@ -515,8 +517,20 @@ export default function InvitationGuestBookPage() {
               return;
             }
 
+            processingScanRef.current = true;
             lastDetectedRef.current = { value: rawValue, at: now };
-            void registerScan(rawValue);
+            void (async () => {
+              setScannerMessage("QR terbaca. Memproses ke backend...");
+              await stopScanner("processing");
+
+              try {
+                await registerScan(rawValue);
+              } finally {
+                processingScanRef.current = false;
+                setScannerState("idle");
+                setScannerMessage("Proses selesai. Klik Scan Lagi untuk tamu berikutnya.");
+              }
+            })();
           },
           {
             preferredCamera: "environment",
@@ -550,6 +564,12 @@ export default function InvitationGuestBookPage() {
       ? normalizeGuestKey(guestAttendancePayload.sourceUrl || guestAttendancePayload.name)
       : "";
     const pendingGuestDetected = pendingGuestKey ? pendingGuestKeysRef.current.has(pendingGuestKey) : false;
+
+    if (guestAttendancePayload && pendingGuestDetected) {
+      setScannerMessage("Menyimpan kehadiran QR ke backend...");
+      return;
+    }
+
     const duplicateWish = matchedWish
       ? scanHistory.some((entry) => entry.matchedWishId && entry.matchedWishId === matchedWish.wishId)
       : false;
@@ -637,7 +657,7 @@ export default function InvitationGuestBookPage() {
   function handleManualScanSubmit(event) {
     event.preventDefault();
     const rawValue = pickText(manualScanValue);
-    if (!rawValue) return;
+    if (!rawValue || processingScanRef.current) return;
 
     void ensureAudioFeedbackReady();
     void registerScan(rawValue);
@@ -800,10 +820,18 @@ export default function InvitationGuestBookPage() {
                     {scannerState === "active" ? (
                       <button
                         type="button"
-                        onClick={stopScanner}
+                        onClick={() => void stopScanner("idle")}
                         className="inline-flex items-center gap-2 rounded-full bg-[#7d5a39] px-5 py-3 text-sm font-semibold text-white"
                       >
                         Stop Scanner
+                      </button>
+                    ) : scannerState === "processing" ? (
+                      <button
+                        type="button"
+                        disabled
+                        className="inline-flex items-center gap-2 rounded-full bg-[#bda384] px-5 py-3 text-sm font-semibold text-white/90"
+                      >
+                        Memproses...
                       </button>
                     ) : (
                       <button
@@ -811,7 +839,7 @@ export default function InvitationGuestBookPage() {
                         onClick={startScanner}
                         className="mx-auto inline-flex items-center gap-2 rounded-full bg-[#7d5a39] px-5 py-3 text-sm font-semibold text-white"
                       >
-                        Mulai Scan
+                        {scanHistory.length ? "Scan Lagi" : "Klik Mulai Scan"}
                       </button>
                     )}
                   </div>
