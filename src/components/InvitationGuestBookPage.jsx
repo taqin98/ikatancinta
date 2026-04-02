@@ -597,12 +597,20 @@ export default function InvitationGuestBookPage() {
         showScanPopupMessage("success", "Scan berhasil", `${createdRecord.name} berhasil dicatat sebagai hadir.`);
         void loadGuestBook({ silent: true });
       } catch (err) {
-        status = "unmatched";
-        matchedRecordId = null;
-        matchedAttendance = "";
         const nextMessage = err?.message || "Gagal menyimpan kehadiran QR ke backend.";
-        setScannerMessage(nextMessage);
-        showScanPopupMessage("error", "Gagal menyimpan", nextMessage);
+
+        if (err?.status === 409) {
+          status = "duplicate";
+          matchedName = matchedName || guestAttendancePayload.name;
+          matchedAttendance = matchedAttendance || guestAttendancePayload.attendance;
+          setScannerMessage(nextMessage);
+        } else {
+          status = "unmatched";
+          matchedRecordId = null;
+          matchedAttendance = "";
+          setScannerMessage(nextMessage);
+          showScanPopupMessage("error", "Gagal menyimpan", nextMessage);
+        }
       } finally {
         pendingGuestKeysRef.current.delete(pendingGuestKey);
       }
