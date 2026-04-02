@@ -101,6 +101,11 @@ export async function fetchInvitationWishListBySlug(slug) {
     return {
       invitationSlug: data?.data?.invitationSlug || data?.invitationSlug || slug,
       orderId: data?.data?.orderId || data?.orderId || null,
+      packageTier: data?.data?.packageTier || data?.packageTier || null,
+      themeSlug: data?.data?.themeSlug || data?.themeSlug || null,
+      orderStatus: data?.data?.orderStatus || data?.orderStatus || null,
+      publishedAt: data?.data?.publishedAt || data?.publishedAt || null,
+      isPublished: data?.data?.isPublished ?? data?.isPublished ?? true,
       total: Number.isFinite(data?.data?.total) ? data.data.total : wishes.length,
       wishes,
     };
@@ -115,6 +120,11 @@ export async function fetchInvitationWishListBySlug(slug) {
   return {
     invitationSlug: slug || null,
     orderId: null,
+    packageTier: fallbackInvitation?.selectedPackage?.tier || fallbackInvitation?.packageTier || null,
+    themeSlug: fallbackInvitation?.selectedTheme?.slug || fallbackInvitation?.theme?.slug || slug || null,
+    orderStatus: fallbackInvitation?.order?.status || "published",
+    publishedAt: fallbackInvitation?.publishedAt || fallbackInvitation?.order?.publishedAt || new Date().toISOString(),
+    isPublished: true,
     total: wishes.length,
     wishes,
   };

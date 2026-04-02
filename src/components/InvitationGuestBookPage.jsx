@@ -1,19 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
-import { fetchInvitationBySlug, fetchInvitationWishListBySlug } from "../services/invitationApi";
+import { normalizePackageTier } from "../data/packageCatalog";
+import { fetchInvitationWishListBySlug } from "../services/invitationApi";
 import { postInvitationWish } from "../services/wishesApi";
 import { getInvitationSlugFromPath, toAppPath } from "../utils/navigation";
 import { readGuestQueryParams } from "../utils/guestParams";
 import {
   humanizeInvitationSlug,
-  isInvitationPubliclyAccessible,
   pickText,
-  resolveInvitationCoupleLabel,
   resolveInvitationPackageTier,
 } from "../utils/invitationMetadata";
 
 const SCAN_STORAGE_PREFIX = "ikc_guestbook_scan_history_v1:";
 const QR_SCAN_THROTTLE_MS = 2500;
+const SCAN_POPUP_DURATION_MS = 3200;
 
 function normalizeAttendance(value) {
   const normalized = String(value || "")
@@ -268,9 +267,25 @@ function getScanPopupClass(type) {
   return "border-rose-200 bg-rose-50 text-rose-800";
 }
 
+function triggerHapticFeedback(type) {
+  if (typeof navigator === "undefined" || typeof navigator.vibrate !== "function") return;
+
+  if (type === "success") {
+    navigator.vibrate([80]);
+    return;
+  }
+
+  if (type === "warning") {
+    navigator.vibrate([60, 40, 60]);
+    return;
+  }
+
+  navigator.vibrate([140, 60, 140]);
+}
+
 export default function InvitationGuestBookPage() {
   const invitationSlug = getInvitationSlugFromPath();
-  const [invitationData, setInvitationData] = useState(null);
+  const [guestBookMeta, setGuestBookMeta] = useState(null);
   const [wishRecords, setWishRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -287,13 +302,74 @@ export default function InvitationGuestBookPage() {
   const lastDetectedRef = useRef({ value: "", at: 0 });
   const pendingGuestKeysRef = useRef(new Set());
   const popupTimerRef = useRef(0);
+  const audioContextRef = useRef(null);
 
-  const packageTier = normalizePackageTier(resolveInvitationPackageTier(invitationData));
-  const packageConfig = getPackageConfig(packageTier);
-  const coupleLabel = resolveInvitationCoupleLabel(invitationData, invitationSlug);
+  const packageTier = normalizePackageTier(resolveInvitationPackageTier(guestBookMeta));
+  const coupleLabel = humanizeInvitationSlug(invitationSlug);
   const qrModeEnabled = packageTier === "EKSKLUSIF";
-  const guestBookEnabled = packageConfig?.capabilities?.guestBook === true;
   const canUseCameraScan = typeof window !== "undefined" && Boolean(navigator?.mediaDevices?.getUserMedia);
+
+  async function ensureAudioFeedbackReady() {
+    if (typeof window === "undefined") return null;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextClass();
+    }
+
+    if (audioContextRef.current.state === "suspended") {
+      try {
+        await audioContextRef.current.resume();
+      } catch {
+        return null;
+      }
+    }
+
+    return audioContextRef.current;
+  }
+
+  async function playScanFeedbackTone(type) {
+    const audioContext = await ensureAudioFeedbackReady();
+    if (!audioContext) return;
+
+    const now = audioContext.currentTime;
+    const pattern =
+      type === "success"
+        ? [
+            { frequency: 880, duration: 0.08, delay: 0 },
+            { frequency: 1174, duration: 0.11, delay: 0.1 },
+          ]
+        : type === "warning"
+          ? [
+              { frequency: 540, duration: 0.09, delay: 0 },
+              { frequency: 540, duration: 0.09, delay: 0.14 },
+            ]
+          : [
+              { frequency: 280, duration: 0.16, delay: 0 },
+              { frequency: 220, duration: 0.16, delay: 0.2 },
+            ];
+
+    pattern.forEach((tone) => {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      const startAt = now + tone.delay;
+      const endAt = startAt + tone.duration;
+
+      oscillator.type = type === "success" ? "sine" : "triangle";
+      oscillator.frequency.setValueAtTime(tone.frequency, startAt);
+
+      gainNode.gain.setValueAtTime(0.0001, startAt);
+      gainNode.gain.exponentialRampToValueAtTime(0.08, startAt + 0.02);
+      gainNode.gain.exponentialRampToValueAtTime(0.0001, endAt);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.start(startAt);
+      oscillator.stop(endAt);
+    });
+  }
 
   function showScanPopupMessage(type, title, message) {
     if (popupTimerRef.current) {
@@ -307,10 +383,13 @@ export default function InvitationGuestBookPage() {
       message,
     });
 
+    triggerHapticFeedback(type);
+    void playScanFeedbackTone(type);
+
     popupTimerRef.current = window.setTimeout(() => {
       setScanPopup(null);
       popupTimerRef.current = 0;
-    }, 3200);
+    }, SCAN_POPUP_DURATION_MS);
   }
 
   async function stopScanner() {
@@ -327,7 +406,7 @@ export default function InvitationGuestBookPage() {
 
   async function loadGuestBook({ silent = false } = {}) {
     if (!invitationSlug) {
-      setInvitationData(null);
+      setGuestBookMeta(null);
       setWishRecords([]);
       setError("Slug undangan tidak valid.");
       setLoading(false);
@@ -343,17 +422,7 @@ export default function InvitationGuestBookPage() {
     setError("");
 
     try {
-      const [nextInvitationData, nextWishPayload] = await Promise.all([
-        fetchInvitationBySlug(invitationSlug),
-        fetchInvitationWishListBySlug(invitationSlug),
-      ]);
-
-      if (!isInvitationPubliclyAccessible(nextInvitationData)) {
-        setInvitationData(null);
-        setWishRecords([]);
-        setError("Undangan ini masih diproses atau belum dipublikasikan.");
-        return;
-      }
+      const nextWishPayload = await fetchInvitationWishListBySlug(invitationSlug);
 
       const normalizedWishes = (Array.isArray(nextWishPayload?.wishes) ? nextWishPayload.wishes : []).map((record, index) =>
         normalizeWishRecord(record, index, invitationSlug, nextWishPayload?.orderId || null)
@@ -365,10 +434,18 @@ export default function InvitationGuestBookPage() {
         return rightTime - leftTime;
       });
 
-      setInvitationData(nextInvitationData || null);
+      setGuestBookMeta({
+        invitationSlug: nextWishPayload?.invitationSlug || invitationSlug,
+        orderId: nextWishPayload?.orderId || null,
+        packageTier: nextWishPayload?.packageTier || null,
+        themeSlug: nextWishPayload?.themeSlug || null,
+        orderStatus: nextWishPayload?.orderStatus || null,
+        publishedAt: nextWishPayload?.publishedAt || null,
+        isPublished: nextWishPayload?.isPublished ?? true,
+      });
       setWishRecords(normalizedWishes);
     } catch (err) {
-      setInvitationData(null);
+      setGuestBookMeta(null);
       setWishRecords([]);
       setError(err?.message || "Gagal memuat buku tamu.");
     } finally {
@@ -384,6 +461,10 @@ export default function InvitationGuestBookPage() {
       if (popupTimerRef.current) {
         window.clearTimeout(popupTimerRef.current);
         popupTimerRef.current = 0;
+      }
+      if (audioContextRef.current && typeof audioContextRef.current.close === "function") {
+        void audioContextRef.current.close();
+        audioContextRef.current = null;
       }
       if (qrScannerRef.current) {
         qrScannerRef.current.destroy();
@@ -413,6 +494,7 @@ export default function InvitationGuestBookPage() {
     try {
       setScannerMessage("Membuka kamera...");
       setScannerState("starting");
+      await ensureAudioFeedbackReady();
       const [{ default: QrScanner }] = await Promise.all([import("qr-scanner")]);
       const video = videoRef.current;
 
@@ -549,6 +631,7 @@ export default function InvitationGuestBookPage() {
     const rawValue = pickText(manualScanValue);
     if (!rawValue) return;
 
+    void ensureAudioFeedbackReady();
     void registerScan(rawValue);
     setManualScanValue("");
   }
@@ -608,28 +691,6 @@ export default function InvitationGuestBookPage() {
     );
   }
 
-  if (!guestBookEnabled) {
-    return (
-      <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fff8ef_0%,#f5ecdd_48%,#efe4d2_100%)] px-4 py-8 text-[#493521]">
-        <div className="mx-auto max-w-2xl rounded-[2rem] border border-white/70 bg-white/90 p-8 text-center shadow-[0_24px_80px_rgba(92,67,38,0.14)] backdrop-blur">
-          <p className="text-xs font-semibold uppercase tracking-[0.35em] text-[#9e7e57]">Buku Tamu</p>
-          <h1 className="mt-3 font-['Playfair_Display'] text-4xl font-semibold">Fitur tidak tersedia</h1>
-          <p className="mt-3 text-sm text-[#83684a]">
-            Buku tamu hanya aktif untuk paket Premium dan Eksklusif. Undangan ini terdeteksi sebagai paket {packageTier || "BASIC"}.
-          </p>
-          <div className="mt-6">
-            <a
-              href={toAppPath(`/undangan/${encodeURIComponent(invitationSlug || "")}`)}
-              className="inline-flex items-center gap-2 rounded-full bg-[#7d5a39] px-5 py-3 text-sm font-semibold text-white"
-            >
-              Kembali ke Undangan
-            </a>
-          </div>
-        </div>
-      </main>
-    );
-  }
-
   return (
     <main className="min-h-screen bg-[radial-gradient(circle_at_top,#fff9f1_0%,#f5ecdd_48%,#ecdcc5_100%)] px-4 py-6 text-[#493521] sm:px-6 sm:py-8">
       {scanPopup ? (
@@ -654,7 +715,7 @@ export default function InvitationGuestBookPage() {
       ) : null}
 
       <div className="mx-auto max-w-5xl space-y-6">
-        <section className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-[0_24px_80px_rgba(92,67,38,0.14)] backdrop-blur sm:p-8">
+        <section className="rounded-lg border border-white/70 bg-white/90 p-6 shadow-[0_24px_80px_rgba(92,67,38,0.14)] backdrop-blur sm:p-8">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="flex flex-wrap items-center gap-3">
@@ -688,7 +749,7 @@ export default function InvitationGuestBookPage() {
           </div>
         </section>
 
-        <section className="rounded-[2rem] border border-white/70 bg-white/90 p-6 shadow-[0_24px_80px_rgba(92,67,38,0.12)] sm:p-8">
+        <section className="rounded-lg border border-white/70 bg-white/90 p-6 shadow-[0_24px_80px_rgba(92,67,38,0.12)] sm:p-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-[#9e7e57]">Tamu</p>
@@ -709,7 +770,7 @@ export default function InvitationGuestBookPage() {
           </div>
 
           {qrModeEnabled && showScanner ? (
-            <div className="mt-6 rounded-[1.6rem] border border-[#eadcc8] bg-[#fffaf3] p-4 sm:p-5">
+            <div className="mt-6 rounded-lg border border-[#eadcc8] bg-[#fffaf3] p-4 sm:p-5">
               <div className="grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-[0.25em] text-[#9e7e57]">Scanner Kamera</p>
@@ -740,7 +801,7 @@ export default function InvitationGuestBookPage() {
                       <button
                         type="button"
                         onClick={startScanner}
-                        className="inline-flex items-center gap-2 rounded-full bg-[#7d5a39] px-5 py-3 text-sm font-semibold text-white"
+                        className="mx-auto inline-flex items-center gap-2 rounded-full bg-[#7d5a39] px-5 py-3 text-sm font-semibold text-white"
                       >
                         Mulai Scan
                       </button>
@@ -756,21 +817,23 @@ export default function InvitationGuestBookPage() {
                       onChange={(event) => setManualScanValue(event.target.value)}
                       rows={4}
                       placeholder="Tempel isi QR code di sini jika diperlukan."
-                      className="w-full rounded-2xl border border-[#e6d4bd] bg-white px-4 py-3 text-sm text-[#5b432b] outline-none transition focus:border-[#c89d62] focus:ring-2 focus:ring-[#f2e0c8]"
+                      className="w-full rounded-md border border-[#e6d4bd] bg-white px-4 py-3 text-sm text-[#5b432b] outline-none transition focus:border-[#c89d62] focus:ring-2 focus:ring-[#f2e0c8]"
                     />
-                    <button
-                      type="submit"
-                      className="inline-flex items-center gap-2 rounded-full border border-[#d9c4a8] bg-white px-5 py-3 text-sm font-semibold text-[#6f5535]"
-                    >
-                      Proses QR
-                    </button>
+                    <div className="w-full text-center">
+                      <button
+                        type="submit"
+                        className="mx-auto inline-flex items-center gap-2 rounded-full border border-[#d9c4a8] bg-white px-5 py-3 text-sm font-semibold text-[#6f5535]"
+                      >
+                        Proses QR
+                      </button>
+                    </div>
                   </form>
                 </div>
               </div>
             </div>
           ) : null}
 
-          <div className="mt-6 overflow-hidden rounded-[1.6rem] border border-[#eadcc8]">
+          <div className="mt-6 overflow-hidden rounded-md border border-[#eadcc8]">
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-[#eadcc8]">
                 <thead className="bg-[#f7efe3]">
