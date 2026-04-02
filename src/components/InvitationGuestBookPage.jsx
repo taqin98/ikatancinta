@@ -604,18 +604,9 @@ export default function InvitationGuestBookPage() {
         matchedRecordId = createdRecord.wishId;
         matchedName = createdRecord.name;
         matchedAttendance = createdRecord.attendance;
-        setWishRecords((current) => {
-          const nextRecords = [createdRecord, ...current];
-          nextRecords.sort((left, right) => {
-            const leftTime = new Date(left.createdAt || 0).getTime();
-            const rightTime = new Date(right.createdAt || 0).getTime();
-            return rightTime - leftTime;
-          });
-          return nextRecords;
-        });
         setScannerMessage("Kehadiran QR berhasil disimpan.");
         showScanPopupMessage("success", "Scan berhasil", `${createdRecord.name} berhasil dicatat sebagai hadir.`);
-        void loadGuestBook({ silent: true });
+        await loadGuestBook({ silent: true });
       } catch (err) {
         const nextMessage = err?.message || "Gagal menyimpan kehadiran QR ke backend.";
 
