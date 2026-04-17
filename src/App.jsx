@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import Features from "./components/Features";
 import FaqSection from "./components/FaqSection";
 import CreateInvitationFormPage from "./components/CreateInvitationFormPage";
@@ -233,7 +234,12 @@ function App() {
     return <ThemeDetailPage />;
   }
 
-  return <HomePage />;
+  return (
+    <>
+      <HomePage />
+      <SpeedInsights />
+    </>
+  );
 }
 
 export default App;
