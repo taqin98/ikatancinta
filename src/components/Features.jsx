@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import basicGalleryImage from "../templates/basic/ivory-grace/assets/images/fres-G-15.jpg";
+import premiumGalleryImage from "../templates/premium/misty-romance/assets/images/gallery/gallery-01.jpg";
+import exclusiveGalleryImage from "../templates/exclusive/puspa-asmara/assets/images/SUJA-24SK1173-PII-7.jpg";
 
 const APP_BASE_URL = import.meta.env.BASE_URL || "/";
 
 const galleryImages = [
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuCq5o2G6c8U43H69KadZyZ3qDZfA_DbIMYqgrAOMjuJ31b75f0jLCnjgpapNc7YhJeIDoX-k9fQkjKTAKuhXVBI7Y0OpRnTwbvQ7DGjjOXouZFftquGyOPii1WxRpIpNhBCO72RiNUb0VGwgxWM0Ek7tqeDgSGn56I1K1LmKcPclP28cHMhU7hnwf17pzNk_ukLSh2f1lKS9omJc8_8RGfM83DTYerzk-zpMTi54F4fSUcJgEqrVmca9d_AMRULHi6MKBB6CGlz9U8I",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuASbD0QZ2ogbKpWPyM1c6TDRemfrnh7bAQIy01S802LUJVhV_1uVFu7DIkGUBH8ugmeNoQhQ6xCgaeO-ZATPBqSsdfh6MOyR0bLIPSlcIVSgSuAdVlFHD-7LBND6kgxareEjZ7kQnuSfwOIw67IEY8FeKpMyS8g4_T_KtI6_QT96cesO9_IO7pSu6f7vSxTUhpC95todPoUN9qKaBDB7lYiC4EHTcaR8U_f5zAEsH5m7cFomLQ0YE56UbklF0mlx89pnBfMA5sqwAZC",
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAQSQ_836cyL6XxKE54c2eQuFCVsuD0_YQRo_22tNpIXnhqQBUTmnMfxuuujHTXXIVNxV3xsKOa0qqFOAr8WEvEt77zyE4SXDcKGqiA5J7aBAqkqpi8T7Vhpz2onShLU6KgmxKLkuZY6fI8BOZ09P7pEqKkQEnAso7jM9lgcsdHLLWW8ySai_3kBZSIhl8Tl0dLRR07mhX01AIq594s8p9A0fkQzE1TNJUxznfakSllgWewDMkg-niAy9SFrXwy-XqxsDHaqyYMm3KR",
+  basicGalleryImage,
+  premiumGalleryImage,
+  exclusiveGalleryImage,
 ];
 
 const albumArt = "https://i.scdn.co/image/ab67616d0000b273277620423172f5a151f452e3";
