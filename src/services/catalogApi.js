@@ -148,6 +148,135 @@ function buildThemeQuery(filters = {}) {
   return params.toString();
 }
 
+function pickFirstText(...values) {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    if (typeof value === "object") continue;
+    const text = String(value).trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function slugifyInvitationSegment(value) {
+  return String(value || "")
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+}
+
+function extractInvitationSlugFromCandidate(value) {
+  const raw = pickFirstText(value);
+  if (!raw) return "";
+
+  let candidate = raw;
+
+  if (/^(https?:)?\/\//i.test(candidate)) {
+    try {
+      const parsed = new URL(candidate, window.location.origin);
+      candidate = parsed.pathname || "";
+    } catch {
+      candidate = raw;
+    }
+  }
+
+  const publishedMatch = candidate.match(/\/undangan\/([^/?#]+)/i);
+  if (publishedMatch?.[1]) {
+    try {
+      return decodeURIComponent(publishedMatch[1]).trim();
+    } catch {
+      return publishedMatch[1].trim();
+    }
+  }
+
+  const plainPath = candidate.replace(/^\/+/, "").replace(/^undangan\//i, "").trim();
+  if (!plainPath) return "";
+
+  if (/^[^/?#]+$/.test(plainPath)) {
+    try {
+      return decodeURIComponent(plainPath).trim();
+    } catch {
+      return plainPath;
+    }
+  }
+
+  return "";
+}
+
+function deriveInvitationSlugFromLabel(invitation = {}) {
+  const rawLabel = pickFirstText(
+    invitation.couple,
+    invitation.coupleName,
+    invitation.coupleLabel,
+    invitation.title,
+    invitation.name,
+  );
+  if (!rawLabel) return "";
+
+  const normalizedLabel = rawLabel
+    .replace(/^undangan\s+/i, "")
+    .replace(/^the wedding of\s+/i, "")
+    .replace(/\s*&\s*/g, " ");
+
+  return slugifyInvitationSegment(normalizedLabel);
+}
+
+function normalizeInvitationHref(value) {
+  const raw = pickFirstText(value);
+  if (!raw) return "";
+
+  if (/^(https?:)?\/\//i.test(raw)) return raw;
+  if (raw.startsWith("/")) return raw;
+  if (/^undangan\//i.test(raw)) return `/${raw}`;
+
+  return "";
+}
+
+function pickInvitationHrefCandidate(invitation = {}) {
+  const directHref = pickFirstText(
+    invitation.href,
+    invitation.path,
+    invitation.publicUrl,
+    invitation.public_url,
+    invitation.link,
+  );
+  if (directHref) return directHref;
+
+  const rawUrl = pickFirstText(invitation.url);
+  if (!rawUrl) return "";
+  if (/\/undangan\/|^undangan\/|^\/undangan\//i.test(rawUrl)) return rawUrl;
+
+  return "";
+}
+
+function normalizeInvitationCard(invitation = {}, themeSlug, { allowDerivedSlug = false } = {}) {
+  const invitationSlug =
+    extractInvitationSlugFromCandidate(
+      pickFirstText(
+        invitation.invitationSlug,
+        invitation.invitation_slug,
+        invitation.publicSlug,
+        invitation.public_slug,
+        invitation.slug,
+      ),
+    ) || (allowDerivedSlug ? deriveInvitationSlugFromLabel(invitation) : "");
+
+  const href =
+    normalizeInvitationHref(pickInvitationHrefCandidate(invitation)) ||
+    (invitationSlug ? `/undangan/${encodeURIComponent(invitationSlug)}` : "");
+
+  return {
+    ...invitation,
+    themeSlug,
+    invitationSlug: pickFirstText(invitation.invitationSlug, invitation.invitation_slug, invitationSlug) || null,
+    href: href || null,
+  };
+}
+
 export async function fetchPackages() {
   if (shouldUseRealCatalogApi()) {
     try {
@@ -220,16 +349,17 @@ export async function fetchThemeInvitations(slug) {
       const payload = unwrapCollectionPayload(
         await getJson(`${baseUrl}/themes/${encodeURIComponent(slug)}/invitations`),
       );
-      if (payload.length > 0) {
-        return payload;
-      }
-
-      console.warn("Catalog API returned empty invitation list, using local fallback.", slug);
+      return payload.map((invitation) =>
+        normalizeInvitationCard(invitation, slug, { allowDerivedSlug: true }),
+      );
     } catch (error) {
-      console.warn("Catalog API invitation request failed, using local fallback.", error);
+      console.warn("Catalog API invitation request failed.", error);
+      return [];
     }
   }
 
   await wait();
-  return cloneJson(invitationsByTheme[slug] || []);
+  return cloneJson(invitationsByTheme[slug] || []).map((invitation) =>
+    normalizeInvitationCard(invitation, slug),
+  );
 }

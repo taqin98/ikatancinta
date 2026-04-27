@@ -1,7 +1,7 @@
 import Footer from "./Footer";
 import Navbar from "./Navbar";
 import WhatsAppButton from "./WhatsAppButton";
-import { navigateTo, openInNewTab } from "../utils/navigation";
+import { navigateTo, openInNewTab, toAppPath } from "../utils/navigation";
 import { useThemeBySlug, useThemeInvitations } from "../hooks/useCatalogData";
 import { getCurrentPathname } from "../utils/navigation";
 
@@ -139,18 +139,33 @@ export default function ThemeDetailPage() {
             </p>
             {invitationsUsingPreset.length > 0 ? (
               <div className="grid grid-cols-1 min-[420px]:grid-cols-2 md:grid-cols-4 gap-4 lg:gap-6">
-                {invitationsUsingPreset.map((item) => (
-                  <article
-                    key={item.id}
-                    className="rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 hover:shadow-lg transition-shadow"
-                  >
-                    <div className="w-full aspect-[4/6] rounded-xl overflow-hidden bg-slate-200 mb-3">
-                      <img src={item.thumbnail} alt={`Thumbnail ${item.title}`} className="w-full h-full object-cover" />
-                    </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1">{item.title}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-300">{item.date}</p>
-                  </article>
-                ))}
+                {invitationsUsingPreset.map((item) => {
+                  const isClickable = Boolean(item.href);
+
+                  return (
+                    <a
+                      key={item.id}
+                      href={isClickable ? toAppPath(item.href) : undefined}
+                      onClick={(event) => {
+                        if (!isClickable) return;
+                        event.preventDefault();
+                        navigateTo(item.href);
+                      }}
+                      className={`block rounded-[1.5rem] bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 transition-all ${
+                        isClickable
+                          ? "cursor-pointer hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary/30"
+                          : "cursor-default"
+                      }`}
+                      aria-disabled={!isClickable}
+                    >
+                      <div className="w-full aspect-[4/6] rounded-xl overflow-hidden bg-slate-200 mb-3">
+                        <img src={item.thumbnail} alt={`Thumbnail ${item.title}`} className="w-full h-full object-cover" />
+                      </div>
+                      <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1">{item.title}</h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-300">{item.date}</p>
+                    </a>
+                  );
+                })}
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-slate-300 dark:border-slate-600 py-10 text-center text-slate-500 dark:text-slate-300">
