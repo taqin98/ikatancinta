@@ -1,4 +1,5 @@
 import { navigateTo } from "../utils/navigation";
+import heroPhoneImage from "../assets/hero/main_cover.png";
 
 const avatars = [
     'https://lh3.googleusercontent.com/aida-public/AB6AXuCdXpx2fUU55P5NHfSNsEfCkgpvQ2SspMdLxi3tgoLVeHhycG4N4Qc0o12JkJ81ehHNVQB6tMwyavDU2H8YUHnw4YygJacbCLppPtuwsFebDPHWknWzfc3EsIFdwG37Ak0ZAOSLzu2oaeKKfE0n6L7057Lm2v-fh9-ETXTbQ67qjW-QTGTDcVLSwK8tLgmAbeFjttXX0qYFbPZa9ozfUh6KigTQayeNHZ_HnuEtMRDzH4XWWF_tFFrhFecFssFM8rHFZnRbaRv6f-dF',
@@ -9,7 +10,7 @@ const avatars = [
 const heroImages = {
     card1: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAsflsl_adbn0oqqfiu9fjq3ItiJKrlPqU17VYLBEjZnri1tWHP-Yn5tnoYJ1f4pGjNEflgA4ETPg9zVoGGQCd27yCXhpIFdEzRLVLzdu6Bieotx9uIig3pLXnxTxWIeOW1OpP1rKCt4o3gVLdrLUShKnyOOAhPrmLtbDxnwie8ISMb-oSwZQL3lF07wHNqta-QaEunG0t68ewnLARRF89uZX5gqkFUAkhErZVaMEnWH5qFRyjyqBA7pab70XdlPezeeVn1pRQC3QqA',
     card2: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDww_cCj1cLqjGgjlxH44eK1G8UB4UoxD-rTcUT0awQZDTRQMoJJSDFO4Qx7ILa-7ubzr_j0rwFFXHrcTsSRm7DuglmdZSztMzPVZih95LIXAj1DTVGyXgPBEX9Zm1L7z0VdqWqv4gIQGU0C78lW6siwNhNvWoL72Pf_oqqmPxE9LVIUF_2IrG0SW9AcrQWvDRImJGRU0Xhf3fvtF4zCiMXmQEuPZ-_Ur_xspB-gDf927QVZm6A3eXF8T3ZqdHhVqDmBefH0WK7P-ls',
-    phone: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC_i6qVstOl5xlJ8zKWI8zvtR0nMVHLQxnbOpd6DmFKD1rZjzlayY6Xralsrv7Gc2hPLvGpGOZz0zi0uJ7iEw6xrZ2icBh1sXpK0ifUYVvvaABPLomYJ9DacxtpyT-vgRvqfem73GyKbqWXkcRmvHLtvO_EGBsSW2gWvXpabZksZ-zIJvf4KVca4LOu6MqSwMIijqECph7FC2rreB2FrjDuSE9e_6gv4Y2b-9nSGisO_5f9HsDbxYhcgI7OelTaml4kK84jpPYe6A4N',
+    phone: heroPhoneImage,
 };
 
 export default function Hero() {
@@ -98,11 +99,11 @@ export default function Hero() {
                                     <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url('${heroImages.phone}')` }}>
                                         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                                     </div>
-                                    <div className="absolute bottom-8 left-0 right-0 text-center text-white px-4">
+                                    {/* <div className="absolute bottom-8 left-0 right-0 text-center text-white px-4">
                                         <p className="font-serif italic text-2xl mb-1">Save the Date</p>
                                         <h3 className="font-display font-bold text-lg uppercase tracking-widest mb-4">Rizky &amp; Anisa</h3>
                                         <button className="bg-white/20 backdrop-blur-md border border-white/30 text-white text-xs px-4 py-2 rounded-full">Buka Undangan</button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 

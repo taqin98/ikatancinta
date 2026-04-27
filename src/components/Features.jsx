@@ -297,7 +297,7 @@ export default function Features() {
                   <span className="material-symbols-outlined text-primary">
                     check_circle
                   </span>
-                  RSVP Biasa
+                  RSVP
                 </h4>
                 <p className="text-sm text-slate-300 max-w-sm">
                   Tamu dapat mengisi konfirmasi kehadiran langsung dari undangan.

@@ -73,6 +73,16 @@ const packagePlanByTier = Object.fromEntries(
   packagePlans.map((plan) => [normalizePackageTier(plan.tier), plan]),
 );
 
+const themeMediaBySlug = Object.fromEntries(
+  themeSeed.map((theme) => [
+    theme.slug,
+    {
+      thumbnail: theme.thumbnail || theme.image || "",
+      image: theme.image || theme.thumbnail || "",
+    },
+  ]),
+);
+
 function normalizePackagePlan(rawPlan = {}, index = 0) {
   const fallbackPlan = packagePlans[index] || packagePlans[0];
   const tier = normalizePackageTier(rawPlan?.tier || rawPlan?.packageTier || rawPlan?.name || fallbackPlan?.tier);
@@ -106,6 +116,17 @@ function normalizePackagePlan(rawPlan = {}, index = 0) {
 function normalizePackagePlans(rawPackages) {
   if (!Array.isArray(rawPackages)) return cloneJson(packagePlans);
   return rawPackages.map((plan, index) => normalizePackagePlan(plan, index));
+}
+
+function applyThemeMediaOverrides(theme = {}) {
+  const localMedia = themeMediaBySlug[theme.slug];
+  if (!localMedia) return theme;
+
+  return {
+    ...theme,
+    thumbnail: localMedia.thumbnail || theme.thumbnail || theme.image || "",
+    image: localMedia.image || localMedia.thumbnail || theme.image || theme.thumbnail || "",
+  };
 }
 
 function applyThemeFilters(items, filters = {}) {
@@ -153,7 +174,7 @@ export async function fetchThemes(filters = {}) {
       const query = buildThemeQuery(filters);
       const payload = unwrapCollectionPayload(await getJson(query ? `${baseUrl}/themes?${query}` : `${baseUrl}/themes`));
       if (payload.length > 0) {
-        return payload;
+        return payload.map((theme) => applyThemeMediaOverrides(theme));
       }
 
       console.warn("Catalog API returned empty theme list, using local fallback.", filters);

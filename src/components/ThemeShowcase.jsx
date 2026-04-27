@@ -47,7 +47,7 @@ export default function ThemeShowcase() {
             >
               <div className="w-full aspect-[4/6] rounded-lg overflow-hidden bg-slate-200 mb-3">
                 <img
-                  src={theme.thumbnail}
+                  src={theme.thumbnail || theme.image}
                   alt={`Thumbnail tema ${theme.name}`}
                   className="w-full h-full object-cover"
                 />
