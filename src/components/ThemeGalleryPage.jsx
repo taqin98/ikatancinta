@@ -88,16 +88,17 @@ export default function ThemeGalleryPage() {
                     <div className="relative w-full aspect-[4/6] rounded-md overflow-hidden border border-white/60 shadow-soft transform group-hover:-translate-y-1 transition-transform duration-300 mb-4">
                       {theme.usePattern ? (
                         <div className="w-full h-full bg-slate-800 relative flex items-center justify-center overflow-hidden">
-                          <div className="absolute inset-0 bg-emerald-900"></div>
+                          <div className="absolute inset-0 bg-emerald-900">
+                             <h3 className="font-serif italic text-xl mb-1 text-amber-200">
+                              {theme.title}
+                            </h3>
+                          </div>
                           <div className="absolute w-40 h-40 border border-amber-400/30 rotate-45"></div>
                           <div className="absolute w-32 h-32 border border-amber-400/50 rotate-45"></div>
                           <div className="absolute bottom-8 left-0 right-0 text-center text-white px-2">
                             <h3 className="font-serif italic text-xl mb-1 text-amber-200">
                               {theme.title}
                             </h3>
-                            <p className="text-[10px] uppercase tracking-widest font-bold text-amber-100">
-                              {theme.couple}
-                            </p>
                           </div>
                         </div>
                       ) : (
@@ -105,30 +106,26 @@ export default function ThemeGalleryPage() {
                           className="w-full h-full bg-cover bg-center"
                           style={{ backgroundImage: `url('${theme.image}')` }}
                         >
-                          <div className={`absolute inset-0 ${theme.overlayClass}`}></div>
-                          <div className="absolute bottom-8 left-0 right-0 text-center text-white px-2">
-                            <h3 className="font-serif italic text-xl mb-1">{theme.title}</h3>
-                            <p className="text-[10px] uppercase tracking-widest font-bold">
-                              {theme.couple}
-                            </p>
+                          <div className={`absolute inset-3 left-0 right-0 text-center text-white px-2 ${theme.overlayClass ?? ''}`}>
+                            <h3 className="font-serif italic text-xl mb-1">{theme.name}</h3>
                           </div>
                         </div>
                       )}
 
-                      <span className="absolute bottom-2 left-2 px-2.5 py-1 rounded-md bg-slate-900/80 text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
-                        {theme.packageTier}
-                      </span>
-                    </div>
-
-                    <div className="text-center">
-                      <div className="flex items-center justify-center gap-2 mb-1">
-                        <span className="px-2 py-0.5 rounded-md bg-white text-[10px] font-bold uppercase tracking-wider text-slate-500 border border-slate-100">
+                      <div className="absolute bottom-2 left-2 flex items-center gap-2">
+                        <span className="px-2.5 py-1 rounded-md bg-slate-900/80 text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
+                          Paket:{theme.packageTier}
+                        </span>
+                        <span className="px-2.5 py-1 rounded-md bg-white/85 text-slate-700 text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
                           {theme.category}
                         </span>
                       </div>
-                      <h3 className="font-serif text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-1">
-                        {theme.name}
-                      </h3>
+                    </div>
+
+                    <div className="text-center">
+                      <p className="mb-1 text-xs sm:text-sm leading-5 text-slate-500 dark:text-slate-400">
+                        {theme.description}
+                      </p>
                       {(() => {
                         const previewHref = getPreviewHref(theme);
                         return (
