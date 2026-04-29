@@ -11,6 +11,7 @@ import { saveInvitationDraft, mapFormToInvitationSchema } from "../services/invi
 import { uploadOrderAsset } from "../services/uploadApi";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 import { createOrderId } from "../utils/orderId";
+import { formatThemeCategories } from "../utils/themeCategories";
 
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
 const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
@@ -354,7 +355,7 @@ function StepOneMempelai({
     }
 
     return availableThemes.filter((theme) =>
-      [theme.name, theme.category, theme.packageTier].join(" ").toLowerCase().includes(keyword)
+      [theme.name, formatThemeCategories(theme, " "), theme.packageTier].join(" ").toLowerCase().includes(keyword)
     );
   }, [availableThemes, themeQuery]);
   const sortedThemes = useMemo(() => {

@@ -4,8 +4,8 @@ import Navbar from "./Navbar";
 import WhatsAppButton from "./WhatsAppButton";
 import { useThemeCatalog } from "../hooks/useCatalogData";
 import { navigateTo, openInNewTab } from "../utils/navigation";
+import { getThemeCategories, themeMatchesCategory } from "../utils/themeCategories";
 
-const categories = ["Semua", "Modern", "Minimalis", "Islami", "Floral", "Rustic"];
 const INITIAL_VISIBLE = 8;
 const LOAD_MORE_STEP = 4;
 
@@ -13,11 +13,12 @@ export default function ThemeGalleryPage() {
   const [activeCategory, setActiveCategory] = useState("Semua");
   const [visibleCount, setVisibleCount] = useState(INITIAL_VISIBLE);
   const { themes, loading } = useThemeCatalog();
+  const availableCategories = useMemo(
+    () => ["Semua", ...new Set(themes.flatMap((theme) => getThemeCategories(theme)))],
+    [themes],
+  );
   const filteredThemes = useMemo(() => {
-    if (activeCategory === "Semua") {
-      return themes;
-    }
-    return themes.filter((theme) => theme.category === activeCategory);
+    return themes.filter((theme) => themeMatchesCategory(theme, activeCategory));
   }, [activeCategory, themes]);
   const visibleThemes = filteredThemes.slice(0, visibleCount);
   const hasMoreThemes = visibleCount < filteredThemes.length;
@@ -25,6 +26,12 @@ export default function ThemeGalleryPage() {
   useEffect(() => {
     setVisibleCount(INITIAL_VISIBLE);
   }, [activeCategory]);
+
+  useEffect(() => {
+    if (activeCategory !== "Semua" && !availableCategories.includes(activeCategory)) {
+      setActiveCategory("Semua");
+    }
+  }, [activeCategory, availableCategories]);
 
   const handleLoadMore = () => {
     setVisibleCount((prev) => Math.min(prev + LOAD_MORE_STEP, filteredThemes.length));
@@ -56,7 +63,7 @@ export default function ThemeGalleryPage() {
               </p>
             </div>
             <div className="flex gap-2 sm:gap-3 overflow-x-auto no-scrollbar py-2 px-1 justify-start md:justify-center">
-              {categories.map((category) => (
+              {availableCategories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setActiveCategory(category)}
@@ -112,13 +119,18 @@ export default function ThemeGalleryPage() {
                         </div>
                       )}
 
-                      <div className="absolute bottom-2 left-2 flex items-center gap-2">
+                      <div className="absolute bottom-2 left-2 right-2 flex flex-wrap items-center gap-2">
                         <span className="px-2.5 py-1 rounded-md bg-slate-900/80 text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
-                          Paket:{theme.packageTier}
+                          Paket: {theme.packageTier}
                         </span>
-                        <span className="px-2.5 py-1 rounded-md bg-white/85 text-slate-700 text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
-                          {theme.category}
-                        </span>
+                        {getThemeCategories(theme).map((category) => (
+                          <span
+                            key={`${theme.slug}-${category}`}
+                            className="px-2.5 py-1 rounded-md bg-white/85 text-slate-700 text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm"
+                          >
+                            {category}
+                          </span>
+                        ))}
                       </div>
                     </div>
 

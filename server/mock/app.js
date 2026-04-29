@@ -2,7 +2,12 @@ import cors from "cors";
 import express from "express";
 import multer from "multer";
 import { packagePlans } from "../../src/data/packageCatalog.js";
-import { invitationsByThemeSeed, themeSeed, findThemeBySlug } from "./data/themes.seed.js";
+import {
+  invitationsByThemeSeed,
+  themeSeed,
+  findThemeBySlug,
+  themeMatchesCategory,
+} from "./data/themes.seed.js";
 import {
   buildInvitationSchemaFromTheme,
   buildOrderId,
@@ -47,7 +52,7 @@ app.get("/api/themes", (req, res) => {
     if (packageTier && theme.packageTier !== packageTier) return false;
     if (slug && theme.slug !== slug) return false;
     if (presetId && theme.presetId !== presetId) return false;
-    if (category && theme.category !== category) return false;
+    if (category && !themeMatchesCategory(theme, category)) return false;
     if (status && theme.status !== status) return false;
     return true;
   });

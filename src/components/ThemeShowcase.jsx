@@ -1,5 +1,6 @@
 import { navigateTo, toAppPath } from "../utils/navigation";
 import { useThemeCatalog } from "../hooks/useCatalogData";
+import { formatThemeCategories } from "../utils/themeCategories";
 
 export default function ThemeShowcase() {
   const { themes, loading } = useThemeCatalog();
@@ -53,7 +54,7 @@ export default function ThemeShowcase() {
                 />
               </div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
-                {theme.category}
+                {formatThemeCategories(theme, " • ")}
               </p>
               <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base mb-1">{theme.name}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-300">{theme.description}</p>
