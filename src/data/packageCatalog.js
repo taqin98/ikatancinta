@@ -64,7 +64,7 @@ const PACKAGE_CATALOG = {
       "Galeri foto (maks. 8)",
       "Love stories",
       "Link Live Streaming",
-      "Buku Tamu",
+      "Buku Tamu Digital",
       "Background music (list dan custom upload)",
       "Custom domain (opsional, biaya domain tidak termasuk)",
       "Masa aktif jangka panjang",

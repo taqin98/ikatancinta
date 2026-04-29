@@ -330,7 +330,7 @@ export default function Features() {
               <div className="bg-white/80 dark:bg-surface-dark px-4 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 flex items-center gap-3 transition-transform hover:-translate-y-0.5 cursor-default">
                 <span className="material-symbols-outlined text-primary text-[20px]">edit_note</span>
                 <div>
-                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Buku Tamu</p>
+                  <p className="text-xs font-semibold text-gray-800 dark:text-gray-100">Buku Tamu Digital</p>
                   <p className="text-[11px] text-gray-500 dark:text-gray-400">Buat daftar tamu dengan sistem QR Card</p>
                 </div>
               </div>

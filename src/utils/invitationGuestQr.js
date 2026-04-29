@@ -58,7 +58,7 @@ export function upsertGuestQrSection(options = {}) {
       <p style="margin:0;font-size:12px;letter-spacing:0.28em;text-transform:uppercase;color:#9e7e57;">QR Tamu</p>
       <h2 style="margin:14px 0 0;font-size:34px;line-height:1.2;color:#4d3925;font-weight:600;">${normalizedGuestName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}</h2>
       <p style="max-width:560px;margin:14px auto 0;font-size:15px;line-height:1.8;color:#745a3e;">
-        Tunjukkan QR ini kepada petugas resepsionis. Saat discan, nama tamu akan otomatis masuk ke buku tamu sebagai data kehadiran.
+        Tunjukkan QR ini kepada petugas resepsionis. Saat discan, nama tamu akan otomatis masuk ke buku tamu digital sebagai data kehadiran.
       </p>
       <div style="margin:24px auto 0;display:inline-flex;align-items:center;justify-content:center;padding:16px;border-radius:28px;background:#fff;border:1px solid rgba(180,152,118,0.2);">
         <img src="${qrImageUrl.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}" alt="${`QR code undangan ${normalizedGuestName}`.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")}" loading="lazy" referrerpolicy="no-referrer" style="display:block;width:min(100%,280px);height:auto;border-radius:20px;" />
