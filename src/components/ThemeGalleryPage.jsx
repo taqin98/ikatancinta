@@ -123,7 +123,7 @@ export default function ThemeGalleryPage() {
                     </div>
 
                     <div className="text-center">
-                      <p className="mb-1 text-xs sm:text-sm leading-5 text-slate-500 dark:text-slate-400">
+                      <p className="mb-1 text-[12px] leading-5 text-slate-500 dark:text-slate-400">
                         {theme.description}
                       </p>
                       {(() => {
