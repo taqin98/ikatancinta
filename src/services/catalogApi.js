@@ -5,6 +5,7 @@ import {
   themes as themeSeed,
 } from "../data/themes";
 import { normalizePackageTier, packagePlans } from "../data/packageCatalog";
+import { themeMatchesCategory } from "../utils/themeCategories";
 
 const DEFAULT_JSON_HEADERS = {
   Accept: "application/json",
@@ -134,7 +135,7 @@ function applyThemeFilters(items, filters = {}) {
     if (filters.packageTier && theme.packageTier !== normalizePackageTier(filters.packageTier)) return false;
     if (filters.slug && theme.slug !== filters.slug) return false;
     if (filters.presetId && theme.presetId !== filters.presetId) return false;
-    if (filters.category && theme.category !== filters.category) return false;
+    if (filters.category && !themeMatchesCategory(theme, filters.category)) return false;
     return true;
   });
 }

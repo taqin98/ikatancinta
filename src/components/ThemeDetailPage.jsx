@@ -4,6 +4,7 @@ import WhatsAppButton from "./WhatsAppButton";
 import { navigateTo, openInNewTab, toAppPath } from "../utils/navigation";
 import { useThemeBySlug, useThemeInvitations } from "../hooks/useCatalogData";
 import { getCurrentPathname } from "../utils/navigation";
+import { formatThemeCategories } from "../utils/themeCategories";
 
 export default function ThemeDetailPage() {
   const pathname = getCurrentPathname();
@@ -78,7 +79,7 @@ export default function ThemeDetailPage() {
               </div>
 
               <div className="max-w-xl mx-auto lg:mx-0">
-                <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">{theme.category}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-primary mb-2">{formatThemeCategories(theme, " • ")}</p>
                 <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white mb-3 leading-tight">
                   {theme.name}
                 </h1>
@@ -117,7 +118,7 @@ export default function ThemeDetailPage() {
                   </div>
                   <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3">
                     <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Kategori</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{theme.category}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{formatThemeCategories(theme)}</p>
                   </div>
                   <div className="rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 px-4 py-3">
                     <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Paket</p>

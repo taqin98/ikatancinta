@@ -3,7 +3,7 @@ export const themeSeed = [
     slug: "blue-nature",
     presetId: "bun-premium-001",
     name: "Blue Nature",
-    category: "Natural",
+    category: ["Natural", "Floral"],
     packageTier: "PREMIUM",
     priceLabel: "Rp 149.000",
     description: "Nuansa biru natural dengan sentuhan gold dan tekstur floral yang hangat.",
@@ -20,7 +20,7 @@ export const themeSeed = [
     slug: "noir-minimalist",
     presetId: "nrm-basic-001",
     name: "Noir Minimalist",
-    category: "Minimalist",
+    category: ["Minimalist", "Classic"],
     packageTier: "BASIC",
     priceLabel: "Rp 99.000",
     description: "Migrasi pixel-perfect gaya luxury minimalist dengan cover lock, lottie, countdown, dan gift panel interaktif.",
@@ -37,7 +37,7 @@ export const themeSeed = [
     slug: "ivory-grace",
     presetId: "ivg-basic-001",
     name: "Ivory Grace",
-    category: "Classic",
+    category: ["Classic", "Minimalist"],
     packageTier: "BASIC",
     priceLabel: "Rp 99.000",
     description: "Migrasi pixel-perfect gaya minimalist luxury dari source Luxury 02 dengan cover lock, countdown, gift toggle, dan audio floating.",
@@ -54,7 +54,7 @@ export const themeSeed = [
     slug: "navy-blossom",
     presetId: "nvb-basic-001",
     name: "Navy Blossom",
-    category: "Classic",
+    category: ["Classic", "Floral"],
     packageTier: "BASIC",
     priceLabel: "Rp 99.000",
     description: "Migrasi pixel-perfect dari source Luxury 08 dengan cover lock, dual particles, countdown, gift toggle, dan wishes adapter.",
@@ -71,7 +71,7 @@ export const themeSeed = [
     slug: "timeless-promise",
     presetId: "tlp-premium-001",
     name: "Timeless Promise",
-    category: "Floral",
+    category: ["Floral", "Classic"],
     packageTier: "PREMIUM",
     priceLabel: "Rp 149.000",
     description: "Template klasik hasil migrasi pixel-perfect dari source WordPress/Elementor.",
@@ -88,7 +88,7 @@ export const themeSeed = [
     slug: "misty-romance",
     presetId: "mtr-premium-001",
     name: "Misty Romance",
-    category: "Floral",
+    category: ["Floral", "Natural"],
     packageTier: "PREMIUM",
     priceLabel: "Rp 149.000",
     description: "Template romantis dengan ambience misty, lottie burung, dan layout Elementor pixel-perfect.",
@@ -105,7 +105,7 @@ export const themeSeed = [
     slug: "velvet-burgundy",
     presetId: "vlb-premium-001",
     name: "Velvet Burgundy",
-    category: "Classic",
+    category: ["Classic", "Floral"],
     packageTier: "PREMIUM",
     priceLabel: "Rp 149.000",
     description: "Migrasi pixel-perfect dari template WordPress/Elementor dengan nuansa burgundy elegan.",
@@ -122,7 +122,7 @@ export const themeSeed = [
     slug: "botanical-elegance",
     presetId: "bte-exclusive-001",
     name: "Botanical Elegance",
-    category: "Classic",
+    category: ["Classic", "Natural"],
     packageTier: "EKSKLUSIF",
     priceLabel: "Rp 149.000",
     description: "Migrasi pixel-perfect dari template premium WordPress/Elementor dengan detail botanical elegan.",
@@ -139,7 +139,7 @@ export const themeSeed = [
     slug: "puspa-asmara",
     presetId: "psa-exclusive-001",
     name: "Puspa Asmara",
-    category: "Classic",
+    category: ["Classic", "Floral"],
     packageTier: "EKSKLUSIF",
     priceLabel: "Rp 149.000",
     description: "Migrasi pixel-perfect dari template WordPress/Elementor dengan komposisi floral klasik dan interaksi undangan lengkap.",
@@ -156,7 +156,7 @@ export const themeSeed = [
     slug: "eternal-summit",
     presetId: "ets-exclusive-001",
     name: "Eternal Summit",
-    category: "Classic",
+    category: ["Classic", "Natural"],
     packageTier: "EKSKLUSIF",
     priceLabel: "Rp 149.000",
     description: "Migrasi pixel-perfect dari template WordPress/Elementor Premium 03 dengan tata letak ornamental merah marun.",
@@ -182,6 +182,27 @@ export const invitationsByThemeSeed = {
     { id: "be-1", title: "Undangan Nisa & Hanif", date: "3 Juli 2026", thumbnail: "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=900&q=80" },
   ],
 };
+
+export function getThemeCategories(themeOrCategory) {
+  const rawCategory =
+    themeOrCategory && typeof themeOrCategory === "object" && !Array.isArray(themeOrCategory)
+      ? themeOrCategory.category
+      : themeOrCategory;
+
+  if (Array.isArray(rawCategory)) {
+    return rawCategory
+      .map((category) => String(category || "").trim())
+      .filter(Boolean);
+  }
+
+  const category = String(rawCategory || "").trim();
+  return category ? [category] : [];
+}
+
+export function themeMatchesCategory(theme, category) {
+  if (!category) return true;
+  return getThemeCategories(theme).includes(String(category).trim());
+}
 
 export function findThemeBySlug(slug) {
   return themeSeed.find((theme) => theme.slug === slug) || null;

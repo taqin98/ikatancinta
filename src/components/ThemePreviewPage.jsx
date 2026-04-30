@@ -3,6 +3,7 @@ import Navbar from "./Navbar";
 import WhatsAppButton from "./WhatsAppButton";
 import { useThemeByPresetId } from "../hooks/useCatalogData";
 import { navigateTo } from "../utils/navigation";
+import { formatThemeCategories } from "../utils/themeCategories";
 
 function getPresetIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -83,7 +84,7 @@ export default function ThemePreviewPage() {
 
                 <div className="mt-4 grid grid-cols-2 gap-2">
                   <span className="px-2.5 py-1.5 rounded-lg bg-primary-soft text-primary text-[11px] font-bold text-center uppercase tracking-wide">
-                    {theme.category}
+                    {formatThemeCategories(theme)}
                   </span>
                   <span className="px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 text-[11px] font-bold text-center uppercase tracking-wide">
                     {theme.packageTier}
@@ -105,7 +106,7 @@ export default function ThemePreviewPage() {
                   </div>
                   <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40">
                     <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Kategori</p>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{theme.category}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">{formatThemeCategories(theme)}</p>
                   </div>
                   <div className="rounded-xl border border-slate-200 dark:border-slate-700 p-3 bg-slate-50 dark:bg-slate-900/40">
                     <p className="text-[10px] uppercase tracking-wider text-slate-500 font-bold mb-1">Paket</p>

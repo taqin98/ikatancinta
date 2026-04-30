@@ -1,5 +1,6 @@
 import { navigateTo, toAppPath } from "../utils/navigation";
 import { useThemeCatalog } from "../hooks/useCatalogData";
+import { formatThemeCategories } from "../utils/themeCategories";
 
 export default function ThemeShowcase() {
   const { themes, loading } = useThemeCatalog();
@@ -42,20 +43,22 @@ export default function ThemeShowcase() {
               }}
               role="button"
               tabIndex={0}
-              className="rounded-xl bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 hover:shadow-lg transition-shadow cursor-pointer animate-enter-up"
+              className="rounded-md bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-3 hover:shadow-lg transition-shadow cursor-pointer animate-enter-up"
               style={{ transitionDelay: `${120 + index * 80}ms` }}
             >
-              <div className="w-full aspect-[4/6] rounded-lg overflow-hidden bg-slate-200 mb-3">
+              <div className="relative w-full aspect-[4/6] rounded-md overflow-hidden bg-slate-200 mb-3">
                 <img
                   src={theme.thumbnail || theme.image}
                   alt={`Thumbnail tema ${theme.name}`}
                   className="w-full h-full object-cover"
                 />
+                <div className={`absolute inset-3 left-0 right-0 text-center text-white px-2 ${theme.overlayClass ?? ""}`}>
+                  <h3 className="font-serif italic text-lg sm:text-xl mb-1">{theme.name}</h3>
+                </div>
               </div>
               <p className="text-[10px] font-bold uppercase tracking-wider text-primary mb-1">
-                {theme.category}
+                {formatThemeCategories(theme, " • ")}
               </p>
-              <h3 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base mb-1">{theme.name}</h3>
               <p className="text-xs text-slate-500 dark:text-slate-300">{theme.description}</p>
             </article>
           ))}
