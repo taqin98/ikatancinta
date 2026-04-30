@@ -121,7 +121,7 @@ export default function ThemeGalleryPage() {
 
                       <div className="absolute bottom-2 left-2 right-2 flex flex-wrap items-center gap-2">
                         <span className="px-2.5 py-1 rounded-md bg-slate-900/80 text-white text-[10px] font-bold tracking-wider uppercase backdrop-blur-sm">
-                          Paket: {theme.packageTier}
+                          {theme.packageTier}
                         </span>
                         {getThemeCategories(theme).map((category) => (
                           <span
