@@ -300,6 +300,7 @@ const DEFAULT_BANK_CHIP = "assets/images/local/wp-content__uploads__2024__09__ch
 const BANK_LOGO_FALLBACKS = {
   bca: "assets/images/local/wp-content__uploads__2024__09__BCA_logo_Bank_Central_Asia-1-3-2048x650-1-1.png",
   dana: "assets/images/local/wp-content__uploads__2024__09__1200px-Logo_dana_blue.svg-1-2-1.png",
+  seabank: "/payment/seabank.png",
 };
 
 function resolveBankLogo(bankName, explicitLogo) {
@@ -310,6 +311,7 @@ function resolveBankLogo(bankName, explicitLogo) {
   if (!key) return "";
   if (key.includes("bca")) return BANK_LOGO_FALLBACKS.bca;
   if (key.includes("dana")) return BANK_LOGO_FALLBACKS.dana;
+  if (key.includes("seabank")) return BANK_LOGO_FALLBACKS.seabank;
   return "";
 }
 

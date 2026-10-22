@@ -651,12 +651,13 @@ function normalizeBankAccount(item) {
     item?.logoUrl,
     item?.image,
     normalizedBankName.includes("bca") ? "assets/images/BCA_logo_Bank_Central_Asia-1-3-5-2-1-scaled.png" : "",
-    normalizedBankName.includes("dana") ? "assets/images/1200px-Logo_dana_blue.svg-1-1-1-1-1-2.png" : ""
+    normalizedBankName.includes("dana") ? "assets/images/1200px-Logo_dana_blue.svg-1-1-1-1-1-2.png" : "",
+    normalizedBankName.includes("seabank") ? "assets/images/seabank-logo.png" : ""
   );
   const chip = pickAsset(
     item?.chip,
     item?.chipImage,
-    normalizedBankName.includes("bca") ? "assets/images/chip-atm-1-2-4-3.png" : ""
+    normalizedBankName.includes("dana") ? "" : "assets/images/chip-atm-1-2-4-3.png"
   );
 
   if (!bankName && !accountNumber && !accountHolder && !logo && !chip) return null;
@@ -1195,24 +1196,61 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     const legacyGift = mergedData?.gifts || {};
     const genericGift = mergedData?.gift || {};
     const digitalEnvelopeInfo = mergedData?.features?.digitalEnvelopeInfo || {};
-    const rawBankList = [
-      ...(Array.isArray(legacyGift?.bankAccounts) ? legacyGift.bankAccounts : []),
-      ...(Array.isArray(genericGift?.bankList) ? genericGift.bankList : []),
-      ...(Array.isArray(digitalEnvelopeInfo?.bankList) ? digitalEnvelopeInfo.bankList : []),
-    ];
-    const bankList = rawBankList.map(normalizeBankAccount).filter(Boolean);
-    const bank1 = bankList[0] || null;
-    const bank2 = bankList[1] || null;
-    const rawShipping = {
-      ...(legacyGift?.shipping || {}),
-      ...(genericGift?.shipping || {}),
-      ...(digitalEnvelopeInfo?.shipping || {}),
+    const isListIdenticalToDummy = (list) => {
+      if (!Array.isArray(list) || !Array.isArray(schemaJson.gifts?.bankAccounts)) return false;
+      if (list.length !== schemaJson.gifts.bankAccounts.length) return false;
+      return list.every((item, idx) => {
+        const dummy = schemaJson.gifts.bankAccounts[idx];
+        return item?.accountNumber === dummy?.accountNumber && item?.accountHolder === dummy?.accountHolder;
+      });
     };
+
+    const candidateBankLists = [
+      genericGift?.bankList,
+      genericGift?.bankAccounts,
+      legacyGift?.bankAccounts,
+      legacyGift?.bankList,
+      digitalEnvelopeInfo?.bankList,
+    ];
+    let rawBankList = [];
+    for (const candidate of candidateBankLists) {
+      if (Array.isArray(candidate) && candidate.length > 0 && !isListIdenticalToDummy(candidate)) {
+        rawBankList = candidate;
+        break;
+      }
+    }
+    if (rawBankList.length === 0) {
+      rawBankList = candidateBankLists.find((c) => Array.isArray(c) && c.length > 0) || (isStaticDemoMode ? (schemaJson.gifts?.bankAccounts || []) : []);
+    }
+    const bankList = rawBankList.map(normalizeBankAccount).filter(Boolean);
+
+    const isShippingDummy = (s) => {
+      if (!s || typeof s !== "object") return true;
+      return s.recipient === schemaJson.gifts?.shipping?.recipient &&
+             s.address === schemaJson.gifts?.shipping?.address &&
+             s.phone === schemaJson.gifts?.shipping?.phone;
+    };
+    const candidateShippings = [
+      genericGift?.shipping,
+      legacyGift?.shipping,
+      digitalEnvelopeInfo?.shipping,
+    ];
+    let rawShipping = null;
+    for (const s of candidateShippings) {
+      if (s && (pickText(s.recipient) || pickText(s.phone) || pickText(s.address)) && !isShippingDummy(s)) {
+        rawShipping = s;
+        break;
+      }
+    }
+    if (!rawShipping) {
+      rawShipping = isStaticDemoMode ? (schemaJson.gifts?.shipping || {}) : (candidateShippings.find(Boolean) || {});
+    }
+
     const hasShippingData = Boolean(pickText(rawShipping?.recipient, rawShipping?.phone, rawShipping?.address));
     const shipping = {
-      recipient: pickText(rawShipping?.recipient, groom.fullName),
-      phone: pickText(rawShipping?.phone, "-"),
-      address: pickText(rawShipping?.address, akad.addressName, "-"),
+      recipient: pickText(rawShipping?.recipient, isStaticDemoMode ? schemaJson.gifts?.shipping?.recipient : "", groom.fullName),
+      phone: pickText(rawShipping?.phone, isStaticDemoMode ? schemaJson.gifts?.shipping?.phone : "", "-"),
+      address: pickText(rawShipping?.address, isStaticDemoMode ? schemaJson.gifts?.shipping?.address : "", akad.addressName, "-"),
     };
     const hasGiftSection = (mergedData?.features?.digitalEnvelopeEnabled ?? true) && (bankList.length > 0 || hasShippingData);
 
@@ -1481,26 +1519,68 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setText(root, ".elementor-element-4c42a555 .elementor-button-text", copy.giftToggleLabel || "Klik di sini");
     setNodeVisible(root, ".elementor-element-43104f45", hasGiftSection);
 
-    setNodeVisible(root, ".elementor-element-47a1bba0", Boolean(bank1));
-    setNodeVisible(root, ".elementor-element-4d7dbe7d", Boolean(bank2));
-    setNodeVisible(root, ".elementor-element-6efe9a3d", hasShippingData);
-    setNodeVisible(root, ".elementor-element-4e6e1333", Boolean(bank1?.logo));
-    setNodeVisible(root, ".elementor-element-24f130ef", Boolean(bank1?.chip));
-    setNodeVisible(root, ".elementor-element-1f4e8e34", Boolean(bank2?.logo));
+    const baseBankCard1 = root.querySelector(".elementor-element-47a1bba0");
+    const baseBankCard2 = root.querySelector(".elementor-element-4d7dbe7d");
+    const amplopContainer = root.querySelector("#amplop") || baseBankCard1?.parentElement;
 
-    setImage(root, ".elementor-element-4e6e1333 img", bank1?.logo);
-    setImage(root, ".elementor-element-24f130ef img", bank1?.chip);
-    setImage(root, ".elementor-element-1f4e8e34 img", bank2?.logo);
+    amplopContainer?.querySelectorAll("[data-pa-bank-clone='true']").forEach((node) => node.remove());
 
-    setHtml(root, ".elementor-element-124e0fdb .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountNumber || "-")}</p>`);
-    setHtml(root, ".elementor-element-15e9e282 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountHolder || "-")}</p>`);
-    setHtml(root, ".elementor-element-71a8e014 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountNumber || "-")}</p>`);
-    setHtml(root, ".elementor-element-16681b37 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountHolder || "-")}</p>`);
+    if (bankList.length === 0) {
+      setNodeVisible(root, ".elementor-element-47a1bba0", false);
+      setNodeVisible(root, ".elementor-element-4d7dbe7d", false);
+    } else {
+      setNodeVisible(root, ".elementor-element-47a1bba0", true);
+      const bank1 = bankList[0];
+      setImage(root, ".elementor-element-4e6e1333 img", bank1?.logo);
+      setImage(root, ".elementor-element-24f130ef img", bank1?.chip);
+      setNodeVisible(root, ".elementor-element-4e6e1333", Boolean(bank1?.logo));
+      setNodeVisible(root, ".elementor-element-24f130ef", Boolean(bank1?.chip));
+      setHtml(root, ".elementor-element-124e0fdb .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountNumber || "-")}</p>`);
+      setHtml(root, ".elementor-element-15e9e282 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountHolder || "-")}</p>`);
+      const copyBox1 = root.querySelector(".elementor-element-24d1d394 .copy-content");
+      if (copyBox1) copyBox1.textContent = pickText(bank1?.accountNumber);
 
-    const copyBox1 = root.querySelector(".elementor-element-24d1d394 .copy-content");
-    const copyBox2 = root.querySelector(".elementor-element-751d79fe .copy-content");
-    if (copyBox1) copyBox1.textContent = pickText(bank1?.accountNumber);
-    if (copyBox2) copyBox2.textContent = pickText(bank2?.accountNumber);
+      if (bankList.length > 1) {
+        setNodeVisible(root, ".elementor-element-4d7dbe7d", true);
+        const bank2 = bankList[1];
+        setImage(root, ".elementor-element-1f4e8e34 img", bank2?.logo);
+        setNodeVisible(root, ".elementor-element-1f4e8e34", Boolean(bank2?.logo));
+        setHtml(root, ".elementor-element-71a8e014 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountNumber || "-")}</p>`);
+        setHtml(root, ".elementor-element-16681b37 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountHolder || "-")}</p>`);
+        const copyBox2 = root.querySelector(".elementor-element-751d79fe .copy-content");
+        if (copyBox2) copyBox2.textContent = pickText(bank2?.accountNumber);
+
+        let previousBankTarget = baseBankCard2;
+        for (let i = 2; i < bankList.length; i++) {
+          const bankExtra = bankList[i];
+          const clonedCard = baseBankCard2.cloneNode(true);
+          clonedCard.setAttribute("data-pa-bank-clone", "true");
+          clonedCard.style.marginTop = "20px";
+          clonedCard.style.display = "";
+
+          const extraLogo = clonedCard.querySelector(".elementor-element-1f4e8e34 img");
+          if (extraLogo) {
+            if (bankExtra.logo) {
+              extraLogo.src = resolveAssetUrl(bankExtra.logo);
+              extraLogo.style.display = "";
+            } else {
+              extraLogo.style.display = "none";
+            }
+          }
+          const extraAcc = clonedCard.querySelector(".elementor-element-71a8e014 .elementor-widget-container");
+          if (extraAcc) extraAcc.innerHTML = `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bankExtra.accountNumber || "-")}</p>`;
+          const extraHolder = clonedCard.querySelector(".elementor-element-16681b37 .elementor-widget-container");
+          if (extraHolder) extraHolder.innerHTML = `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bankExtra.accountHolder || "-")}</p>`;
+          const extraCopy = clonedCard.querySelector(".copy-content");
+          if (extraCopy) extraCopy.textContent = pickText(bankExtra.accountNumber);
+
+          previousBankTarget.parentElement.insertBefore(clonedCard, previousBankTarget.nextSibling);
+          previousBankTarget = clonedCard;
+        }
+      } else {
+        setNodeVisible(root, ".elementor-element-4d7dbe7d", false);
+      }
+    }
 
     setHtml(root, ".elementor-element-45da7c64 .elementor-widget-container", `<p>${escapeHtml(copy.shippingTitle || "Kirim Hadiah")}</p>`);
     setHtml(

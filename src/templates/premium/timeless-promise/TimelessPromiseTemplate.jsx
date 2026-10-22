@@ -407,6 +407,12 @@ function resolveBankLogo(bankName) {
             hideChip: false,
         };
     }
+    if (normalized.includes("seabank")) {
+        return {
+            src: "/payment/seabank.png",
+            hideChip: false,
+        };
+    }
     return {
         src: buildBankLogoDataUrl(bankName || "BANK"),
         hideChip: !/(bri|bni|mandiri|cimb|permata|btn)/i.test(normalized),

@@ -195,10 +195,14 @@ export function mapFormToInvitationSchema({
     const mappedGiftBankList = Array.isArray(giftInfo?.bankList)
         ? giftInfo.bankList.filter((item) => item?.bank || item?.account || item?.name)
         : [];
-    const mappedGiftShipping = {
-        ...(defaultSchema.gift?.shipping || {}),
-        ...(giftInfo?.shipping || {}),
-    };
+    const hasCustomShipping = Boolean(giftInfo?.shipping && (giftInfo.shipping.recipient || giftInfo.shipping.phone || giftInfo.shipping.address));
+    const mappedGiftShipping = hasCustomShipping
+        ? {
+            recipient: giftInfo.shipping?.recipient || "",
+            phone: giftInfo.shipping?.phone || "",
+            address: giftInfo.shipping?.address || "",
+        }
+        : { ...(defaultSchema.gift?.shipping || {}) };
     const hasGiftData = mappedGiftBankList.length > 0 || Boolean(mappedGiftShipping.recipient || mappedGiftShipping.phone || mappedGiftShipping.address);
     const normalizedLivestreamUrl = String(livestream?.url || "").trim();
     const isLivestreamEnabled = packageCapabilities.livestream === true && (Boolean(livestream?.enabled) || Boolean(normalizedLivestreamUrl));
@@ -244,6 +248,11 @@ export function mapFormToInvitationSchema({
         gift: {
             ...(defaultSchema.gift || {}),
             bankList: hasGiftData ? mappedGiftBankList : [],
+            shipping: hasGiftData ? mappedGiftShipping : {},
+        },
+        gifts: {
+            ...(defaultSchema.gifts || {}),
+            bankAccounts: hasGiftData ? mappedGiftBankList : [],
             shipping: hasGiftData ? mappedGiftShipping : {},
         },
         copy: {

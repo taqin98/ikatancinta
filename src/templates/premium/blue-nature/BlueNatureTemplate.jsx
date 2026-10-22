@@ -979,7 +979,11 @@ export default function BlueNatureTemplate({ data: propData = null, invitationSl
                                         <div className="bn-gift__panel">
                                             {bankList.map((bank, index) => {
                                                 const key = String(bank.bank || "").toLowerCase();
-                                                const logo = key.includes("dana") ? LogoDana : LogoBca;
+                                                const logo = key.includes("dana")
+                                                    ? LogoDana
+                                                    : key.includes("seabank")
+                                                    ? "/payment/seabank.png"
+                                                    : LogoBca;
                                                 const readable = bank.account?.replace(/(\d{4})(?=\d)/g, "$1 ") || "-";
                                                 return (
                                                     <div className="bn-bank-card" key={`${bank.bank}-${bank.account}-${index}`} data-aos="fade-up" data-aos-delay={index * 90}>

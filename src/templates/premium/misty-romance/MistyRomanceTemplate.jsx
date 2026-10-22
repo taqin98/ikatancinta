@@ -221,6 +221,7 @@ function normalizeLoveStoryItem(item) {
 const BANK_LOGO_FALLBACKS = {
     bca: "assets/images/payment/bca/bca-logo.png",
     dana: "assets/images/payment/dana/dana-logo.png",
+    seabank: "/payment/seabank.png",
 };
 
 function resolveBankLogo(bankName, explicitLogo) {
@@ -230,6 +231,7 @@ function resolveBankLogo(bankName, explicitLogo) {
     const normalizedBank = pickText(bankName).toLowerCase();
     if (normalizedBank.includes("bca")) return BANK_LOGO_FALLBACKS.bca;
     if (normalizedBank.includes("dana")) return BANK_LOGO_FALLBACKS.dana;
+    if (normalizedBank.includes("seabank")) return BANK_LOGO_FALLBACKS.seabank;
     return "";
 }
 

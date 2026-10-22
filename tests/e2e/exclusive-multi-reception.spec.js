@@ -206,5 +206,47 @@ test.describe("Exclusive Template Multiple Receptions", () => {
     const livestreamContainer = page.locator(".elementor-element-68da415");
     await expect(livestreamContainer).toBeHidden();
   });
+
+  test("renders 3 bank cards and dynamic shipping data in Botanical Elegance", async ({ page }) => {
+    await page.addInitScript((draft) => {
+      sessionStorage.setItem("ikc_invitation_draft", JSON.stringify({
+        ...draft,
+        gift: {
+          bankList: [
+            { bank: "BCA", account: "2470953881", name: "Ahmad Khoirurrozikin" },
+            { bank: "BCA", account: "2471070680", name: "Robiatul Adawiyah" },
+            { bank: "SeaBank", account: "901905143413", name: "Ahmad Khoirurrozikin" },
+          ],
+          shipping: {
+            recipient: "Robiatul Adawiyah",
+            phone: "",
+            address: "Jl. KH. Nawawi RT 20/04 Sinanggul Mlonggo Jepara",
+          },
+        },
+      }));
+    }, SAMPLE_MULTI_RESEPSI_DRAFT);
+    await page.goto("/undangan/botanical-elegance?preview=1");
+
+    const openBtn = page.getByRole("button", { name: /Buka Undangan/i });
+    if (await openBtn.isVisible()) {
+      await openBtn.click();
+    }
+
+    // Toggle gift section
+    const giftBtn = page.locator("#klik");
+    await giftBtn.click();
+
+    // Verify all 3 accounts are rendered
+    await expect(page.locator(".elementor-heading-title", { hasText: "2470953881" })).toBeVisible();
+    await expect(page.locator(".elementor-heading-title", { hasText: "2471070680" })).toBeVisible();
+    await expect(page.locator(".elementor-heading-title", { hasText: "901905143413" })).toBeVisible();
+    await expect(page.locator("img[src*='seabank-logo.png']")).toBeVisible();
+    // Verify real shipping data is rendered and dummy Habib data is absent in gift section
+    const giftContainer = page.locator("#amplop");
+    await expect(giftContainer.getByText("Nama Penerima : Robiatul Adawiyah")).toBeVisible();
+    await expect(giftContainer.getByText("Jl. KH. Nawawi RT 20/04 Sinanggul Mlonggo Jepara")).toBeVisible();
+    await expect(giftContainer.getByText("Habib Yulianto")).toHaveCount(0);
+    await expect(giftContainer.getByText("Ds Pagu Kec.Wates Kab. Kediri")).toHaveCount(0);
+  });
 });
 

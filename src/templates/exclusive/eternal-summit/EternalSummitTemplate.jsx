@@ -335,8 +335,15 @@ function normalizeBankAccount(item) {
   const bankName = pickText(item.bankName, item.bank, item.provider, item.title);
   const accountNumber = pickText(item.accountNumber, item.account, item.number);
   const accountHolder = pickText(item.accountHolder, item.accountName, item.name);
-  const logo = pickAsset(item.logo, item.image);
-  const chip = pickAsset(item.chip);
+  const normalizedBankName = bankName.toLowerCase();
+  const logo = pickAsset(
+    item.logo,
+    item.image,
+    normalizedBankName.includes("bca") ? "assets/images/BCA_logo_Bank_Central_Asia-1-3-5-scaled-1.png" : "",
+    normalizedBankName.includes("dana") ? "assets/images/1200px-Logo_dana_blue.svg-1-1-1.png" : "",
+    normalizedBankName.includes("seabank") ? "assets/images/seabank-logo.png" : ""
+  );
+  const chip = pickAsset(item.chip, normalizedBankName.includes("dana") ? "" : "assets/images/chip-atm-1-2-4.png");
 
   if (!bankName && !accountNumber && !accountHolder && !logo) return null;
 
@@ -886,15 +893,70 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     )
       .map(normalizeRuntimeStory)
       .filter(Boolean);
-    const gifts = mergedData?.gifts || {};
-    const bankList = (Array.isArray(gifts.bankAccounts) ? gifts.bankAccounts : []).map(normalizeBankAccount).filter(Boolean);
-    const bank1 = bankList[0] || {};
-    const bank2 = bankList[1] || {};
+    const legacyGift = mergedData?.gifts || {};
+    const genericGift = mergedData?.gift || {};
+    const digitalEnvelopeInfo = mergedData?.features?.digitalEnvelopeInfo || {};
+
+    const isListIdenticalToDummy = (list) => {
+      if (!Array.isArray(list) || !Array.isArray(schemaJson.gifts?.bankAccounts)) return false;
+      if (list.length !== schemaJson.gifts.bankAccounts.length) return false;
+      return list.every((item, idx) => {
+        const dummy = schemaJson.gifts.bankAccounts[idx];
+        return item?.accountNumber === dummy?.accountNumber && item?.accountHolder === dummy?.accountHolder;
+      });
+    };
+
+    const candidateBankLists = [
+      genericGift?.bankList,
+      genericGift?.bankAccounts,
+      legacyGift?.bankAccounts,
+      legacyGift?.bankList,
+      digitalEnvelopeInfo?.bankList,
+    ];
+    let rawBankList = [];
+    for (const candidate of candidateBankLists) {
+      if (Array.isArray(candidate) && candidate.length > 0 && !isListIdenticalToDummy(candidate)) {
+        rawBankList = candidate;
+        break;
+      }
+    }
+    if (rawBankList.length === 0) {
+      rawBankList = candidateBankLists.find((c) => Array.isArray(c) && c.length > 0) || (isStaticDemoMode ? (schemaJson.gifts?.bankAccounts || []) : []);
+    }
+    const bankList = rawBankList.map(normalizeBankAccount).filter(Boolean);
+
+    const isShippingDummy = (s) => {
+      if (!s || typeof s !== "object") return true;
+      return s.recipient === schemaJson.gifts?.shipping?.recipient &&
+             s.address === schemaJson.gifts?.shipping?.address &&
+             s.phone === schemaJson.gifts?.shipping?.phone;
+    };
+    const candidateShippings = [
+      genericGift?.shipping,
+      legacyGift?.shipping,
+      digitalEnvelopeInfo?.shipping,
+    ];
+    let rawShipping = null;
+    for (const s of candidateShippings) {
+      if (s && (pickText(s.recipient) || pickText(s.phone) || pickText(s.address)) && !isShippingDummy(s)) {
+        rawShipping = s;
+        break;
+      }
+    }
+    if (!rawShipping) {
+      rawShipping = isStaticDemoMode ? (schemaJson.gifts?.shipping || {}) : (candidateShippings.find(Boolean) || {});
+    }
+
+    const hasShippingData = Boolean(pickText(rawShipping?.recipient, rawShipping?.phone, rawShipping?.address));
+    const shipping = {
+      recipient: pickText(rawShipping?.recipient, isStaticDemoMode ? schemaJson.gifts?.shipping?.recipient : "", groom.fullName),
+      phone: pickText(rawShipping?.phone, isStaticDemoMode ? schemaJson.gifts?.shipping?.phone : "", "-"),
+      address: pickText(rawShipping?.address, isStaticDemoMode ? schemaJson.gifts?.shipping?.address : "", akad.addressName, "-"),
+    };
+    const hasGiftSection = (mergedData?.features?.digitalEnvelopeEnabled ?? true) && (bankList.length > 0 || hasShippingData);
     const gallery = (Array.isArray(mergedData?.gallery) ? mergedData.gallery : []).map(normalizeGalleryItem).map(resolveAssetUrl).filter(Boolean);
     const hasGallery = gallery.length > 0;
     const hasStories = stories.length > 0;
-    const hasShippingData = Boolean(pickText(gifts.shipping?.recipient, gifts.shipping?.phone, gifts.shipping?.address));
-    const hasGiftSection = (mergedData?.features?.digitalEnvelopeEnabled ?? true) && (bankList.length > 0 || hasShippingData);
 
     const updateImage = (selector, value) => {
       const node = root.querySelector(selector);
@@ -1141,27 +1203,75 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     setHtml(root, ".elementor-element-1a868be4 .elementor-widget-container", `<p>${escapeHtml(pickText(copy.giftIntro, schemaJson.copy.giftIntro))}</p>`);
     setText(root, ".elementor-element-7f4f3cb2 .elementor-button-text", pickText(copy.giftToggleLabel, schemaJson.copy.giftToggleLabel, "Klik di sini"));
 
-    updateImage(".elementor-element-30aeaa27 img", bank1.logo);
-    updateImage(".elementor-element-1f63c40b img", bank1.chip);
-    updateImage(".elementor-element-d4387de img", bank2.logo);
+    const baseBankCard1 = root.querySelector(".elementor-element-1fd860cf");
+    const baseBankCard2 = root.querySelector(".elementor-element-7456d19a");
+    const amplopContainer = root.querySelector("#amplop") || baseBankCard1?.parentElement;
+    amplopContainer?.querySelectorAll("[data-es-bank-clone='true']").forEach((node) => node.remove());
 
-    setHtml(root, ".elementor-element-6929603c .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1.accountNumber || "-")}</p>`);
-    setHtml(root, ".elementor-element-53f178ad .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1.accountHolder || "-")}</p>`);
-    setHtml(root, ".elementor-element-7cf3fe66 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2.accountNumber || "-")}</p>`);
-    setHtml(root, ".elementor-element-cbcefe6 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2.accountHolder || "-")}</p>`);
+    if (bankList.length === 0) {
+      if (baseBankCard1) baseBankCard1.style.display = "none";
+      if (baseBankCard2) baseBankCard2.style.display = "none";
+    } else {
+      const bank1 = bankList[0];
+      if (baseBankCard1) {
+        baseBankCard1.style.display = "";
+        updateImage(".elementor-element-30aeaa27 img", bank1?.logo);
+        updateImage(".elementor-element-1f63c40b img", bank1?.chip);
+        setNodeVisible(".elementor-element-1f63c40b", Boolean(bank1?.chip));
+        setHtml(root, ".elementor-element-6929603c .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountNumber || "-")}</p>`);
+        setHtml(root, ".elementor-element-53f178ad .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank1?.accountHolder || "-")}</p>`);
+        const copyBox1 = root.querySelector(".elementor-element-7d66bf2 .copy-content");
+        if (copyBox1) copyBox1.textContent = normalizeText(bank1?.accountNumber || "");
+      }
 
-    const copyBox1 = root.querySelector(".elementor-element-7d66bf2 .copy-content");
-    const copyBox2 = root.querySelector(".elementor-element-50271a07 .copy-content");
-    if (copyBox1) copyBox1.textContent = normalizeText(bank1.accountNumber || "");
-    if (copyBox2) copyBox2.textContent = normalizeText(bank2.accountNumber || "");
+      if (bankList.length > 1 && baseBankCard2) {
+        baseBankCard2.style.display = "";
+        const bank2 = bankList[1];
+        updateImage(".elementor-element-d4387de img", bank2?.logo);
+        setHtml(root, ".elementor-element-7cf3fe66 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountNumber || "-")}</p>`);
+        setHtml(root, ".elementor-element-cbcefe6 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bank2?.accountHolder || "-")}</p>`);
+        const copyBox2 = root.querySelector(".elementor-element-50271a07 .copy-content");
+        if (copyBox2) copyBox2.textContent = normalizeText(bank2?.accountNumber || "");
+
+        let previousBankTarget = baseBankCard2;
+        for (let i = 2; i < bankList.length; i++) {
+          const bankExtra = bankList[i];
+          const clonedCard = baseBankCard2.cloneNode(true);
+          clonedCard.setAttribute("data-es-bank-clone", "true");
+          clonedCard.style.marginTop = "20px";
+          clonedCard.style.display = "";
+
+          const extraLogo = clonedCard.querySelector(".elementor-element-d4387de img");
+          if (extraLogo) {
+            if (bankExtra.logo) {
+              extraLogo.src = resolveAssetUrl(bankExtra.logo);
+              extraLogo.style.display = "";
+            } else {
+              extraLogo.style.display = "none";
+            }
+          }
+          const extraAcc = clonedCard.querySelector(".elementor-element-7cf3fe66 .elementor-widget-container");
+          if (extraAcc) extraAcc.innerHTML = `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bankExtra.accountNumber || "-")}</p>`;
+          const extraHolder = clonedCard.querySelector(".elementor-element-cbcefe6 .elementor-widget-container");
+          if (extraHolder) extraHolder.innerHTML = `<p class="elementor-heading-title elementor-size-default">${escapeHtml(bankExtra.accountHolder || "-")}</p>`;
+          const extraCopy = clonedCard.querySelector(".copy-content");
+          if (extraCopy) extraCopy.textContent = normalizeText(bankExtra.accountNumber || "");
+
+          previousBankTarget.parentElement.insertBefore(clonedCard, previousBankTarget.nextSibling);
+          previousBankTarget = clonedCard;
+        }
+      } else if (baseBankCard2) {
+        baseBankCard2.style.display = "none";
+      }
+    }
 
     setHtml(root, ".elementor-element-27c73c9 .elementor-widget-container", `<p class="elementor-heading-title elementor-size-default">${escapeHtml(pickText(copy.shippingTitle, schemaJson.copy.shippingTitle, "Kirim Hadiah"))}</p>`);
     setHtml(
       root,
       ".elementor-element-5c696c96 .elementor-widget-container",
-      `<p>Nama Penerima : ${escapeHtml(gifts.shipping?.recipient || "-")}</p><p>No. HP : ${escapeHtml(
-        gifts.shipping?.phone || "-"
-      )}</p><p>${escapeHtml(gifts.shipping?.address || "-")}</p>`
+      `<p>Nama Penerima : ${escapeHtml(shipping.recipient)}</p><p>No. HP : ${escapeHtml(
+        shipping.phone
+      )}</p><p>${escapeHtml(shipping.address)}</p>`
     );
     setNodeVisible(".elementor-element-1a11e47a", hasGiftSection);
     setNodeVisible(".elementor-element-1a868be4", hasGiftSection);
