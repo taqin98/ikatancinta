@@ -92,6 +92,9 @@ function mergeInvitationData(base, ...sources) {
   output.event = { ...(base?.event || {}), ...(output.event || {}) };
   output.event.akad = { ...(base?.event?.akad || {}), ...(output.event?.akad || {}) };
   output.event.resepsi = { ...(base?.event?.resepsi || {}), ...(output.event?.resepsi || {}) };
+  output.event.resepsiList = Array.isArray(output.event?.resepsiList) && output.event.resepsiList.length > 0
+    ? output.event.resepsiList
+    : (Array.isArray(base?.event?.resepsiList) ? base.event.resepsiList : undefined);
   output.streaming = { ...(base?.streaming || {}), ...(output.streaming || {}) };
   output.gifts = { ...(base?.gifts || {}), ...(output.gifts || {}) };
   output.gifts.shipping = { ...(base?.gifts?.shipping || {}), ...(output.gifts?.shipping || {}) };
@@ -415,6 +418,26 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
   const bride = orderPayload.bride || incomingData.bride || {};
   const akad = orderPayload.akad || incomingData.akad || incomingData.event?.akad || {};
   const resepsi = orderPayload.resepsi || incomingData.resepsi || incomingData.event?.resepsi || {};
+  const rawResepsiList = Array.isArray(orderPayload.resepsiList)
+    ? orderPayload.resepsiList
+    : Array.isArray(orderPayload.receptions)
+      ? orderPayload.receptions
+      : Array.isArray(incomingData.resepsiList)
+        ? incomingData.resepsiList
+        : Array.isArray(incomingData.receptions)
+          ? incomingData.receptions
+          : Array.isArray(incomingData.event?.resepsiList)
+            ? incomingData.event.resepsiList
+            : [];
+  const runtimeResepsiList = (rawResepsiList.length > 0 ? rawResepsiList : (resepsi && (resepsi.date || resepsi.venue || resepsi.venueName) ? [resepsi] : [])).map((item, idx) => ({
+    id: item.id || idx + 1,
+    title: pickText(item.title, idx === 0 ? baseSchema?.event?.resepsi?.title : `Resepsi ${idx + 1}`, "Resepsi"),
+    date: pickText(formatDateID(item.date), item.date, formatDateID(akad.date), baseSchema?.event?.resepsi?.date),
+    time: pickText(item.time, formatTimeRange(item.startTime, item.endTime), baseSchema?.event?.resepsi?.time),
+    addressName: pickText(item.addressName, item.venueName, item.venue, baseSchema?.event?.resepsi?.addressName),
+    address: pickText(item.address, akad.address, baseSchema?.event?.resepsi?.address),
+    mapsUrl: pickText(item.mapsLink, item.mapsUrl, akad.mapsLink, akad.mapsUrl, baseSchema?.event?.resepsi?.mapsUrl),
+  }));
   const rawStories = Array.isArray(orderPayload.stories)
     ? orderPayload.stories
     : Array.isArray(orderPayload.loveStory)
@@ -540,6 +563,7 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
         address: pickText(resepsi.address, akad.address, baseSchema?.event?.resepsi?.address),
         mapsUrl: pickText(resepsi.mapsLink, resepsi.mapsUrl, akad.mapsLink, akad.mapsUrl, baseSchema?.event?.resepsi?.mapsUrl),
       },
+      resepsiList: runtimeResepsiList.length > 0 ? runtimeResepsiList : (Array.isArray(incomingData.event?.resepsiList) ? incomingData.event.resepsiList : undefined),
       livestream: {
         ...(incomingData.event?.livestream || {}),
         title: pickText(rawStreaming.title, incomingData?.copy?.streamingTitle, baseSchema?.streaming?.title),
@@ -673,7 +697,8 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
 }
 
 export default function EternalSummitTemplate({ data: propData, invitationSlug = "eternal-summit", mode = "live" }) {
-  const isStaticDemoMode = mode === "demo";
+  const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  const isStaticDemoMode = mode === "demo" && !isPreview;
   const { data: fetchedData } = useInvitationData(invitationSlug, {
     fallbackSlug: "eternal-summit",
     skipFetch: Boolean(propData) || isStaticDemoMode,
@@ -721,6 +746,8 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
   const [opened, setOpened] = useState(false);
   const [lightboxImage, setLightboxImage] = useState("");
   const [wishes, setWishes] = useState(() => fallbackWishes);
+  const wishesRef = useRef(wishes);
+  wishesRef.current = wishes;
 
   useEffect(() => {
     let styleNode = document.getElementById(STYLE_LINK_ID);
@@ -979,11 +1006,53 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
     setHtml(root, ".elementor-element-1eb50d4e .elementor-widget-container", formatAddressHtml(akad.addressName || "", akad.address || ""));
     setLink(root, ".elementor-element-7c82a9ed a.elementor-button", normalizeText(akad.mapsUrl || "https://www.google.com/maps"));
 
-    setText(root, ".elementor-element-23d77e99 .elementor-heading-title", normalizeText(resepsi.title || "Resepsi"));
-    setHtml(root, ".elementor-element-5af3db73 .elementor-widget-container", `<p>${escapeHtml(resepsi.date || "")}</p>`);
-    setHtml(root, ".elementor-element-1e224734 .elementor-widget-container", `<p>${escapeHtml(resepsi.time || "")}</p>`);
-    setHtml(root, ".elementor-element-48b08001 .elementor-widget-container", formatAddressHtml(resepsi.addressName || "", resepsi.address || ""));
-    setLink(root, ".elementor-element-6f77a52c a.elementor-button", normalizeText(resepsi.mapsUrl || "https://www.google.com/maps"));
+    const resepsiListSource = Array.isArray(event?.resepsiList) && event.resepsiList.length > 0
+      ? event.resepsiList
+      : Array.isArray(mergedData?.resepsiList) && mergedData.resepsiList.length > 0
+        ? mergedData.resepsiList
+        : [resepsi];
+
+    const baseResepsiCard = root.querySelector(".elementor-element-b14f759");
+    if (baseResepsiCard) {
+      baseResepsiCard.parentElement?.querySelectorAll("[data-reception-clone='true']").forEach((node) => node.remove());
+
+      let currentCardTarget = baseResepsiCard;
+      resepsiListSource.forEach((item, index) => {
+        let cardNode = baseResepsiCard;
+        if (index > 0) {
+          cardNode = baseResepsiCard.cloneNode(true);
+          cardNode.setAttribute("data-reception-clone", "true");
+          cardNode.style.marginTop = "24px";
+          currentCardTarget.parentElement.insertBefore(cardNode, currentCardTarget.nextSibling);
+          currentCardTarget = cardNode;
+        }
+
+        const itemTitle = normalizeText(pickText(item.title, index === 0 ? (schemaJson.event?.resepsi?.title || "Resepsi") : `Resepsi ${index + 1}`));
+        const itemDate = pickText(formatDateID(item.date), item.date, resepsi.date || "");
+        const itemTime = pickText(item.time, formatTimeRange(item.startTime, item.endTime), resepsi.time || "");
+        const itemAddressHtml = formatAddressHtml(item.addressName || item.venueName || item.venue || "", item.address || "");
+        const itemMapsUrl = normalizeText(pickText(item.mapsUrl, item.mapsLink, resepsi.mapsUrl || "https://www.google.com/maps"));
+
+        const titleNode = cardNode.querySelector(".elementor-element-23d77e99 .elementor-heading-title");
+        if (titleNode) titleNode.textContent = itemTitle;
+
+        const dateNode = cardNode.querySelector(".elementor-element-5af3db73 .elementor-widget-container");
+        if (dateNode) dateNode.innerHTML = `<p>${escapeHtml(itemDate)}</p>`;
+
+        const timeNode = cardNode.querySelector(".elementor-element-1e224734 .elementor-widget-container");
+        if (timeNode) timeNode.innerHTML = `<p>${escapeHtml(itemTime)}</p>`;
+
+        const addrNode = cardNode.querySelector(".elementor-element-48b08001 .elementor-widget-container");
+        if (addrNode) addrNode.innerHTML = itemAddressHtml;
+
+        const mapBtnNode = cardNode.querySelector(".elementor-element-6f77a52c a.elementor-button");
+        if (mapBtnNode) {
+          mapBtnNode.setAttribute("href", itemMapsUrl);
+          mapBtnNode.setAttribute("target", "_blank");
+          mapBtnNode.setAttribute("rel", "noopener noreferrer");
+        }
+      });
+    }
 
     setText(root, ".elementor-element-7185baf3 .elementor-heading-title", pickText(streaming.title, copy.streamingTitle, schemaJson.streaming.title, "Live Streaming"));
     setHtml(root, ".elementor-element-4b860fdb .elementor-widget-container", `<p>${escapeHtml(pickText(streaming.intro, copy.streamingIntro, schemaJson.streaming.intro))}</p>`);
@@ -1189,7 +1258,7 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
       };
 
       renderWishesRef.current = renderWishes;
-      renderWishes(wishes);
+      renderWishes(wishesRef.current);
 
       const onCountLinkClick = (event) => {
         event.preventDefault();

@@ -100,6 +100,9 @@ function mergeInvitationData(base, ...sources) {
   output.event = { ...(base?.event || {}), ...(output.event || {}) };
   output.event.akad = { ...(base?.event?.akad || {}), ...(output.event?.akad || {}) };
   output.event.resepsi = { ...(base?.event?.resepsi || {}), ...(output.event?.resepsi || {}) };
+  output.event.resepsiList = Array.isArray(output.event?.resepsiList) && output.event.resepsiList.length > 0
+    ? output.event.resepsiList
+    : (Array.isArray(base?.event?.resepsiList) ? base.event.resepsiList : undefined);
   output.streaming = { ...(base?.streaming || {}), ...(output.streaming || {}) };
   output.gifts = { ...(base?.gifts || {}), ...(output.gifts || {}) };
   output.gifts.shipping = { ...(base?.gifts?.shipping || {}), ...(output.gifts?.shipping || {}) };
@@ -258,6 +261,28 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
   const bride = orderPayload.bride || incomingData.bride || {};
   const akad = orderPayload.akad || incomingData.akad || {};
   const resepsi = orderPayload.resepsi || incomingData.resepsi || {};
+  const rawResepsiList = Array.isArray(orderPayload.resepsiList)
+    ? orderPayload.resepsiList
+    : Array.isArray(orderPayload.receptions)
+      ? orderPayload.receptions
+      : Array.isArray(incomingData.resepsiList)
+        ? incomingData.resepsiList
+        : Array.isArray(incomingData.receptions)
+          ? incomingData.receptions
+          : Array.isArray(incomingData.event?.resepsiList)
+            ? incomingData.event.resepsiList
+            : [];
+  const runtimeResepsiList = (rawResepsiList.length > 0 ? rawResepsiList : (resepsi && (resepsi.date || resepsi.venue || resepsi.venueName) ? [resepsi] : [])).map((item, idx) => ({
+    id: item.id || idx + 1,
+    title: pickText(item.title, idx === 0 ? "Resepsi" : `Resepsi ${idx + 1}`),
+    date: item.date,
+    time: item.time || (item.startTime && item.endTime ? `Pukul : ${item.startTime.replace(":", ".")} – ${item.endTime.replace(":", ".")} WIB` : item.startTime ? `Pukul : ${item.startTime.replace(":", ".")} WIB` : undefined),
+    addressName: item.addressName || item.venue || item.venueName,
+    address: item.address,
+    mapsUrl: item.mapsUrl || item.mapsLink,
+    coverPhoto: pickAsset(item.coverImage, item.coverPhoto),
+    coverImage: pickAsset(item.coverImage, item.coverPhoto),
+  }));
   const runtimeInvitationSlug = resolveInvitationSlug(
     {
       ...incomingData,
@@ -438,6 +463,7 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
         coverImage: pickAsset(resepsi.coverImage, resepsi.coverPhoto),
         coverPhoto: pickAsset(resepsi.coverImage, resepsi.coverPhoto),
       },
+      resepsiList: runtimeResepsiList.length > 0 ? runtimeResepsiList : (Array.isArray(incomingData.event?.resepsiList) ? incomingData.event.resepsiList : undefined),
     },
     copy: {
       ...(incomingData.copy || {}),
@@ -881,7 +907,8 @@ function toYouTubeEmbedUrl(url) {
 }
 
 export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "puspa-asmara", mode = "live" }) {
-  const isStaticDemoMode = mode === "demo";
+  const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  const isStaticDemoMode = mode === "demo" && !isPreview;
   const { data: fetchedData } = useInvitationData(invitationSlug, {
     fallbackSlug: "puspa-asmara",
     skipFetch: Boolean(propData) || isStaticDemoMode,
@@ -1241,18 +1268,12 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setText(root, ".elementor-element-2cbc0e63 .elementor-heading-title", copy.countdownTitle || "MENUJU HARI BAHAGIA");
 
     const akadCard = root.querySelector(".elementor-element-4773c7fd");
-    const resepsiCard = root.querySelector(".elementor-element-40607301");
-    [akadCard, resepsiCard].forEach((node) => {
-      if (!node) return;
-      node.classList.add("pa-section-photo");
-      node.style.minHeight = "unset";
-      node.style.height = "auto";
-    });
+    if (akadCard) {
+      akadCard.classList.add("pa-section-photo");
+      akadCard.style.minHeight = "unset";
+      akadCard.style.height = "auto";
+    }
     setBackgroundImage(root, ".elementor-element-4773c7fd", akad.coverPhoto, {
-      position: "center center",
-      overlay: "rgba(0, 0, 0, 0.80)",
-    });
-    setBackgroundImage(root, ".elementor-element-40607301", resepsi.coverPhoto, {
       position: "center center",
       overlay: "rgba(0, 0, 0, 0.80)",
     });
@@ -1266,11 +1287,70 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     setHtml(root, ".elementor-element-6583b60f .elementor-widget-container", formatEventAddressHtml(akadSource));
     setLink(root, ".elementor-element-49e9eabe a.elementor-button", akad.mapsUrl);
 
-    setText(root, ".elementor-element-5cc8d2a8 .elementor-heading-title", resepsi.title);
-    setText(root, ".elementor-element-25b9dde4 .elementor-heading-title", resepsi.date);
-    setText(root, ".elementor-element-7ce43ba6 .elementor-heading-title", resepsi.time);
-    setHtml(root, ".elementor-element-7a6eb763 .elementor-widget-container", formatEventAddressHtml(resepsiSource));
-    setLink(root, ".elementor-element-56cb6222 a.elementor-button", resepsi.mapsUrl);
+    const resepsiListSource = Array.isArray(mergedData?.event?.resepsiList) && mergedData.event.resepsiList.length > 0
+      ? mergedData.event.resepsiList
+      : Array.isArray(mergedData?.resepsiList) && mergedData.resepsiList.length > 0
+        ? mergedData.resepsiList
+        : [resepsiSource];
+
+    const baseResepsiCard = root.querySelector(".elementor-element-40607301");
+    if (baseResepsiCard) {
+      baseResepsiCard.parentElement?.querySelectorAll("[data-reception-clone='true']").forEach((node) => node.remove());
+
+      let currentCardTarget = baseResepsiCard;
+      resepsiListSource.forEach((item, index) => {
+        let cardNode = baseResepsiCard;
+        if (index > 0) {
+          cardNode = baseResepsiCard.cloneNode(true);
+          cardNode.setAttribute("data-reception-clone", "true");
+          cardNode.style.marginTop = "24px";
+          currentCardTarget.parentElement.insertBefore(cardNode, currentCardTarget.nextSibling);
+          currentCardTarget = cardNode;
+        }
+
+        cardNode.classList.add("pa-section-photo");
+        cardNode.style.minHeight = "unset";
+        cardNode.style.height = "auto";
+
+        const itemCover = pickAsset(item.coverPhoto, item.coverImage, resepsi.coverPhoto);
+        if (itemCover) {
+          cardNode.style.backgroundImage = `linear-gradient(rgba(0, 0, 0, 0.80), rgba(0, 0, 0, 0.80)), url("${itemCover}")`;
+          cardNode.style.backgroundPosition = "center center";
+          cardNode.style.backgroundRepeat = "no-repeat";
+          cardNode.style.backgroundSize = "cover";
+        }
+
+        const itemTitle = pickText(item.title, index === 0 ? "Resepsi" : `Resepsi ${index + 1}`);
+        const itemDateRaw = item.date || resepsiSource.date;
+        const itemDate = pickText(
+          itemDateRaw?.includes?.("Pukul") ? itemDateRaw : formatEventDate(itemDateRaw, item.time, akadSource?.date || mergedData?.event?.dateISO),
+          itemDateRaw,
+          resepsi.date
+        );
+        const itemTime = pickText(item.time, resepsi.time, "Pukul : 09.00 WIB");
+        const itemAddressHtml = formatEventAddressHtml(item);
+        const itemMapsUrl = pickText(item.mapsUrl, item.mapsLink, resepsi.mapsUrl);
+
+        const titleEl = cardNode.querySelector(".elementor-element-5cc8d2a8 .elementor-heading-title");
+        if (titleEl) titleEl.textContent = itemTitle;
+
+        const dateEl = cardNode.querySelector(".elementor-element-25b9dde4 .elementor-heading-title");
+        if (dateEl) dateEl.textContent = itemDate;
+
+        const timeEl = cardNode.querySelector(".elementor-element-7ce43ba6 .elementor-heading-title");
+        if (timeEl) timeEl.textContent = itemTime;
+
+        const addrEl = cardNode.querySelector(".elementor-element-7a6eb763 .elementor-widget-container");
+        if (addrEl) addrEl.innerHTML = itemAddressHtml;
+
+        const mapBtn = cardNode.querySelector(".elementor-element-56cb6222 a.elementor-button");
+        if (mapBtn) {
+          mapBtn.setAttribute("href", itemMapsUrl);
+          mapBtn.setAttribute("target", "_blank");
+          mapBtn.setAttribute("rel", "noopener noreferrer");
+        }
+      });
+    }
 
     setHtml(root, ".elementor-element-26ee4767 .elementor-widget-container", `<p>${escapeHtml(copy.livestreamTitle || "Live Streaming")}</p>`);
     setText(

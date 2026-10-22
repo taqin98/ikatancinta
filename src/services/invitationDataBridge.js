@@ -70,6 +70,7 @@ export function mapFormToInvitationSchema({
     bride,
     akad,
     resepsi,
+    resepsiList,
     livestream,
     isReceptionEnabled,
     frontCoverImage,
@@ -139,15 +140,41 @@ export function mapFormToInvitationSchema({
         mapsUrl: akad?.mapsLink || defaultSchema.event.akad.mapsUrl,
     };
 
-    const mappedResepsi = isReceptionEnabled && resepsi
+    const rawResepsiList = Array.isArray(resepsiList) && resepsiList.length > 0
+        ? resepsiList
+        : (resepsi ? [resepsi] : []);
+
+    const mappedResepsiList = isReceptionEnabled && rawResepsiList.length > 0
+        ? rawResepsiList.map((item, idx) => ({
+            id: item.id || idx + 1,
+            title: item.title || (idx === 0 ? (defaultSchema.event?.resepsi?.title || "Resepsi") : `Resepsi ${idx + 1}`),
+            date: formatDateID(item.date) || defaultSchema.event?.resepsi?.date || "",
+            rawDate: item.date || "",
+            startTime: item.startTime || "",
+            endTime: item.endTime || "",
+            time: formatTimeRange(item.startTime, item.endTime) || defaultSchema.event?.resepsi?.time || "",
+            venueName: item.venue || defaultSchema.event?.resepsi?.venueName || "",
+            address: item.address || defaultSchema.event?.resepsi?.address || "",
+            mapsUrl: item.mapsLink || defaultSchema.event?.resepsi?.mapsUrl || "",
+            coverPhoto:
+                item.coverImage?.url ||
+                akad?.coverImage?.url ||
+                coverImage?.url ||
+                defaultSchema.event?.resepsi?.coverPhoto ||
+                "",
+        }))
+        : [];
+
+    const mappedResepsi = mappedResepsiList[0] || (isReceptionEnabled && resepsi
         ? {
-            date: formatDateID(resepsi?.date) || defaultSchema.event.resepsi.date,
-            time: formatTimeRange(resepsi?.startTime, resepsi?.endTime) || defaultSchema.event.resepsi.time,
-            venueName: resepsi?.venue || defaultSchema.event.resepsi.venueName || "",
-            address: resepsi?.address || defaultSchema.event.resepsi.address,
-            mapsUrl: resepsi?.mapsLink || defaultSchema.event.resepsi.mapsUrl,
+            title: resepsi?.title || defaultSchema.event?.resepsi?.title || "Resepsi",
+            date: formatDateID(resepsi?.date) || defaultSchema.event?.resepsi?.date,
+            time: formatTimeRange(resepsi?.startTime, resepsi?.endTime) || defaultSchema.event?.resepsi?.time,
+            venueName: resepsi?.venue || defaultSchema.event?.resepsi?.venueName || "",
+            address: resepsi?.address || defaultSchema.event?.resepsi?.address,
+            mapsUrl: resepsi?.mapsLink || defaultSchema.event?.resepsi?.mapsUrl,
         }
-        : defaultSchema.event.resepsi;
+        : defaultSchema.event.resepsi);
 
     const mappedLovestory = stories && stories.length > 0
         ? stories.map((s) => ({
@@ -250,12 +277,14 @@ export function mapFormToInvitationSchema({
             resepsi: {
                 ...mappedResepsi,
                 coverPhoto:
-                    (isReceptionEnabled ? resepsi?.coverImage?.url : "") ||
+                    (isReceptionEnabled ? (mappedResepsiList[0]?.coverPhoto || resepsi?.coverImage?.url) : "") ||
                     akad?.coverImage?.url ||
                     coverImage?.url ||
                     defaultSchema.event?.resepsi?.coverPhoto ||
                     "",
             },
+            resepsiList: mappedResepsiList.length > 0 ? mappedResepsiList : [mappedResepsi],
         },
+        resepsiList: mappedResepsiList.length > 0 ? mappedResepsiList : [mappedResepsi],
     };
 }

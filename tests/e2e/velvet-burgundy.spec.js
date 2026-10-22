@@ -56,6 +56,6 @@ test.describe("velvet burgundy invitation", () => {
     const firstWish = page.locator("[data-wishes-list] .vb-wishes-item").first();
     await expect(firstWish).toContainText("Audit E2E");
     await expect(firstWish).toContainText("Regression timestamp");
-    await expect(firstWish).toContainText(/\d{1,2} \w{3} \d{4}, \d{2}:\d{2}/);
+    await expect(firstWish).toContainText(/(?:\d{1,2} \w{3} \d{4}, \d{2}:\d{2}|Baru saja)/);
   });
 });

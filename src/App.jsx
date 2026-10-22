@@ -198,16 +198,19 @@ function App() {
     return <VelvetBurgundyTemplate mode="demo" />;
   }
 
+  const isPreviewMode = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+  const exclusiveTemplateMode = isPreviewMode ? "live" : "demo";
+
   if (pathname === "/undangan/botanical-elegance") {
-    return <BotanicalEleganceTemplate mode="demo" />;
+    return <BotanicalEleganceTemplate mode={exclusiveTemplateMode} />;
   }
 
   if (pathname === "/undangan/puspa-asmara") {
-    return <PuspaAsmaraTemplate mode="demo" />;
+    return <PuspaAsmaraTemplate mode={exclusiveTemplateMode} />;
   }
 
   if (pathname === "/undangan/eternal-summit") {
-    return <EternalSummitTemplate mode="demo" />;
+    return <EternalSummitTemplate mode={exclusiveTemplateMode} />;
   }
 
   if (isInvitationGuestBookPath(pathname)) {

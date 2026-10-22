@@ -31,3 +31,4 @@ admin-dashboard-next-refine
 .env.production
 .env.development
 .env.local
+.vercel

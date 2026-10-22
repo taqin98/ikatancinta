@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { buildOrderConfirmationPath, navigateTo, toAppPath } from "../utils/navigation";
 import { getPackageConfig, normalizePackageTier } from "../data/packageCatalog";
 import { QUOTE_CATEGORIES, QUOTE_PRESETS } from "../data/Quotes";
@@ -12,12 +12,13 @@ import { uploadOrderAsset } from "../services/uploadApi";
 import { getDefaultSchemaBySlug } from "../templates/basic/schemas";
 import { createOrderId } from "../utils/orderId";
 import { formatThemeCategories } from "../utils/themeCategories";
+import { themes as staticThemes } from "../data/themes";
 
 const INITIAL_CUSTOMER = { name: "", phone: "", email: "", address: "" };
 const INITIAL_GROOM = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
 const INITIAL_BRIDE = { fullname: "", nickname: "", parents: "", instagram: "", photo: null };
 const INITIAL_AKAD = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
-const INITIAL_RESEPSI = { date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
+const INITIAL_RESEPSI = { id: 1, title: "Resepsi", date: "", startTime: "", endTime: "", venue: "", address: "", mapsLink: "", coverImage: null };
 const INITIAL_GIFT_BANK = { bank: "", account: "", name: "" };
 const INITIAL_GIFT_BANKS = [INITIAL_GIFT_BANK, INITIAL_GIFT_BANK].map((item) => ({ ...item }));
 const INITIAL_GIFT_SHIPPING = { recipient: "", phone: "", address: "" };
@@ -569,6 +570,11 @@ function StepTwoAcara({
   setAkad,
   resepsi,
   setResepsi,
+  resepsiList,
+  addResepsi,
+  removeResepsi,
+  updateResepsi,
+  isExclusivePackage,
   isSessionEnabled,
   setIsSessionEnabled,
   sessions,
@@ -594,7 +600,9 @@ function StepTwoAcara({
     <>
       <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Detail Acara</h2>
-        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">Isi jadwal akad dan resepsi. Resepsi selalu aktif, dan sesi tamu bisa diaktifkan bila diperlukan.</p>
+        <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+          Isi jadwal akad dan resepsi. Resepsi selalu aktif, dan sesi tamu bisa diaktifkan bila diperlukan.
+        </p>
       </div>
 
       <section className="mb-8 space-y-5 rounded-lg border border-slate-100 dark:border-slate-800 p-5 bg-white dark:bg-slate-800/40">
@@ -610,14 +618,150 @@ function StepTwoAcara({
       </section>
 
       <section className="mb-8 space-y-5 rounded-lg border border-slate-100 dark:border-slate-800 p-5 bg-white dark:bg-slate-800/40">
-        <h3 className="text-xl font-bold">Resepsi</h3>
-        <input id="resepsi_date" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="date" value={resepsi.date} onChange={handleResepsi("date")} />
-        <div className="grid grid-cols-2 gap-4">
-          <input id="resepsi_start_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.startTime} onChange={handleResepsi("startTime")} />
-          <input id="resepsi_end_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.endTime} onChange={handleResepsi("endTime")} />
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-xl font-bold">Acara Resepsi</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {isExclusivePackage
+                ? "Paket Eksklusif mendukung penambahan lebih dari 1 acara resepsi."
+                : "Informasi jadwal dan lokasi resepsi pernikahan."}
+            </p>
+          </div>
+          {isExclusivePackage && (
+            <button
+              type="button"
+              onClick={addResepsi}
+              className="text-xs font-bold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded-lg flex items-center gap-1 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[16px]">add</span>
+              Tambah Resepsi
+            </button>
+          )}
         </div>
-        <input id="resepsi_venue" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" placeholder="Tempat / Nama Lokasi" type="text" value={resepsi.venue} onChange={handleResepsi("venue")} />
-        <textarea className="w-full bg-surface-light dark:bg-white/5 rounded-lg p-4 resize-none" rows={3} placeholder="Alamat Lengkap" value={resepsi.address} onChange={handleResepsi("address")} />
+
+        {isExclusivePackage ? (
+          <div className="space-y-6">
+            {(resepsiList || [resepsi]).map((item, idx) => (
+              <div key={item.id || idx} className="rounded-lg border border-slate-200 dark:border-slate-700/60 p-4 space-y-4 bg-slate-50/50 dark:bg-white/[0.02]">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    {item.title || `Resepsi ${idx + 1}`}
+                  </span>
+                  {idx > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => removeResepsi(item.id)}
+                      className="text-xs text-slate-400 hover:text-red-500 flex items-center gap-1 transition-colors"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">delete</span>
+                      Hapus
+                    </button>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Judul / Nama Acara</label>
+                  <input
+                    id={`resepsi_title_${item.id}`}
+                    className="w-full bg-white dark:bg-white/5 rounded-lg h-12 px-4 text-sm border border-slate-200 dark:border-white/10"
+                    placeholder={`Contoh: Resepsi ${idx + 1} atau Ngunduh Mantu`}
+                    type="text"
+                    value={item.title || ""}
+                    onChange={(e) => updateResepsi(item.id, "title", e.target.value)}
+                    data-resepsi-field={`title-${item.id}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Tanggal Acara</label>
+                  <input
+                    id={idx === 0 ? "resepsi_date" : `resepsi_date_${item.id}`}
+                    className="w-full bg-white dark:bg-white/5 rounded-lg h-14 px-4 border border-slate-200 dark:border-white/10"
+                    type="date"
+                    value={item.date || ""}
+                    onChange={(e) => updateResepsi(item.id, "date", e.target.value)}
+                    data-resepsi-field={`date-${item.id}`}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Jam Mulai</label>
+                    <input
+                      id={idx === 0 ? "resepsi_start_time" : `resepsi_start_time_${item.id}`}
+                      className="w-full bg-white dark:bg-white/5 rounded-lg h-14 px-4 border border-slate-200 dark:border-white/10"
+                      type="time"
+                      value={item.startTime || ""}
+                      onChange={(e) => updateResepsi(item.id, "startTime", e.target.value)}
+                      data-resepsi-field={`start_time-${item.id}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1">Jam Selesai</label>
+                    <input
+                      id={idx === 0 ? "resepsi_end_time" : `resepsi_end_time_${item.id}`}
+                      className="w-full bg-white dark:bg-white/5 rounded-lg h-14 px-4 border border-slate-200 dark:border-white/10"
+                      type="time"
+                      value={item.endTime || ""}
+                      onChange={(e) => updateResepsi(item.id, "endTime", e.target.value)}
+                      data-resepsi-field={`end_time-${item.id}`}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Tempat / Nama Lokasi</label>
+                  <input
+                    id={idx === 0 ? "resepsi_venue" : `resepsi_venue_${item.id}`}
+                    className="w-full bg-white dark:bg-white/5 rounded-lg h-14 px-4 border border-slate-200 dark:border-white/10"
+                    placeholder="Tempat / Nama Lokasi"
+                    type="text"
+                    value={item.venue || ""}
+                    onChange={(e) => updateResepsi(item.id, "venue", e.target.value)}
+                    data-resepsi-field={`venue-${item.id}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Alamat Lengkap</label>
+                  <textarea
+                    id={`resepsi_address_${item.id}`}
+                    className="w-full bg-white dark:bg-white/5 rounded-lg p-4 resize-none border border-slate-200 dark:border-white/10"
+                    rows={3}
+                    placeholder="Alamat Lengkap"
+                    value={item.address || ""}
+                    onChange={(e) => updateResepsi(item.id, "address", e.target.value)}
+                    data-resepsi-field={`address-${item.id}`}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">Link Google Maps (Opsional)</label>
+                  <input
+                    id={`resepsi_maps_${item.id}`}
+                    className="w-full bg-white dark:bg-white/5 rounded-lg h-14 px-4 border border-slate-200 dark:border-white/10"
+                    placeholder="Link Google Maps"
+                    type="url"
+                    value={item.mapsLink || ""}
+                    onChange={(e) => updateResepsi(item.id, "mapsLink", e.target.value)}
+                    data-resepsi-field={`maps-${item.id}`}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+            <input id="resepsi_date" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="date" value={resepsi.date} onChange={handleResepsi("date")} />
+            <div className="grid grid-cols-2 gap-4">
+              <input id="resepsi_start_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.startTime} onChange={handleResepsi("startTime")} />
+              <input id="resepsi_end_time" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" type="time" value={resepsi.endTime} onChange={handleResepsi("endTime")} />
+            </div>
+            <input id="resepsi_venue" className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" placeholder="Tempat / Nama Lokasi" type="text" value={resepsi.venue} onChange={handleResepsi("venue")} />
+            <textarea className="w-full bg-surface-light dark:bg-white/5 rounded-lg p-4 resize-none" rows={3} placeholder="Alamat Lengkap" value={resepsi.address} onChange={handleResepsi("address")} />
+            <input className="w-full bg-surface-light dark:bg-white/5 rounded-lg h-14 px-4" placeholder="Link Google Maps" type="url" value={resepsi.mapsLink} onChange={handleResepsi("mapsLink")} />
+          </>
+        )}
 
         <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex items-center justify-between gap-4">
           <div>
@@ -1642,6 +1786,7 @@ function StepFourReview({
   bride,
   akad,
   resepsi,
+  resepsiList,
   isSessionEnabled,
   sessions,
   coverImage,
@@ -1702,7 +1847,7 @@ function StepFourReview({
           </div>
         </details>
 
-        <details className="group bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-primary/10 dark:border-primary/5 overflow-hidden">
+        <details className="group bg-surface-light dark:bg-surface-dark rounded-lg shadow-sm border border-primary/10 dark:border-primary/5 overflow-hidden" open>
           <summary className="flex cursor-pointer items-center justify-between p-4 select-none">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary"><span className="material-symbols-outlined">event_available</span></div>
@@ -1717,9 +1862,22 @@ function StepFourReview({
               <div><p className="text-xs text-slate-500">Lokasi</p><p className="text-sm font-medium">{akad.venue || "-"}</p></div>
             </div>
             <div className="grid gap-3 pt-3 border-t border-dashed border-slate-200 dark:border-slate-700/50">
-              <div><p className="text-xs text-slate-500">Tanggal Resepsi</p><p className="text-sm font-medium">{formatDateID(resepsi.date)}</p></div>
-              <div><p className="text-xs text-slate-500">Waktu</p><p className="text-sm font-medium">{resepsi.startTime || "-"} - {resepsi.endTime || "-"} WIB</p></div>
-              <div><p className="text-xs text-slate-500">Lokasi</p><p className="text-sm font-medium">{resepsi.venue || "-"}</p></div>
+              {Array.isArray(resepsiList) && resepsiList.length > 1 ? (
+                resepsiList.map((item, idx) => (
+                  <div key={item.id || idx} className="pt-2 first:pt-0 border-t first:border-t-0 border-slate-100 dark:border-slate-800 space-y-1">
+                    <p className="text-xs font-bold text-primary">{item.title || `Resepsi ${idx + 1}`}</p>
+                    <p className="text-xs text-slate-500">Tanggal: <span className="font-medium text-slate-800 dark:text-slate-200">{formatDateID(item.date)}</span></p>
+                    <p className="text-xs text-slate-500">Waktu: <span className="font-medium text-slate-800 dark:text-slate-200">{item.startTime || "-"} - {item.endTime || "-"} WIB</span></p>
+                    <p className="text-xs text-slate-500">Lokasi: <span className="font-medium text-slate-800 dark:text-slate-200">{item.venue || "-"}</span></p>
+                  </div>
+                ))
+              ) : (
+                <>
+                  <div><p className="text-xs text-slate-500">Tanggal Resepsi</p><p className="text-sm font-medium">{formatDateID(resepsi.date)}</p></div>
+                  <div><p className="text-xs text-slate-500">Waktu</p><p className="text-sm font-medium">{resepsi.startTime || "-"} - {resepsi.endTime || "-"} WIB</p></div>
+                  <div><p className="text-xs text-slate-500">Lokasi</p><p className="text-sm font-medium">{resepsi.venue || "-"}</p></div>
+                </>
+              )}
               {isSessionEnabled && (
                 <div><p className="text-xs text-slate-500">Teks Sesi di Bawah Resepsi</p><p className="text-sm font-medium">{formatSessionsSummary(sessions) || "-"}</p></div>
               )}
@@ -1930,7 +2088,50 @@ export default function CreateInvitationFormPage() {
   const [bride, setBride] = useState(INITIAL_BRIDE);
 
   const [akad, setAkad] = useState(INITIAL_AKAD);
-  const [resepsi, setResepsi] = useState(INITIAL_RESEPSI);
+  const [resepsiList, setResepsiList] = useState([INITIAL_RESEPSI]);
+  const resepsi = resepsiList[0] || INITIAL_RESEPSI;
+
+  const setResepsi = useCallback((updater) => {
+    setResepsiList((prevList) => {
+      const current = prevList[0] || INITIAL_RESEPSI;
+      const nextResepsi = typeof updater === "function" ? updater(current) : updater;
+      if (prevList.length === 0) return [nextResepsi];
+      return [nextResepsi, ...prevList.slice(1)];
+    });
+  }, []);
+
+  const addResepsi = useCallback(() => {
+    setResepsiList((prev) => {
+      const nextId = prev.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) + 1;
+      return [
+        ...prev,
+        {
+          id: nextId,
+          title: `Resepsi ${prev.length + 1}`,
+          date: prev[0]?.date || "",
+          startTime: "",
+          endTime: "",
+          venue: prev[0]?.venue || "",
+          address: prev[0]?.address || "",
+          mapsLink: prev[0]?.mapsLink || "",
+          coverImage: null,
+        },
+      ];
+    });
+  }, []);
+
+  const removeResepsi = useCallback((id) => {
+    setResepsiList((prev) => {
+      if (prev.length <= 1) return prev;
+      return prev.filter((item) => item.id !== id);
+    });
+  }, []);
+
+  const updateResepsi = useCallback((id, key, value) => {
+    setResepsiList((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, [key]: value } : item))
+    );
+  }, []);
 
   const [sessions, setSessions] = useState(INITIAL_SESSIONS);
 
@@ -1952,10 +2153,14 @@ export default function CreateInvitationFormPage() {
   const [uploadedMusicFile, setUploadedMusicFile] = useState(null);
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const musicPreviewRef = useRef(null);
-  const [selectedTheme, setSelectedTheme] = useState(null);
+  const [selectedTheme, setSelectedTheme] = useState(() => resolveInitialTheme(staticThemes));
   const selectedPackage = useMemo(() => getPackageConfig(selectedTheme?.packageTier), [selectedTheme?.packageTier]);
   const uploadConfig = useMemo(() => getThemeUploadConfig(selectedTheme, selectedPackage), [selectedTheme, selectedPackage]);
   const canUseDigitalEnvelope = selectedPackage?.capabilities?.digitalEnvelope === true;
+  const isExclusivePackage =
+    selectedPackage?.tier === "EKSKLUSIF" ||
+    selectedTheme?.packageTier === "EKSKLUSIF" ||
+    selectedTheme?.packageTier === "EKSLUSIF";
   const selectedMusicTrack = useMemo(
     () => MUSIC_TRACKS.find((track) => track.id === selectedMusicTrackId) || MUSIC_TRACKS[0],
     [selectedMusicTrackId],
@@ -1985,13 +2190,16 @@ export default function CreateInvitationFormPage() {
       (uploadConfig.akadCover?.visible && akad.coverImage)
     );
     const hasResepsi = Boolean(
-      resepsi.date ||
-      resepsi.startTime ||
-      resepsi.endTime ||
-      resepsi.venue ||
-      resepsi.address ||
-      resepsi.mapsLink ||
-      (uploadConfig.resepsiCover?.visible && resepsi.coverImage) ||
+      resepsiList.some(
+        (item) =>
+          item.date ||
+          item.startTime ||
+          item.endTime ||
+          item.venue ||
+          item.address ||
+          item.mapsLink ||
+          (uploadConfig.resepsiCover?.visible && item.coverImage)
+      ) ||
       isSessionEnabled
     );
     const hasMedia = Boolean(
@@ -2019,7 +2227,7 @@ export default function CreateInvitationFormPage() {
     akad,
     uploadConfig,
     isSessionEnabled,
-    resepsi,
+    resepsiList,
     coverImage,
     frontCoverImage,
     openingThumbnailImage,
@@ -2083,7 +2291,7 @@ export default function CreateInvitationFormPage() {
     if (!uploadConfig.loveStoryPhotoOne?.visible && !uploadConfig.loveStoryPhotoTwo?.visible) {
       setStories((prev) => prev.map((story) => (story.photo ? { ...story, photo: null } : story)));
     }
-  }, [uploadConfig]);
+  }, [uploadConfig, setResepsi]);
 
   useEffect(() => {
     if (canUseDigitalEnvelope) return;
@@ -2460,7 +2668,7 @@ export default function CreateInvitationFormPage() {
       const normalizedGiftBankList = normalizeGiftBankList(giftBankList);
       const normalizedGiftShipping = normalizeGiftShipping(giftShipping);
       const schemaData = mapFormToInvitationSchema({
-        groom, bride, akad, resepsi, isReceptionEnabled,
+        groom, bride, akad, resepsi, resepsiList, isReceptionEnabled,
         livestream,
         frontCoverImage, coverImage, openingThumbnailImage, galleryImages, stories,
         quote, quoteSource, saveTheDateBackgroundImage, wishesBackgroundImage, closingBackgroundImage,
@@ -2517,13 +2725,23 @@ export default function CreateInvitationFormPage() {
       }
       if (!akad.venue) return { message: "Lokasi akad wajib diisi.", selector: "#akad_venue" };
 
-      if (!resepsi.date) return { message: "Tanggal resepsi wajib diisi.", selector: "#resepsi_date" };
-      if (!resepsi.startTime) return { message: "Jam mulai resepsi wajib diisi.", selector: "#resepsi_start_time" };
-      if (!resepsi.endTime) return { message: "Jam selesai resepsi wajib diisi.", selector: "#resepsi_end_time" };
-      if (!isEndTimeAfterStart(resepsi.startTime, resepsi.endTime)) {
-        return { message: "Jam selesai resepsi harus lebih besar dari jam mulai.", selector: "#resepsi_end_time" };
+      for (let i = 0; i < resepsiList.length; i++) {
+        const item = resepsiList[i];
+        const isFirst = i === 0;
+        const prefix = resepsiList.length > 1 ? ` (${item.title || `Resepsi ${i + 1}`})` : "";
+        const dateSel = isFirst ? "#resepsi_date" : `#resepsi_date_${item.id}`;
+        const startSel = isFirst ? "#resepsi_start_time" : `#resepsi_start_time_${item.id}`;
+        const endSel = isFirst ? "#resepsi_end_time" : `#resepsi_end_time_${item.id}`;
+        const venueSel = isFirst ? "#resepsi_venue" : `#resepsi_venue_${item.id}`;
+
+        if (!item.date) return { message: `Tanggal resepsi${prefix} wajib diisi.`, selector: dateSel };
+        if (!item.startTime) return { message: `Jam mulai resepsi${prefix} wajib diisi.`, selector: startSel };
+        if (!item.endTime) return { message: `Jam selesai resepsi${prefix} wajib diisi.`, selector: endSel };
+        if (!isEndTimeAfterStart(item.startTime, item.endTime)) {
+          return { message: `Jam selesai resepsi${prefix} harus lebih besar dari jam mulai.`, selector: endSel };
+        }
+        if (!item.venue) return { message: `Lokasi resepsi${prefix} wajib diisi.`, selector: venueSel };
       }
-      if (!resepsi.venue) return { message: "Lokasi resepsi wajib diisi.", selector: "#resepsi_venue" };
 
       if (isSessionEnabled) {
         const invalidSession = sessions.find((session) => !session.start || !session.end);
@@ -2791,6 +3009,18 @@ export default function CreateInvitationFormPage() {
             coverImage: shouldIncludeResepsiCoverUpload ? uploadedResepsiCover : null,
           }
           : null,
+        resepsiList: isReceptionEnabled
+          ? resepsiList.map((item, idx) => ({
+            ...item,
+            coverImage: idx === 0 && shouldIncludeResepsiCoverUpload ? uploadedResepsiCover : item.coverImage,
+          }))
+          : [],
+        receptions: isReceptionEnabled
+          ? resepsiList.map((item, idx) => ({
+            ...item,
+            coverImage: idx === 0 && shouldIncludeResepsiCoverUpload ? uploadedResepsiCover : item.coverImage,
+          }))
+          : [],
         isReceptionEnabled,
         sessions: isSessionEnabled ? sessions : [],
         frontCoverImage: uploadedFrontCover,
@@ -2960,6 +3190,11 @@ export default function CreateInvitationFormPage() {
                 setAkad={setAkad}
                 resepsi={resepsi}
                 setResepsi={setResepsi}
+                resepsiList={resepsiList}
+                addResepsi={addResepsi}
+                removeResepsi={removeResepsi}
+                updateResepsi={updateResepsi}
+                isExclusivePackage={isExclusivePackage}
                 isSessionEnabled={isSessionEnabled}
                 setIsSessionEnabled={setIsSessionEnabled}
                 sessions={sessions}
@@ -3047,6 +3282,7 @@ export default function CreateInvitationFormPage() {
                 bride={bride}
                 akad={akad}
                 resepsi={resepsi}
+                resepsiList={resepsiList}
                 isSessionEnabled={isSessionEnabled}
                 sessions={sessions}
                 coverImage={coverImage}

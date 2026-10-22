@@ -82,6 +82,9 @@ function mergeInvitationData(base, ...sources) {
     output.event = { ...(base?.event || {}), ...(output.event || {}) };
     output.event.akad = { ...(base?.event?.akad || {}), ...(output.event?.akad || {}) };
     output.event.resepsi = { ...(base?.event?.resepsi || {}), ...(output.event?.resepsi || {}) };
+    output.event.resepsiList = Array.isArray(output.event?.resepsiList) && output.event.resepsiList.length > 0
+        ? output.event.resepsiList
+        : (Array.isArray(base?.event?.resepsiList) ? base.event.resepsiList : undefined);
     output.streaming = { ...(base?.streaming || {}), ...(output.streaming || {}) };
     output.gifts = { ...(base?.gifts || {}), ...(output.gifts || {}) };
     output.gifts.shipping = { ...(base?.gifts?.shipping || {}), ...(output.gifts?.shipping || {}) };
@@ -378,6 +381,26 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     const bride = orderPayload.bride || incomingData.bride || {};
     const akad = orderPayload.akad || incomingData.akad || {};
     const resepsi = orderPayload.resepsi || incomingData.resepsi || {};
+    const rawResepsiList = Array.isArray(orderPayload.resepsiList)
+        ? orderPayload.resepsiList
+        : Array.isArray(orderPayload.receptions)
+          ? orderPayload.receptions
+          : Array.isArray(incomingData.resepsiList)
+            ? incomingData.resepsiList
+            : Array.isArray(incomingData.receptions)
+              ? incomingData.receptions
+              : Array.isArray(incomingData.event?.resepsiList)
+                ? incomingData.event.resepsiList
+                : [];
+    const runtimeResepsiList = (rawResepsiList.length > 0 ? rawResepsiList : (resepsi && (resepsi.date || resepsi.venue || resepsi.venueName) ? [resepsi] : [])).map((item, idx) => ({
+        id: item.id || idx + 1,
+        title: pickText(item.title, idx === 0 ? baseSchema?.event?.resepsi?.title : `Resepsi ${idx + 1}`, "Resepsi"),
+        date: pickText(formatDateID(item.date), item.date, baseSchema?.event?.resepsi?.date),
+        time: pickText(item.time, formatTimeRange(item.startTime, item.endTime), baseSchema?.event?.resepsi?.time),
+        addressName: pickText(item.addressName, item.venueName, item.venue, baseSchema?.event?.resepsi?.addressName),
+        address: pickText(item.address, baseSchema?.event?.resepsi?.address),
+        mapsUrl: pickText(item.mapsLink, item.mapsUrl, baseSchema?.event?.resepsi?.mapsUrl),
+    }));
     const rawStories = Array.isArray(orderPayload.stories)
         ? orderPayload.stories
         : Array.isArray(orderPayload.loveStory)
@@ -577,6 +600,7 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
                 address: pickText(resepsi.address, baseSchema?.event?.resepsi?.address),
                 mapsUrl: pickText(resepsi.mapsLink, resepsi.mapsUrl, baseSchema?.event?.resepsi?.mapsUrl),
             },
+            resepsiList: runtimeResepsiList.length > 0 ? runtimeResepsiList : (Array.isArray(incomingData.event?.resepsiList) ? incomingData.event.resepsiList : undefined),
         },
     };
 }
@@ -611,7 +635,8 @@ function writeStoredWishes(entries) {
 }
 
 export default function BotanicalEleganceTemplate({ data: propData, invitationSlug = "botanical-elegance", mode = "live" }) {
-    const isStaticDemoMode = mode === "demo";
+    const isPreview = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("preview") === "1";
+    const isStaticDemoMode = mode === "demo" && !isPreview;
     const { data: fetchedData } = useInvitationData(invitationSlug, {
         fallbackSlug: "botanical-elegance",
         skipFetch: Boolean(propData) || isStaticDemoMode,
@@ -942,12 +967,59 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
         setText(".elementor-element-618e783 p", pickText(akad.time, schemaJson.event.akad.time));
         setHtml(".elementor-element-1d0f5bf0 .elementor-widget-container", formatAddressHtml(akad.addressName, akad.address));
 
-        setText(".elementor-element-1da13497 .elementor-heading-title", pickText(resepsi.title, schemaJson.event.resepsi.title, "Resepsi"));
-        updateImage(".elementor-element-3ccfcca0 img", dividerImage);
-        setText(".elementor-element-38a25917 .elementor-heading-title", pickText(resepsi.date, schemaJson.event.resepsi.date));
-        setText(".elementor-element-4f4f30c1 p", pickText(resepsi.time, schemaJson.event.resepsi.time));
-        setHtml(".elementor-element-226a4d35 .elementor-widget-container", formatAddressHtml(resepsi.addressName, resepsi.address));
-        setLink(".elementor-element-d620ac1 a", pickText(resepsi.mapsUrl, akad.mapsUrl, mergedData?.event?.mapUrl, schemaJson.event.mapUrl));
+        const rawResepsiListSource = Array.isArray(mergedData?.event?.resepsiList) && mergedData.event.resepsiList.length > 0
+            ? mergedData.event.resepsiList
+            : Array.isArray(mergedData?.resepsiList) && mergedData.resepsiList.length > 0
+              ? mergedData.resepsiList
+              : [resepsi];
+
+        const baseResepsiCard = root.querySelector(".elementor-element-15328523");
+        if (baseResepsiCard) {
+            baseResepsiCard.parentElement?.querySelectorAll("[data-reception-clone='true']").forEach((node) => node.remove());
+
+            let currentCardTarget = baseResepsiCard;
+            rawResepsiListSource.forEach((item, index) => {
+                let cardNode = baseResepsiCard;
+                if (index > 0) {
+                    cardNode = baseResepsiCard.cloneNode(true);
+                    cardNode.setAttribute("data-reception-clone", "true");
+                    cardNode.style.marginTop = "24px";
+                    currentCardTarget.parentElement.insertBefore(cardNode, currentCardTarget.nextSibling);
+                    currentCardTarget = cardNode;
+                }
+
+                const itemTitle = pickText(item.title, index === 0 ? (schemaJson.event?.resepsi?.title || "Resepsi") : `Resepsi ${index + 1}`, "Resepsi");
+                const itemDate = pickText(item.date, schemaJson.event?.resepsi?.date);
+                const itemTime = pickText(item.time, schemaJson.event?.resepsi?.time);
+                const itemAddressHtml = formatAddressHtml(item.addressName || item.venueName || item.venue, item.address);
+                const itemMapsUrl = pickText(item.mapsUrl, item.mapsLink, resepsi.mapsUrl, akad.mapsUrl, mergedData?.event?.mapUrl, schemaJson.event.mapUrl);
+
+                const titleNode = cardNode.querySelector(".elementor-element-1da13497 .elementor-heading-title");
+                if (titleNode) titleNode.textContent = itemTitle;
+
+                const dividerImg = cardNode.querySelector(".elementor-element-3ccfcca0 img");
+                if (dividerImg && dividerImage) {
+                    dividerImg.src = dividerImage;
+                    dividerImg.removeAttribute("srcset");
+                }
+
+                const dateNode = cardNode.querySelector(".elementor-element-38a25917 .elementor-heading-title");
+                if (dateNode) dateNode.textContent = itemDate;
+
+                const timeNode = cardNode.querySelector(".elementor-element-4f4f30c1 p");
+                if (timeNode) timeNode.textContent = itemTime;
+
+                const addressNode = cardNode.querySelector(".elementor-element-226a4d35 .elementor-widget-container");
+                if (addressNode) addressNode.innerHTML = itemAddressHtml;
+
+                const mapLinkNode = cardNode.querySelector(".elementor-element-d620ac1 a");
+                if (mapLinkNode) {
+                    mapLinkNode.setAttribute("href", itemMapsUrl);
+                    mapLinkNode.setAttribute("target", "_blank");
+                    mapLinkNode.setAttribute("rel", "noopener noreferrer");
+                }
+            });
+        }
 
         setText(".elementor-element-6c290bd6 .elementor-heading-title", pickText(copy.livestreamTitle, schemaJson.streaming.title, "Live Streaming"));
         setText(".elementor-element-3ecdf1ab .elementor-heading-title", pickText(copy.livestreamIntro, schemaJson.streaming.text));
