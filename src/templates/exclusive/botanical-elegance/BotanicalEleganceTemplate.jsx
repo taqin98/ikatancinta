@@ -446,14 +446,24 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
         ...(incomingData.features || {}),
         ...(orderPayload.features || {}),
     };
-    const runtimeLivestreamEnabled =
-        orderPayload.features?.livestreamEnabled ??
-        incomingData.features?.livestreamEnabled;
+    const isLivestreamExplicitlyDisabled =
+        orderPayload.features?.livestreamEnabled === false ||
+        incomingData.features?.livestreamEnabled === false ||
+        orderPayload.livestream?.enabled === false ||
+        incomingData.livestream?.enabled === false ||
+        orderPayload.event?.livestream?.enabled === false ||
+        incomingData.event?.livestream?.enabled === false;
+    const runtimeLivestreamEnabled = isLivestreamExplicitlyDisabled
+        ? false
+        : (orderPayload.features?.livestreamEnabled ??
+           incomingData.features?.livestreamEnabled ??
+           (orderPayload.livestream?.enabled || incomingData.livestream?.enabled || incomingData.event?.livestream?.enabled || Boolean(runtimeStreamingUrl)));
     const runtimeLivestreamCapability = resolveLivestreamCapability({
         ...incomingData,
         selectedPackage: incomingData?.selectedPackage || orderPayload?.selectedPackage,
         packageTier: resolvePackageTier(incomingData, pickText(orderPayload?.packageTier, orderPayload?.selectedTheme?.packageTier)),
     });
+    const finalStreamingUrl = isLivestreamExplicitlyDisabled ? "" : runtimeStreamingUrl;
     const runtimeBankList = Array.isArray(rawGift.bankList)
         ? rawGift.bankList
         : Array.isArray(rawGift.bankAccounts)
@@ -539,7 +549,9 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
         },
         features: {
             ...runtimeFeatures,
-            livestreamEnabled: runtimeLivestreamEnabled ?? (runtimeLivestreamCapability || Boolean(runtimeStreamingUrl)),
+            livestreamEnabled: isLivestreamExplicitlyDisabled
+                ? false
+                : (runtimeLivestreamEnabled ?? Boolean(runtimeLivestreamCapability && finalStreamingUrl)),
         },
         copy: {
             ...(incomingData.copy || {}),
@@ -577,10 +589,11 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
             dividerImage: pickAsset(orderPayload.dividerImage, incomingData.dividerImage, incomingData.event?.dividerImage),
             livestream: {
                 ...(incomingData?.event?.livestream || {}),
-                url: runtimeStreamingUrl,
-                label: inferStreamingLabel(runtimeStreamingUrl, pickText(rawStreaming.label, rawStreaming.platformLabel, baseSchema?.streaming?.label)),
-                date: pickText(rawStreaming.date, formatDateID(akad.date), baseSchema?.streaming?.date),
-                time: pickText(rawStreaming.time, formatTimeRange(akad.startTime, akad.endTime), akad.time, baseSchema?.streaming?.time),
+                enabled: isLivestreamExplicitlyDisabled ? false : Boolean(finalStreamingUrl),
+                url: finalStreamingUrl,
+                label: inferStreamingLabel(finalStreamingUrl, pickText(rawStreaming.label, rawStreaming.platformLabel, baseSchema?.streaming?.label)),
+                date: isLivestreamExplicitlyDisabled ? "" : pickText(rawStreaming.date, formatDateID(akad.date), baseSchema?.streaming?.date),
+                time: isLivestreamExplicitlyDisabled ? "" : pickText(rawStreaming.time, formatTimeRange(akad.startTime, akad.endTime), akad.time, baseSchema?.streaming?.time),
             },
             akad: {
                 ...(incomingData.event?.akad || {}),
@@ -876,10 +889,16 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
         )
             .map(normalizeRuntimeStory)
             .filter(Boolean);
-        const hasStreaming =
-            (mergedData?.features?.livestreamEnabled ?? false) ||
-            resolveLivestreamCapability(mergedData) ||
-            Boolean(pickText(streaming?.url));
+        const isStreamingDisabled =
+            mergedData?.features?.livestreamEnabled === false ||
+            mergedData?.livestream?.enabled === false ||
+            mergedData?.event?.livestream?.enabled === false;
+        const effectiveStreamingUrl = isStreamingDisabled ? "" : pickText(streaming?.url);
+        const hasStreaming = isStaticDemoMode
+            ? Boolean(pickText(streaming?.url))
+            : !isStreamingDisabled &&
+              Boolean(mergedData?.features?.livestreamEnabled || mergedData?.livestream?.enabled || mergedData?.event?.livestream?.enabled) &&
+              Boolean(effectiveStreamingUrl);
         const hasGallery = gallery.length > 0;
         const hasStories = (mergedData?.features?.loveStory ?? true) && stories.length > 0;
         const hasShippingData = Boolean(pickText(rawShipping?.recipient, rawShipping?.phone, rawShipping?.address));
@@ -1028,6 +1047,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
         setLink(".elementor-element-183e05ef a", pickText(streaming.url, schemaJson.streaming.url));
         setText(".elementor-element-183e05ef .elementor-button-text", pickText(streaming.label, schemaJson.streaming.label));
         setNodeVisible(".elementor-element-68da415", hasStreaming);
+        setNodeVisible(".elementor-element-7dc7b48", hasStreaming);
 
         setText(".elementor-element-2fbc9448 .elementor-heading-title", pickText(copy.loveStoryTitle, "Love Story"));
         [
@@ -1505,7 +1525,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
             lottieInstancesRef.current.forEach((instance) => instance?.destroy?.());
             lottieInstancesRef.current = [];
         };
-    }, [invitationSlug, mergedData, opened, scrollUnlocked, wishes]);
+    }, [invitationSlug, isStaticDemoMode, mergedData, opened, scrollUnlocked, wishes]);
 
     useEffect(() => {
         const onKeyDown = (event) => {

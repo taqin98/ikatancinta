@@ -351,14 +351,24 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     ...(incomingData?.features || {}),
     ...(orderPayload?.features || {}),
   };
-  const runtimeLivestreamEnabled =
-    orderPayload?.features?.livestreamEnabled ??
-    incomingData?.features?.livestreamEnabled;
+  const isLivestreamExplicitlyDisabled =
+    orderPayload?.features?.livestreamEnabled === false ||
+    incomingData?.features?.livestreamEnabled === false ||
+    orderPayload?.livestream?.enabled === false ||
+    incomingData?.livestream?.enabled === false ||
+    orderPayload?.event?.livestream?.enabled === false ||
+    incomingData?.event?.livestream?.enabled === false;
+  const runtimeLivestreamEnabled = isLivestreamExplicitlyDisabled
+    ? false
+    : (orderPayload?.features?.livestreamEnabled ??
+       incomingData?.features?.livestreamEnabled ??
+       Boolean(orderPayload?.livestream?.enabled || incomingData?.livestream?.enabled || incomingData?.event?.livestream?.enabled || runtimeStreamingUrl));
   const runtimeLivestreamCapability = resolveLivestreamCapability({
     ...incomingData,
     selectedPackage: incomingData?.selectedPackage || orderPayload?.selectedPackage,
     packageTier: resolvePackageTier(incomingData, pickText(orderPayload?.packageTier, orderPayload?.selectedTheme?.packageTier)),
   });
+  const finalStreamingUrl = isLivestreamExplicitlyDisabled ? "" : runtimeStreamingUrl;
   const runtimeBankList = Array.isArray(rawGift?.bankList)
     ? rawGift.bankList
     : Array.isArray(rawGift?.bankAccounts)
@@ -443,7 +453,9 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     },
     features: {
       ...runtimeFeatures,
-      livestreamEnabled: runtimeLivestreamEnabled ?? (runtimeLivestreamCapability || Boolean(runtimeStreamingUrl)),
+      livestreamEnabled: isLivestreamExplicitlyDisabled
+        ? false
+        : (runtimeLivestreamEnabled ?? Boolean(runtimeLivestreamCapability && finalStreamingUrl)),
     },
     event: {
       ...(incomingData.event || {}),
@@ -452,6 +464,8 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
       livestream: {
         ...(incomingData?.event?.livestream || {}),
         ...runtimeStreaming,
+        enabled: isLivestreamExplicitlyDisabled ? false : Boolean(finalStreamingUrl),
+        url: finalStreamingUrl,
       },
       akad: {
         ...(incomingData.event?.akad || {}),
@@ -1167,10 +1181,16 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       time: pickText(livestreamSource?.time, akad.time),
       url: pickText(livestreamSource?.url),
     };
-    const hasStreaming =
-      (mergedData?.features?.livestreamEnabled ?? false) ||
-      resolveLivestreamCapability(mergedData) ||
-      Boolean(streaming.url);
+    const isStreamingDisabled =
+      mergedData?.features?.livestreamEnabled === false ||
+      mergedData?.livestream?.enabled === false ||
+      mergedData?.event?.livestream?.enabled === false;
+    const effectiveStreamingUrl = isStreamingDisabled ? "" : pickText(streaming.url);
+    const hasStreaming = isStaticDemoMode
+      ? Boolean(pickText(streaming.url))
+      : !isStreamingDisabled &&
+        Boolean(mergedData?.features?.livestreamEnabled || mergedData?.livestream?.enabled || mergedData?.event?.livestream?.enabled) &&
+        Boolean(effectiveStreamingUrl);
 
     const legacyGift = mergedData?.gifts || {};
     const genericGift = mergedData?.gift || {};

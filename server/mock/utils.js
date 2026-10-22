@@ -109,7 +109,14 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
     : [];
   const rawLivestream = payload?.livestream || payload?.event?.livestream || {};
   const livestreamUrl = normalizeText(rawLivestream?.url || rawLivestream?.link);
-  const livestreamEnabled = Boolean(payload?.features?.livestreamEnabled || rawLivestream?.enabled || livestreamUrl);
+  const isLivestreamExplicitlyDisabled =
+    payload?.features?.livestreamEnabled === false ||
+    rawLivestream?.enabled === false;
+  const livestreamEnabled = !isLivestreamExplicitlyDisabled && Boolean(
+    payload?.features?.livestreamEnabled ||
+    rawLivestream?.enabled ||
+    livestreamUrl
+  ) && Boolean(livestreamUrl);
   const livestreamPlatformLabel = inferLivestreamPlatformLabel(livestreamUrl, rawLivestream?.platformLabel || rawLivestream?.label);
   const livestreamDate = normalizeText(rawLivestream?.date || payload?.akad?.date);
   const livestreamTime = normalizeText(rawLivestream?.time || formatEventTimeRange(payload?.akad?.startTime, payload?.akad?.endTime));
@@ -239,10 +246,11 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
       resepsiList: mappedResepsiList,
       receptions: mappedResepsiList,
       livestream: {
-        date: livestreamDate,
-        time: livestreamTime,
+        enabled: livestreamEnabled,
+        date: livestreamEnabled ? livestreamDate : "",
+        time: livestreamEnabled ? livestreamTime : "",
         platformLabel: livestreamPlatformLabel,
-        url: livestreamUrl,
+        url: livestreamEnabled ? livestreamUrl : "",
       },
     },
     akad: {
@@ -281,10 +289,10 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
     galleryImages: rawGalleryImages,
     livestream: {
       enabled: livestreamEnabled,
-      url: livestreamUrl,
+      url: livestreamEnabled ? livestreamUrl : "",
       platformLabel: livestreamPlatformLabel,
-      date: livestreamDate,
-      time: livestreamTime,
+      date: livestreamEnabled ? livestreamDate : "",
+      time: livestreamEnabled ? livestreamTime : "",
     },
     features: {
       countdownEnabled: true,

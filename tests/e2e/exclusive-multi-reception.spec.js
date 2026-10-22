@@ -183,4 +183,28 @@ test.describe("Exclusive Template Multiple Receptions", () => {
     await expect(page.getByText("Grand Ballroom Hotel Savoy")).toBeVisible();
     await expect(page.getByText("Gedung Graha Saba")).toBeVisible();
   });
+
+  test("hides livestream section when livestream is disabled in Botanical Elegance", async ({ page }) => {
+    await page.addInitScript((draft) => {
+      sessionStorage.setItem("ikc_invitation_draft", JSON.stringify({
+        ...draft,
+        livestream: { enabled: false, url: "" },
+        event: {
+          ...draft.event,
+          livestream: { enabled: false, url: "" },
+        },
+        features: { ...(draft.features || {}), livestreamEnabled: false },
+      }));
+    }, SAMPLE_MULTI_RESEPSI_DRAFT);
+    await page.goto("/undangan/botanical-elegance?preview=1");
+
+    const openBtn = page.getByRole("button", { name: /Buka Undangan/i });
+    if (await openBtn.isVisible()) {
+      await openBtn.click();
+    }
+
+    const livestreamContainer = page.locator(".elementor-element-68da415");
+    await expect(livestreamContainer).toBeHidden();
+  });
 });
+

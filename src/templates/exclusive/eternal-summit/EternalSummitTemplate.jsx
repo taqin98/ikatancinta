@@ -669,9 +669,14 @@ function buildRuntimeInvitationData(incomingData, baseSchema) {
     features: {
       ...runtimeFeatures,
       livestreamEnabled:
-        orderPayload.features?.livestreamEnabled ??
-        incomingData.features?.livestreamEnabled ??
-        Boolean(runtimeStreamingUrl),
+        orderPayload.features?.livestreamEnabled === false ||
+        incomingData.features?.livestreamEnabled === false ||
+        orderPayload.livestream?.enabled === false ||
+        incomingData.livestream?.enabled === false
+          ? false
+          : (orderPayload.features?.livestreamEnabled ??
+             incomingData.features?.livestreamEnabled ??
+             Boolean(runtimeStreamingUrl)),
       digitalEnvelopeEnabled:
         orderPayload.features?.digitalEnvelopeEnabled ??
         incomingData.features?.digitalEnvelopeEnabled ??
@@ -860,7 +865,16 @@ export default function EternalSummitTemplate({ data: propData, invitationSlug =
       ...(mergedData?.streaming || {}),
       ...(mergedData?.event?.livestream || {}),
     };
-    const hasStreaming = (orderPayload?.features?.livestreamEnabled ?? mergedData?.features?.livestreamEnabled ?? false) || Boolean(pickText(streaming?.url));
+    const isStreamingDisabled =
+      mergedData?.features?.livestreamEnabled === false ||
+      mergedData?.livestream?.enabled === false ||
+      mergedData?.event?.livestream?.enabled === false;
+    const effectiveStreamingUrl = isStreamingDisabled ? "" : pickText(streaming?.url);
+    const hasStreaming = isStaticDemoMode
+      ? Boolean(pickText(streaming?.url))
+      : !isStreamingDisabled &&
+        Boolean(orderPayload?.features?.livestreamEnabled ?? mergedData?.features?.livestreamEnabled ?? mergedData?.livestream?.enabled) &&
+        Boolean(effectiveStreamingUrl);
     const stories = (
       Array.isArray(mergedData?.loveStory)
         ? mergedData.loveStory
