@@ -117,6 +117,40 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
   const isPublished = PUBLIC_INVITATION_STATUSES.has(status);
   const publishedAt = new Date().toISOString();
 
+  const rawResepsiList = Array.isArray(payload?.resepsiList) && payload.resepsiList.length > 0
+    ? payload.resepsiList
+    : Array.isArray(payload?.receptions) && payload.receptions.length > 0
+      ? payload.receptions
+      : payload?.resepsi
+        ? [payload.resepsi]
+        : [];
+
+  const mappedResepsiList = rawResepsiList.map((item, index) => ({
+    id: item?.id || index + 1,
+    title: item?.title || (rawResepsiList.length > 1 ? `Resepsi ${index + 1}` : "Resepsi"),
+    date: item?.date || "",
+    startTime: item?.startTime || "",
+    endTime: item?.endTime || "",
+    time: item?.startTime ? `${String(item.startTime).replace(":", ".")} - ${String(item?.endTime || "10:00").replace(":", ".")} WIB` : "",
+    venue: item?.venue || item?.venueName || "",
+    venueName: item?.venue || item?.venueName || "",
+    address: item?.address || "Simpang Lima Gumul, Kediri",
+    mapsLink: item?.mapsLink || item?.mapsUrl || "https://maps.google.com",
+    mapsUrl: item?.mapsLink || item?.mapsUrl || "https://maps.google.com",
+    coverImage: normalizeAssetPayload(item?.coverImage, "resepsi-cover"),
+  }));
+
+  const primaryResepsi = mappedResepsiList[0] || {
+    date: payload?.resepsi?.date || "",
+    startTime: payload?.resepsi?.startTime || "",
+    endTime: payload?.resepsi?.endTime || "",
+    time: payload?.resepsi?.startTime ? `${String(payload.resepsi.startTime).replace(":", ".")} - ${String(payload?.resepsi?.endTime || "10:00").replace(":", ".")} WIB` : "",
+    venue: payload?.resepsi?.venue || "",
+    address: payload?.resepsi?.address || "Simpang Lima Gumul, Kediri",
+    mapsLink: payload?.resepsi?.mapsLink || "https://maps.google.com",
+    coverImage: normalizeAssetPayload(payload?.resepsi?.coverImage, "resepsi-cover"),
+  };
+
   return {
     status,
     orderStatus: status,
@@ -196,12 +230,14 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
         mapsUrl: "https://maps.google.com",
       },
       resepsi: {
-        date: "Senin, 30 Maret 2026",
-        time: "11.00 - 14.00 WIB",
-        venueName: payload?.resepsi?.venue || "",
-        address: "Simpang Lima Gumul, Kediri",
-        mapsUrl: "https://maps.google.com",
+        date: primaryResepsi.date || "Senin, 30 Maret 2026",
+        time: primaryResepsi.time || "11.00 - 14.00 WIB",
+        venueName: primaryResepsi.venue || primaryResepsi.venueName || "",
+        address: primaryResepsi.address || "Simpang Lima Gumul, Kediri",
+        mapsUrl: primaryResepsi.mapsLink || primaryResepsi.mapsUrl || "https://maps.google.com",
       },
+      resepsiList: mappedResepsiList,
+      receptions: mappedResepsiList,
       livestream: {
         date: livestreamDate,
         time: livestreamTime,
@@ -219,16 +255,9 @@ export function buildInvitationSchemaFromTheme(slug, order = null) {
       mapsLink: payload?.akad?.mapsLink || "https://maps.google.com",
       coverImage: normalizeAssetPayload(payload?.akad?.coverImage, "akad-cover"),
     },
-    resepsi: {
-      date: payload?.resepsi?.date || "",
-      startTime: payload?.resepsi?.startTime || "",
-      endTime: payload?.resepsi?.endTime || "",
-      time: payload?.resepsi?.startTime ? `${String(payload.resepsi.startTime).replace(":", ".")} - ${String(payload?.resepsi?.endTime || "10:00").replace(":", ".")} WIB` : "",
-      venue: payload?.resepsi?.venue || "",
-      address: payload?.resepsi?.address || "Simpang Lima Gumul, Kediri",
-      mapsLink: payload?.resepsi?.mapsLink || "https://maps.google.com",
-      coverImage: normalizeAssetPayload(payload?.resepsi?.coverImage, "resepsi-cover"),
-    },
+    resepsi: primaryResepsi,
+    resepsiList: mappedResepsiList,
+    receptions: mappedResepsiList,
     copy: {
       openingGreeting: "The Wedding Of",
       openingText: "Tanpa mengurangi rasa hormat, kami mengundang Anda untuk menghadiri acara pernikahan kami.",
