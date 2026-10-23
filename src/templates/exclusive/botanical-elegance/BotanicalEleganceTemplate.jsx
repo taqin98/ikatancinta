@@ -47,6 +47,7 @@ const BODY_CLASSES = [
 
 const STYLE_LINK_ID = "botanical-elegance-style";
 const STYLE_HREF = `${PUBLIC_TEMPLATE_PREFIX}style.css?v=20260306-1`;
+const LOTTIE_HREF = `${PUBLIC_ASSET_PREFIX}vendor/elementor-pro/assets/lib/lottie/lottie.min.js`;
 const LEGACY_STORAGE_KEY = "premium_01_ucapan_13544";
 const DEFAULT_AUDIO_SRC = "assets/media/audio/Howl-s-Moving-FULL-CUT.mp3";
 const DEFAULT_BCA_LOGO = "assets/media/uploads/2025/11/BCA_logo_Bank_Central_Asia-1-3-5-scaled.png";
