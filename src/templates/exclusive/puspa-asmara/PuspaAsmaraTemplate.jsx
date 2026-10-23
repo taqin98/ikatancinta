@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { fetchInvitationWishListBySlug } from "../../../services/invitationApi";
 import { postInvitationWish } from "../../../services/wishesApi";
 import { getPackageConfig } from "../../../data/packageCatalog";
 import { upsertGuestQrSection } from "../../../utils/invitationGuestQr";
@@ -47,7 +48,7 @@ const BODY_CLASSES = [
 const STYLE_LINK_ID = "puspa-asmara-style";
 const STYLE_HREF = `${PUBLIC_TEMPLATE_PREFIX}style.css?v=20260326-1`;
 const LOTTIE_HREF = `${PUBLIC_ASSET_PREFIX}js/lottie.min.js`;
-const WISHES_STORAGE_KEY = "premium_02_ucapan_13735";
+const LEGACY_STORAGE_KEY = "premium_02_ucapan_13735";
 const DEMO_DESKTOP_COVER_IMAGE = "assets/images/SUJA-24SK1173-PII-9-1-e1730097922583.jpg";
 const DEMO_MOBILE_COVER_IMAGE = "assets/images/P2G-FALLBACK-PII.webp";
 const DEMO_COUPLE_SECTION_IMAGE = "assets/images/PRE-VINT-02-COUPLE2-PII.webp";
@@ -508,21 +509,30 @@ function normalizeWishItem(item) {
   };
 }
 
-function readStoredWishes() {
+function getWishesStorageKey(slug) {
+  const cleanSlug = String(slug || "").trim().toLowerCase();
+  return cleanSlug ? `ikc_wishes_${cleanSlug}` : "ikc_wishes_demo";
+}
+
+function readStoredWishes(slug) {
   try {
-    const raw = window.localStorage.getItem(WISHES_STORAGE_KEY);
+    if (typeof window !== "undefined" && window.localStorage.getItem(LEGACY_STORAGE_KEY)) {
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
+    const key = getWishesStorageKey(slug);
+    const raw = window.localStorage.getItem(key);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    const normalized = Array.isArray(parsed) ? parsed.map(normalizeWishItem).filter(Boolean) : [];
-    return normalized.length > 0 ? normalized : null;
+    return Array.isArray(parsed) ? parsed.map(normalizeWishItem).filter(Boolean) : null;
   } catch {
     return null;
   }
 }
 
-function writeStoredWishes(entries) {
+function writeStoredWishes(slug, entries) {
   try {
-    window.localStorage.setItem(WISHES_STORAGE_KEY, JSON.stringify(entries));
+    const key = getWishesStorageKey(slug);
+    window.localStorage.setItem(key, JSON.stringify(entries));
   } catch {
     // ignore storage failures
   }
@@ -963,7 +973,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
   const audioResumeRef = useRef(false);
   const unlockTimerRef = useRef(null);
   const [lightboxImage, setLightboxImage] = useState("");
-  const [wishes, setWishes] = useState(() => fallbackWishes);
+  const [wishes, setWishes] = useState(() => (isStaticDemoMode ? fallbackWishes : []));
   const [isInvitationOpened, setIsInvitationOpened] = useState(false);
 
   useEffect(() => {
@@ -1030,29 +1040,60 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
   }, []);
 
   useEffect(() => {
+    if (isStaticDemoMode) {
+      const stored = typeof window !== "undefined" ? readStoredWishes(invitationSlug) : null;
+      if (stored?.length) {
+        setWishes(stored);
+        return;
+      }
+      const wishSeedSource = Array.isArray(mergedData?.wishes)
+        ? mergedData.wishes
+        : Array.isArray(mergedData?.wishes?.initial)
+          ? mergedData.wishes.initial
+          : [];
+      const seeded = wishSeedSource.map(normalizeWishItem).filter(Boolean);
+      setWishes(seeded.length > 0 ? seeded : fallbackWishes);
+      return;
+    }
+
+    let isMounted = true;
+    const activeSlug = resolveInvitationSlug(mergedData, invitationSlug || "puspa-asmara");
+
     const wishSeedSource = Array.isArray(mergedData?.wishes)
       ? mergedData.wishes
       : Array.isArray(mergedData?.wishes?.initial)
         ? mergedData.wishes.initial
-        : [];
-    const seeded = wishSeedSource.map(normalizeWishItem).filter(Boolean);
-    const fallbackSeed = seeded.length > 0 ? seeded : fallbackWishes;
-    const stored = typeof window !== "undefined" ? readStoredWishes() : null;
-    if (stored?.length) {
-      const seen = new Set(stored.map(buildWishKey));
-      const merged = [...stored];
-      fallbackSeed.forEach((entry) => {
-        const key = buildWishKey(entry);
-        if (!seen.has(key)) {
-          merged.push(entry);
-          seen.add(key);
-        }
-      });
-      setWishes(merged);
-      return;
+        : null;
+
+    if (Array.isArray(wishSeedSource)) {
+      const seeded = wishSeedSource.map(normalizeWishItem).filter(Boolean);
+      setWishes(seeded);
     }
-    setWishes(fallbackSeed);
-  }, [mergedData, fallbackWishes]);
+
+    if (activeSlug) {
+      fetchInvitationWishListBySlug(activeSlug)
+        .then((res) => {
+          if (!isMounted) return;
+          const liveWishes = Array.isArray(res?.wishes)
+            ? res.wishes.map(normalizeWishItem).filter(Boolean)
+            : [];
+          setWishes(liveWishes);
+          writeStoredWishes(activeSlug, liveWishes);
+        })
+        .catch(() => {
+          if (wishSeedSource === null) {
+            const cached = readStoredWishes(activeSlug);
+            if (isMounted && cached) {
+              setWishes(cached);
+            }
+          }
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [mergedData, invitationSlug, isStaticDemoMode, fallbackWishes]);
 
   useEffect(
     () => () => {
@@ -1640,7 +1681,7 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
     const wishesList = root.querySelector("#cui-container-comment-13735");
     const renderWishes = (entries) => {
       if (!wishesList || !countLink || !attendanceWrap) return;
-      const items = Array.isArray(entries) && entries.length > 0 ? entries : fallbackWishes;
+      const items = Array.isArray(entries) ? entries : [];
 
       wishesList.style.display = "block";
       if (wishesBox) wishesBox.style.display = "block";
@@ -1648,16 +1689,21 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
       const hadirCount = items.filter((entry) => /hadir/i.test(entry.attendance) && !/(tidak|absen)/i.test(entry.attendance)).length;
       const tidakHadirCount = items.filter((entry) => /(tidak|absen)/i.test(entry.attendance)).length;
 
-      wishesList.innerHTML = items
-        .map(
-          (entry) =>
-            `<li class="cui-item-comment"><div class="cui-comment-content"><div class="cui-comment-info"><a href="#" class="cui-commenter-name" onclick="return false;">${escapeHtml(
-              entry.author
-            )}</a><span class="cui-post-author">${escapeHtml(entry.attendance)}</span><span class="cui-comment-time">${escapeHtml(
-              formatWishRelativeTime(entry.createdAt)
-            )}</span></div><div class="cui-comment-text"><p>${escapeHtml(entry.comment)}</p></div></div></li>`
-        )
-        .join("");
+      if (!items.length) {
+        wishesList.innerHTML =
+          "<li class='cui-item-comment cui-item-comment-empty'><div class='cui-comment-content'><div class='cui-comment-text'><p>Belum ada ucapan. Jadilah yang pertama mengirim ucapan.</p></div></div></li>";
+      } else {
+        wishesList.innerHTML = items
+          .map(
+            (entry) =>
+              `<li class="cui-item-comment"><div class="cui-comment-content"><div class="cui-comment-info"><a href="#" class="cui-commenter-name" onclick="return false;">${escapeHtml(
+                entry.author
+              )}</a><span class="cui-post-author">${escapeHtml(entry.attendance)}</span><span class="cui-comment-time">${escapeHtml(
+                formatWishRelativeTime(entry.createdAt)
+              )}</span></div><div class="cui-comment-text"><p>${escapeHtml(entry.comment)}</p></div></div></li>`
+          )
+          .join("");
+      }
 
       countLink.innerHTML = `<span>${items.length}</span> Comments`;
       countLink.setAttribute("title", `${items.length} Comments`);
@@ -1737,7 +1783,8 @@ export default function PuspaAsmaraTemplate({ data: propData, invitationSlug = "
 
       setWishes((prev) => {
         const next = [nextEntry, ...prev];
-        writeStoredWishes(next);
+        const activeSlug = resolveInvitationSlug(mergedData, invitationSlug || "puspa-asmara");
+        writeStoredWishes(activeSlug, next);
         return next;
       });
       wishForm.reset();

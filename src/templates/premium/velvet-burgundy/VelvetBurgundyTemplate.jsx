@@ -381,7 +381,7 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
   const scrollAnimationRef = useRef(null);
   const [opened, setOpened] = useState(false);
   const [scrollUnlocked, setScrollUnlocked] = useState(false);
-  const [wishes, setWishes] = useState(() => fallbackWishes);
+  const [wishes, setWishes] = useState(() => (isDemoMode ? fallbackWishes : []));
   const [isSubmittingWish, setIsSubmittingWish] = useState(false);
   const commentAvatarSrc = resolveAssetUrl("assets/images/local/wp-content__uploads__2023__05__cropped-LOGO-32x32.jpg");
   const livestreamEnabledInRender = mergedData?.features?.livestreamEnabled !== false;
@@ -423,10 +423,21 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
   }, []);
 
   useEffect(() => {
-    const next = Array.isArray(mergedData?.wishes) ? mergedData.wishes : [];
-    const normalized = next.map(normalizeWishItem).filter(Boolean);
-    setWishes(normalized.length > 0 ? normalized : fallbackWishes);
-  }, [mergedData, fallbackWishes]);
+    if (isDemoMode) {
+      const next = Array.isArray(mergedData?.wishes) ? mergedData.wishes : [];
+      const normalized = next.map(normalizeWishItem).filter(Boolean);
+      setWishes(normalized.length > 0 ? normalized : fallbackWishes);
+      return;
+    }
+    const rawWishes = Array.isArray(mergedData?.wishes)
+      ? mergedData.wishes
+      : Array.isArray(mergedData?.wishes?.initial)
+        ? mergedData.wishes.initial
+        : null;
+    if (rawWishes !== null) {
+      setWishes(rawWishes.map(normalizeWishItem).filter(Boolean));
+    }
+  }, [mergedData, isDemoMode, fallbackWishes]);
 
   useEffect(() => {
     AOS.init({
@@ -2127,8 +2138,17 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
                             data-wishes-list=""
                             style={{ display: "block" }}
                           >
-                            {wishes.map((wish, index) => (
-                              <li className="cui-item-comment vb-wishes-item" key={`${wish.author}-${wish.createdAt}-${index}`}>
+                            {wishes.length === 0 ? (
+                              <li className="cui-item-comment cui-item-comment-empty">
+                                <div className="cui-comment-content">
+                                  <div className="cui-comment-text">
+                                    <p>Belum ada ucapan. Jadilah yang pertama mengirim ucapan.</p>
+                                  </div>
+                                </div>
+                              </li>
+                            ) : (
+                              wishes.map((wish, index) => (
+                                <li className="cui-item-comment vb-wishes-item" key={`${wish.author}-${wish.createdAt}-${index}`}>
                                 <div className="cui-comment-avatar">
                                   <img alt={wish.author} src={commentAvatarSrc} />
                                 </div>
@@ -2145,7 +2165,8 @@ export default function VelvetBurgundyTemplate({ data: propData, invitationSlug 
                                   </div>
                                 </div>
                               </li>
-                            ))}
+                              ))
+                            )}
                           </ul>
                         </div>
                       </div>

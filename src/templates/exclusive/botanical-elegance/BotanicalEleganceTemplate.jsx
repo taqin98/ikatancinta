@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import AOS from "aos";
 
 import { useInvitationData } from "../../../hooks/useInvitationData";
+import { fetchInvitationWishListBySlug } from "../../../services/invitationApi";
 import { postInvitationWish } from "../../../services/wishesApi";
 import { getPackageConfig } from "../../../data/packageCatalog";
 import { upsertGuestQrSection } from "../../../utils/invitationGuestQr";
@@ -46,8 +47,7 @@ const BODY_CLASSES = [
 
 const STYLE_LINK_ID = "botanical-elegance-style";
 const STYLE_HREF = `${PUBLIC_TEMPLATE_PREFIX}style.css?v=20260306-1`;
-const LOTTIE_HREF = `${PUBLIC_ASSET_PREFIX}vendor/elementor-pro/assets/lib/lottie/lottie.min.js`;
-const WISHES_STORAGE_KEY = "premium_01_ucapan_13544";
+const LEGACY_STORAGE_KEY = "premium_01_ucapan_13544";
 const DEFAULT_AUDIO_SRC = "assets/media/audio/Howl-s-Moving-FULL-CUT.mp3";
 const DEFAULT_BCA_LOGO = "assets/media/uploads/2025/11/BCA_logo_Bank_Central_Asia-1-3-5-scaled.png";
 const DEFAULT_DANA_LOGO = "assets/media/uploads/2025/11/1200px-Logo_dana_blue.svg-1-1-1.png";
@@ -640,21 +640,30 @@ function normalizeWishItem(item) {
     return { author, comment, attendance, createdAt };
 }
 
-function readStoredWishes() {
+function getWishesStorageKey(slug) {
+    const cleanSlug = String(slug || "").trim().toLowerCase();
+    return cleanSlug ? `ikc_wishes_${cleanSlug}` : "ikc_wishes_demo";
+}
+
+function readStoredWishes(slug) {
     try {
-        const raw = window.localStorage.getItem(WISHES_STORAGE_KEY);
+        if (typeof window !== "undefined" && window.localStorage.getItem(LEGACY_STORAGE_KEY)) {
+            window.localStorage.removeItem(LEGACY_STORAGE_KEY);
+        }
+        const key = getWishesStorageKey(slug);
+        const raw = window.localStorage.getItem(key);
         if (!raw) return null;
         const parsed = JSON.parse(raw);
-        const normalized = Array.isArray(parsed) ? parsed.map(normalizeWishItem).filter(Boolean) : [];
-        return normalized.length > 0 ? normalized : null;
+        return Array.isArray(parsed) ? parsed.map(normalizeWishItem).filter(Boolean) : null;
     } catch {
         return null;
     }
 }
 
-function writeStoredWishes(entries) {
+function writeStoredWishes(slug, entries) {
     try {
-        window.localStorage.setItem(WISHES_STORAGE_KEY, JSON.stringify(entries));
+        const key = getWishesStorageKey(slug);
+        window.localStorage.setItem(key, JSON.stringify(entries));
     } catch {
         // ignore storage failures
     }
@@ -701,7 +710,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
     const [opened, setOpened] = useState(false);
     const [scrollUnlocked, setScrollUnlocked] = useState(false);
     const [lightboxImage, setLightboxImage] = useState("");
-    const [wishes, setWishes] = useState(() => fallbackWishes);
+    const [wishes, setWishes] = useState(() => (isStaticDemoMode ? fallbackWishes : []));
 
     useEffect(() => {
         let styleNode = document.getElementById(STYLE_LINK_ID);
@@ -752,14 +761,60 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
     }, []);
 
     useEffect(() => {
-        const stored = typeof window !== "undefined" ? readStoredWishes() : null;
-        if (stored?.length) {
-            setWishes(stored);
+        if (isStaticDemoMode) {
+            const stored = typeof window !== "undefined" ? readStoredWishes(invitationSlug) : null;
+            if (stored?.length) {
+                setWishes(stored);
+                return;
+            }
+            const rawWishes = Array.isArray(mergedData?.wishes)
+                ? mergedData.wishes
+                : Array.isArray(mergedData?.wishes?.initial)
+                ? mergedData.wishes.initial
+                : [];
+            const next = rawWishes.map(normalizeWishItem).filter(Boolean);
+            setWishes(next.length > 0 ? next : fallbackWishes);
             return;
         }
-        const next = Array.isArray(mergedData?.wishes) ? mergedData.wishes.map(normalizeWishItem).filter(Boolean) : [];
-        setWishes(next.length > 0 ? next : fallbackWishes);
-    }, [mergedData, fallbackWishes]);
+
+        let isMounted = true;
+        const activeSlug = resolveInvitationSlug(mergedData, invitationSlug || "botanical-elegance");
+
+        const rawWishes = Array.isArray(mergedData?.wishes)
+            ? mergedData.wishes
+            : Array.isArray(mergedData?.wishes?.initial)
+            ? mergedData.wishes.initial
+            : null;
+
+        if (Array.isArray(rawWishes)) {
+            const next = rawWishes.map(normalizeWishItem).filter(Boolean);
+            setWishes(next);
+        }
+
+        if (activeSlug) {
+            fetchInvitationWishListBySlug(activeSlug)
+                .then((res) => {
+                    if (!isMounted) return;
+                    const liveWishes = Array.isArray(res?.wishes)
+                        ? res.wishes.map(normalizeWishItem).filter(Boolean)
+                        : [];
+                    setWishes(liveWishes);
+                    writeStoredWishes(activeSlug, liveWishes);
+                })
+                .catch(() => {
+                    if (rawWishes === null) {
+                        const cached = readStoredWishes(activeSlug);
+                        if (isMounted && cached) {
+                            setWishes(cached);
+                        }
+                    }
+                });
+        }
+
+        return () => {
+            isMounted = false;
+        };
+    }, [mergedData, invitationSlug, isStaticDemoMode, fallbackWishes]);
 
     useEffect(
         () => () => {
@@ -1540,7 +1595,7 @@ export default function BotanicalEleganceTemplate({ data: propData, invitationSl
 
             const next = [nextEntry, ...wishes];
             setWishes(next);
-            writeStoredWishes(next);
+            writeStoredWishes(activeInvitationSlug, next);
             form.reset();
 
             if (commentStatus) {
